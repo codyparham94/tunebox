@@ -1,8 +1,8 @@
 import { useState, type KeyboardEvent } from 'react'
-import { useNavigate } from 'react-router'
 import type { RadioTrack, Track } from '@shared/types'
 import { setLiked, startTrackRadio } from '../lib/actions'
 import { formatTime } from '../lib/format'
+import { useTrackNav } from '../lib/nav'
 import { useLikedIds } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
 import { useUi } from '../store/ui'
@@ -21,6 +21,8 @@ interface TrackListProps {
   onMove?: (from: number, to: number) => void
   onRemove?: (index: number) => void
   removeLabel?: string
+  /** song title opens its album (off on the album page itself) */
+  linkTitles?: boolean
   label: string
 }
 
@@ -34,6 +36,7 @@ export function TrackList({
   onMove,
   onRemove,
   removeLabel = 'Remove from playlist',
+  linkTitles = true,
   label
 }: TrackListProps) {
   const current = usePlayer((s) => currentTrack(s))
@@ -60,6 +63,7 @@ export function TrackList({
           onPlay={() => play(i)}
           onRemove={onRemove && (() => onRemove(i))}
           removeLabel={removeLabel}
+          linkTitle={linkTitles}
           onMove={onMove && ((to) => to >= 0 && to < tracks.length && onMove(i, to))}
           drag={
             onMove && {
@@ -92,13 +96,14 @@ interface RowProps {
   onPlay: () => void
   onRemove?: () => void
   removeLabel: string
+  linkTitle: boolean
   onMove?: (to: number) => void
   drag?: { dragging: boolean; target: boolean; start(): void; over(): void; end(): void }
 }
 
 function TrackRow(p: RowProps) {
   const { track: t } = p
-  const navigate = useNavigate()
+  const nav = useTrackNav()
   const openAdd = useUi((s) => s.openAddToPlaylist)
   const reason = 'reason' in t ? t.reason : undefined
 
@@ -108,8 +113,8 @@ function TrackRow(p: RowProps) {
     { label: 'Start radio', onSelect: () => void startTrackRadio(t) },
     { label: p.liked ? 'Remove from liked songs' : 'Like', onSelect: () => void setLiked(t, !p.liked), hidden: !p.compact },
     { label: 'Add to playlist…', onSelect: () => openAdd([t]) },
-    { label: 'Go to artist', onSelect: () => navigate(`/artist/${t.artistId}`), hidden: !t.artistId },
-    { label: 'Go to album', onSelect: () => navigate(`/album/${t.albumId}`), hidden: !t.albumId },
+    { label: 'Go to artist', onSelect: () => void nav.artist(t) },
+    { label: 'Go to album', onSelect: () => void nav.album(t) },
     { label: p.removeLabel, onSelect: () => p.onRemove?.(), hidden: !p.onRemove }
   ]
 
@@ -169,31 +174,31 @@ function TrackRow(p: RowProps) {
         </span>
       </button>
       <div className="min-w-0">
-        <div className="track-title truncate" title={t.title}>
-          {t.title}
-        </div>
-        <div className="track-meta truncate">
-          {t.artistId ? (
-            <button className="link-btn" onClick={() => navigate(`/artist/${t.artistId}`)}>
-              {t.artist}
+        <div className="truncate">
+          {p.linkTitle ? (
+            <button className="link-btn title-link" title={`${t.title}: go to album`} onClick={() => void nav.album(t)}>
+              {t.title}
             </button>
           ) : (
-            <span className="muted">{t.artist}</span>
+            <span className="track-title" title={t.title}>
+              {t.title}
+            </span>
           )}
+        </div>
+        <div className="track-meta truncate">
+          <button className="link-btn" title={`Go to ${t.artist}`} onClick={() => void nav.artist(t)}>
+            {t.artist}
+          </button>
           {reason && <span className="muted"> · {reason}</span>}
         </div>
       </div>
       {!p.compact && (
         <div className="track-meta truncate min-w-0">
-          {p.showAlbum &&
-            t.album &&
-            (t.albumId ? (
-              <button className="link-btn truncate" onClick={() => navigate(`/album/${t.albumId}`)}>
-                {t.album}
-              </button>
-            ) : (
-              <span className="muted">{t.album}</span>
-            ))}
+          {p.showAlbum && t.album && (
+            <button className="link-btn truncate" onClick={() => void nav.album(t)}>
+              {t.album}
+            </button>
+          )}
         </div>
       )}
       {!p.compact && <span className="mono muted text-right" style={{ fontSize: 'var(--text-xs)' }}>{t.duration ? formatTime(t.duration) : ''}</span>}

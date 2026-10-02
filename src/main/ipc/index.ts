@@ -38,6 +38,7 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
       album: (id) => ytm.album(id),
       remotePlaylist: (id) => ytm.playlist(id, { max: 300 }),
       match: async (t) => (await resolveMatch(t))?.track ?? null,
+      locate: (t) => ytm.locate(t),
       charts: (genreId) => deezer.chart(genreId ?? 0),
       genres: () => deezer.genres(),
       tags: async () => (lastfm.lastfmAvailable() ? lastfm.topTags(24).catch(() => FALLBACK_TAGS) : FALLBACK_TAGS)

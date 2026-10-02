@@ -27,6 +27,8 @@ export interface TuneboxApi {
     album(id: string): Promise<Collection>
     remotePlaylist(id: string): Promise<Collection>
     match(track: Track): Promise<Track | null>
+    /** artist/album ids for a track that lacks them */
+    locate(track: Track): Promise<{ artistId?: string; albumId?: string }>
     charts(genreId?: number): Promise<Track[]>
     genres(): Promise<Genre[]>
     tags(): Promise<string[]>
@@ -85,7 +87,7 @@ export const EVENT = {
 
 /** Every invokable method, grouped. The preload builds the bridge from this list. */
 export const API_METHODS = {
-  catalog: ['search', 'artist', 'album', 'remotePlaylist', 'match', 'charts', 'genres', 'tags'],
+  catalog: ['search', 'artist', 'album', 'remotePlaylist', 'match', 'locate', 'charts', 'genres', 'tags'],
   library: [
     'playlists',
     'playlist',

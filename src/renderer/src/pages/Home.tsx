@@ -4,11 +4,11 @@ import { Art } from '../components/Art'
 import { NextIcon, PauseIcon, PlayIcon, PrevIcon, RadioIcon, ThumbDownIcon, ThumbUpIcon } from '../components/Icons'
 import { Empty, ErrorState, Loading } from '../components/States'
 import { TrackList } from '../components/TrackList'
-import { startArtistRadio, startTagRadio } from '../lib/actions'
+import { startArtistRadio } from '../lib/actions'
 import { plural, timeAgo } from '../lib/format'
-import { errorMessage, useCharts, useHistory, usePlaylists, useStations, useTags } from '../lib/queries'
+import { useTrackNav } from '../lib/nav'
+import { useCharts, useHistory, usePlaylists, useStations } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
-import { toast } from '../store/toast'
 
 export function Home() {
   return (
@@ -21,7 +21,6 @@ export function Home() {
         <QuickRadioTile />
         <RecentTile />
         <PlaylistsTile />
-        <MoodsTile />
       </div>
     </div>
   )
@@ -39,6 +38,7 @@ function NowPlayingTile() {
   const resume = !t ? history.data?.[0] : undefined
   const shown = t ?? resume?.track
   const thumb = t?.id ? s.thumbs[t.id] : undefined
+  const nav = useTrackNav()
 
   return (
     <section className="tile tile-primary span-2x1" aria-labelledby="np-title" style={{ padding: 'var(--space-4)' }}>
@@ -48,11 +48,23 @@ function NowPlayingTile() {
           <span className="eyebrow truncate">
             {t ? (s.station ? s.station.name : 'Now playing') : resume ? 'Pick up where you left off' : 'Welcome'}
           </span>
-          <h2 id="np-title" className="now-title" title={shown?.title}>
-            {shown?.title ?? 'Your music, your radio'}
+          <h2 id="np-title" className="now-title">
+            {shown ? (
+              <button className="now-link" title={`${shown.title}: go to album`} onClick={() => void nav.album(shown)}>
+                {shown.title}
+              </button>
+            ) : (
+              'Your music, your radio'
+            )}
           </h2>
           <p className={`tile-sub${shown ? ' truncate' : ''}`}>
-            {shown ? shown.artist : 'Search for a song, or start a station and let Tunebox learn what you like.'}
+            {shown ? (
+              <button className="now-link" title={`Go to ${shown.artist}`} onClick={() => void nav.artist(shown)}>
+                {shown.artist}
+              </button>
+            ) : (
+              'Search for a song, or start a station and let Tunebox learn what you like.'
+            )}
             {resume && ` · ${timeAgo(resume.playedAt)}`}
           </p>
           {t?.reason && s.station && <p className="tile-sub truncate">Why this song? {t.reason}</p>}
@@ -233,7 +245,7 @@ function RecentTile() {
 function PlaylistsTile() {
   const playlists = usePlaylists()
   return (
-    <section className="tile" aria-labelledby="pl-title">
+    <section className="tile span-3x1" aria-labelledby="pl-title">
       <div className="section-head">
         <h2 id="pl-title" className="tile-title" style={{ margin: 0 }}>
           Your playlists
@@ -249,8 +261,8 @@ function PlaylistsTile() {
       ) : playlists.data.length === 0 ? (
         <Empty>Make one from any song’s ⋯ menu, or import from YouTube in Library.</Empty>
       ) : (
-        <ul className="grid gap-1 list-none m-0 p-0">
-          {playlists.data.slice(0, 4).map((pl) => (
+        <ul className="playlist-strip list-none m-0 p-0">
+          {playlists.data.slice(0, 9).map((pl) => (
             <li key={pl.id}>
               <Link to={`/playlist/${pl.id}`} className="menu-item" style={{ textDecoration: 'none', minHeight: 44 }}>
                 <Art src={pl.artUrl} size={32} />
@@ -268,35 +280,3 @@ function PlaylistsTile() {
     </section>
   )
 }
-
-function MoodsTile() {
-  const tags = useTags()
-  return (
-    <section className="tile span-2x1" aria-labelledby="mg-title">
-      <h2 id="mg-title" className="tile-title">
-        Moods &amp; genres
-      </h2>
-      <p className="tile-sub" style={{ marginBottom: 'var(--space-3)' }}>
-        Pick one to start a station.
-      </p>
-      {tags.isPending ? (
-        <Loading />
-      ) : tags.isError ? (
-        <ErrorState error={tags.error} />
-      ) : (
-        <div className="chips">
-          {tags.data.slice(0, 18).map((tag) => (
-            <button
-              key={tag}
-              className="chip"
-              onClick={() => startTagRadio(tag).catch((err) => toast.error(errorMessage(err)))}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-

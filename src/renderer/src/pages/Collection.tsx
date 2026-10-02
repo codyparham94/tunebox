@@ -79,7 +79,7 @@ export function Album() {
               }
             />
             <section className="section">
-              <TrackList label={`${a.title} tracks`} tracks={a.tracks} numbered showAlbum={false} />
+              <TrackList label={`${a.title} tracks`} tracks={a.tracks} numbered showAlbum={false} linkTitles={false} />
             </section>
           </>
         )}

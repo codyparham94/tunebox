@@ -1076,3 +1076,46 @@ img {
 .theme-swatch span {
   flex: 1;
 }
+
+/* Song titles that link to their album. */
+.link-btn.title-link {
+  color: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.track.current .link-btn.title-link {
+  color: inherit;
+}
+
+/* Inline links inside the Now Playing tile keep the tile's text colour. */
+.now-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.now-link:hover {
+  text-decoration: underline;
+}
+
+.span-3x1 {
+  grid-column: span 3;
+}
+
+@media (max-width: 1180px) {
+  .span-3x1 {
+    grid-column: span 2;
+  }
+}
+
+.playlist-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-1) var(--space-3);
+  overflow: hidden;
+}

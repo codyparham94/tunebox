@@ -14,7 +14,7 @@ import type {
   SearchResults,
   Track
 } from '@shared/types'
-import { upscaleArt } from '../util/text'
+import { normalizeArtist, normalizeTitle, upscaleArt } from '../util/text'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Node = any
@@ -229,4 +229,28 @@ export async function upNext(videoId: string): Promise<Track[]> {
   const yt = await innertube()
   const panel = await yt.music.getUpNext(videoId, true)
   return compact((panel.contents ?? []).map((i: Node) => toTrack(i))).filter((t) => t.id !== videoId)
+}
+
+/** Best-matching artist channel for a name. */
+export async function findArtistId(name: string): Promise<string | undefined> {
+  const yt = await innertube()
+  const res = await yt.music.search(name, { type: 'artist' })
+  const artists = compact((res.artists?.contents ?? []).map(toArtist))
+  const want = normalizeArtist(name)
+  return (artists.find((a) => normalizeArtist(a.name) === want) ?? artists[0])?.id
+}
+
+/**
+ * Fills in the artist and album ids for a track that arrived without them
+ * (e.g. radio picks), by finding the same song in YT Music search.
+ */
+export async function locate(t: Pick<Track, 'id' | 'title' | 'artist'>): Promise<{ artistId?: string; albumId?: string }> {
+  const primary = t.artist.split(',')[0].trim()
+  const songs = await searchSongs(`${primary} ${normalizeTitle(t.title) || t.title}`, 10)
+  const title = normalizeTitle(t.title)
+  const hit =
+    songs.find((s) => s.id === t.id) ??
+    songs.find((s) => normalizeTitle(s.title) === title && normalizeArtist(s.artist) === normalizeArtist(primary))
+  const artistId = hit?.artistId ?? (await findArtistId(primary))
+  return { artistId, albumId: hit?.albumId }
 }

@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router'
 import { setLiked } from '../lib/actions'
 import { formatTime } from '../lib/format'
+import { useTrackNav } from '../lib/nav'
 import { useLikedIds } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
 import { useUi } from '../store/ui'
@@ -28,7 +28,7 @@ import {
 export function PlayerBar() {
   const s = usePlayer()
   const t = currentTrack(s)
-  const navigate = useNavigate()
+  const nav = useTrackNav()
   const liked = useLikedIds().data
   const { queueOpen, toggleQueue } = useUi()
   const isLiked = !!t?.id && !!liked?.has(t.id)
@@ -43,17 +43,15 @@ export function PlayerBar() {
         <div className="min-w-0">
           {t ? (
             <>
-              <div className="track-title truncate" title={t.title}>
-                {t.title}
+              <div className="truncate">
+                <button className="link-btn title-link" title={`${t.title}: go to album`} onClick={() => void nav.album(t)}>
+                  {t.title}
+                </button>
               </div>
               <div className="track-meta truncate">
-                {t.artistId ? (
-                  <button className="link-btn" onClick={() => navigate(`/artist/${t.artistId}`)}>
-                    {t.artist}
-                  </button>
-                ) : (
-                  <span className="muted">{t.artist}</span>
-                )}
+                <button className="link-btn" title={`Go to ${t.artist}`} onClick={() => void nav.artist(t)}>
+                  {t.artist}
+                </button>
               </div>
               {s.station && t.reason && (
                 <div className="reason truncate" title={`Why this song? ${t.reason}`}>
