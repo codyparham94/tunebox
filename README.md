@@ -18,6 +18,7 @@ A desktop music player for Windows. Search a big catalog, stream audio from YouT
 - **Library:** local playlists (create, rename, reorder, delete), liked songs, listening history. Everything is stored in a local SQLite file, with no account and no login.
 - **Radio:** seed a station from a song, artist, playlist or genre. Candidates come from Last.fm (similar tracks and artists, tag charts) and YouTube Music’s own radio, and a local scoring model ranks them. 👎 bans the track from that station and pushes the artist out; 👍 pulls in more like it. The player shows why each song was picked. Add up to 10 more artists to any station to widen its mix.
 - **Import:** paste a public YouTube or YouTube Music playlist URL.
+- **Updates:** checks GitHub Releases on startup and every few hours. When a new version is out it asks first, then downloads, installs and restarts. **Settings → Updates** checks by hand.
 - **Equalizer:** 10-band EQ with preamp and a live response curve, 26 presets, saved custom presets. Lives in Settings and pops out into its own window (also from the sliders button in the player).
 - **Themes:** 26 light and dark themes adapted from design skills and [awesome-design-md](https://github.com/VoltAgent/awesome-design-md), with a Light/Dark filter.
 - **System:** tray menu (play/pause, next, 👍/👎), close to tray, optional global media-key fallback, remembered window position.
@@ -50,6 +51,8 @@ For development you can instead copy `.env.example` to `.env` and set `LASTFM_AP
 | `npm run smoke` | Resolves 5 known videos with youtubei.js **and** yt-dlp and reports which works. Run it when playback breaks. |
 | `npm run typecheck` | Type-check main and renderer |
 | `npm run build:win` | Download yt-dlp, build, and package an NSIS installer into `release/` |
+
+**Releasing:** bump `version` in `package.json`, run `npm run build:win`, and attach **all three** files from `release/<version>/` to the GitHub release: `Tunebox-Setup-<version>.exe`, its `.blockmap`, and `latest.yml`. Installed copies read `latest.yml` to find updates, so a release without it won't be offered.
 | `npm run icon` | Regenerate `resources/icon.png` |
 
 Set `TUNEBOX_USER_DATA=<folder>` to run against a throwaway profile.

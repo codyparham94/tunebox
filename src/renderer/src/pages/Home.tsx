@@ -1,24 +1,38 @@
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Art } from '../components/Art'
-import { NextIcon, PauseIcon, PlayIcon, PrevIcon, RadioIcon, ThumbDownIcon, ThumbUpIcon } from '../components/Icons'
+import {
+  CompassIcon,
+  Equalizer,
+  NextIcon,
+  PauseIcon,
+  PlayIcon,
+  PlusIcon,
+  PrevIcon,
+  RadioIcon,
+  ThumbDownIcon,
+  ThumbUpIcon
+} from '../components/Icons'
 import { Empty, ErrorState, Loading } from '../components/States'
 import { startArtistRadio } from '../lib/actions'
 import { plural, timeAgo } from '../lib/format'
 import { useTrackNav } from '../lib/nav'
-import { useHistory, usePlaylists, useStations } from '../lib/queries'
+import { api, errorMessage, invalidatePlaylists, useHistory, usePlaylists, useStations } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
+import { toast } from '../store/toast'
 
 export function Home() {
   return (
     <div className="page">
       <h1 className="page-title">{greeting()}</h1>
-      <div className="bento">
+      {/* Recently played runs down the left; the other tiles fill the three columns beside it. */}
+      <div className="bento home-bento">
+        <RecentTile />
         <NowPlayingTile />
         <StationsTile />
         <QuickRadioTile />
-        <RecentTile />
-        <PlaylistsTile />
+        <PlaylistsRow />
       </div>
     </div>
   )
@@ -39,7 +53,7 @@ function NowPlayingTile() {
   const nav = useTrackNav()
 
   return (
-    <section className="tile tile-primary span-2x1" aria-labelledby="np-title" style={{ padding: 'var(--space-4)' }}>
+    <section className="tile tile-primary span-3x1" aria-labelledby="np-title" style={{ padding: 'var(--space-4)' }}>
       <div className="flex h-full items-center gap-5">
         <Art src={shown?.artUrl} size={180} className="shadow-lg" />
         <div className="min-w-0 flex-1 grid grid-cols-1 gap-1">
@@ -102,8 +116,41 @@ function NowPlayingTile() {
             )}
           </div>
         </div>
+        {t && <UpNext />}
       </div>
     </section>
+  )
+}
+
+/** The next few songs in the queue, beside the current one. */
+function UpNext() {
+  const queue = usePlayer((s) => s.queue)
+  const index = usePlayer((s) => s.index)
+  const refilling = usePlayer((s) => s.refilling)
+  const upcoming = queue.slice(index + 1, index + 4)
+  return (
+    <div className="up-next" aria-label="Up next">
+      <span className="eyebrow">Up next</span>
+      {upcoming.length === 0 ? (
+        <p className="tile-sub">{refilling ? 'Finding more songs…' : 'Nothing queued'}</p>
+      ) : (
+        <ol className="list-none m-0 p-0 grid gap-1">
+          {upcoming.map((item, i) => (
+            <li key={item.qid}>
+              <button className="up-next-item" onClick={() => player.jumpTo(index + 1 + i)} aria-label={`Play ${item.title} by ${item.artist}`}>
+                <Art src={item.artUrl} size={36} />
+                <span className="min-w-0 grid">
+                  <span className="truncate" style={{ fontWeight: 600 }}>
+                    {item.title}
+                  </span>
+                  <span className="truncate up-next-artist">{item.artist}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   )
 }
 
@@ -178,43 +225,70 @@ function QuickRadioTile() {
 }
 
 function RecentTile() {
-  const history = useHistory(12)
+  const history = useHistory(25)
+  const current = usePlayer((s) => currentTrack(s)?.id)
+  const playing = usePlayer((s) => s.playing)
   return (
-    <section className="tile span-3x1" aria-labelledby="rp-title">
+    <section className="tile span-1x3 recent-tile" aria-labelledby="rp-title">
       <h2 id="rp-title" className="tile-title">
         Recently played
       </h2>
       {history.isPending ? (
-        <Loading />
+        <Loading rows={6} />
       ) : history.isError ? (
         <ErrorState error={history.error} />
       ) : history.data.length === 0 ? (
         <Empty>Songs you listen to will show up here.</Empty>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-1">
-          {history.data.map((h, i) => (
-            <button
-              key={h.track.id}
-              className="card"
-              style={{ width: 120, flex: 'none', padding: 'var(--space-2)' }}
-              onClick={() => player.playList(history.data.map((x) => x.track), i)}
-              aria-label={`Play ${h.track.title} by ${h.track.artist}`}
-            >
-              <Art src={h.track.artUrl} className="w-full" />
-              <span className="card-title truncate">{h.track.title}</span>
-              <span className="card-sub truncate">{h.track.artist}</span>
-            </button>
-          ))}
-        </div>
+        <ol className="recent-list" aria-label="Recently played songs">
+          {history.data.map((h, i) => {
+            const isCurrent = h.track.id === current
+            return (
+              <li key={h.track.id}>
+                <button
+                  className={`recent-item${isCurrent ? ' active' : ''}`}
+                  onClick={() => player.playList(history.data.map((x) => x.track), i)}
+                  aria-label={`Play ${h.track.title} by ${h.track.artist}`}
+                  aria-current={isCurrent || undefined}
+                >
+                  <span className="relative flex-none">
+                    <Art src={h.track.artUrl} size={40} />
+                    <span className="recent-play" aria-hidden="true">
+                      {isCurrent ? <Equalizer paused={!playing} /> : <PlayIcon size={14} />}
+                    </span>
+                  </span>
+                  <span className="min-w-0 flex-1 grid">
+                    <span className="truncate recent-title">{h.track.title}</span>
+                    <span className="truncate card-sub">{h.track.artist}</span>
+                  </span>
+                  <span className="card-sub flex-none">{timeAgo(h.playedAt)}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ol>
       )}
     </section>
+  )
+}
+
+/** Playlists beside a Discover tile. With no playlists, a small suggestion takes their place. */
+function PlaylistsRow() {
+  const playlists = usePlaylists()
+  if (playlists.isPending) return <section className="tile span-2x1" aria-busy="true" />
+  const has = !!playlists.data?.length
+  return (
+    <>
+      {has ? <PlaylistsTile /> : <NewPlaylistTile />}
+      <DiscoverTile wide={!has} />
+    </>
   )
 }
 
 function PlaylistsTile() {
   const playlists = usePlaylists()
   return (
-    <section className="tile span-4x1" aria-labelledby="pl-title">
+    <section className="tile span-2x1" aria-labelledby="pl-title">
       <div className="section-head">
         <h2 id="pl-title" className="tile-title" style={{ margin: 0 }}>
           Your playlists
@@ -223,15 +297,11 @@ function PlaylistsTile() {
           Library
         </Link>
       </div>
-      {playlists.isPending ? (
-        <Loading />
-      ) : playlists.isError ? (
+      {playlists.isError ? (
         <ErrorState error={playlists.error} />
-      ) : playlists.data.length === 0 ? (
-        <Empty>Make one from any song’s ⋯ menu, or import from YouTube in Library.</Empty>
       ) : (
         <ul className="playlist-strip list-none m-0 p-0">
-          {playlists.data.slice(0, 9).map((pl) => (
+          {(playlists.data ?? []).slice(0, 6).map((pl) => (
             <li key={pl.id}>
               <Link to={`/playlist/${pl.id}`} className="menu-item" style={{ textDecoration: 'none', minHeight: 44 }}>
                 <Art src={pl.artUrl} size={32} />
@@ -247,5 +317,54 @@ function PlaylistsTile() {
         </ul>
       )}
     </section>
+  )
+}
+
+function NewPlaylistTile() {
+  const navigate = useNavigate()
+  const create = async () => {
+    try {
+      const pl = await api.library.createPlaylist('New playlist')
+      invalidatePlaylists()
+      navigate(`/playlist/${pl.id}`)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+  return (
+    <section className="tile" aria-labelledby="np-suggest">
+      <PlusIcon size={28} />
+      <h2 id="np-suggest" className="tile-title" style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)' }}>
+        Make a playlist
+      </h2>
+      <p className="tile-sub">Collect songs you love, or import one from YouTube in Library.</p>
+      <button className="btn btn-primary mt-auto" onClick={() => void create()}>
+        <PlusIcon size={14} /> New playlist
+      </button>
+    </section>
+  )
+}
+
+function DiscoverTile({ wide }: { wide: boolean }) {
+  const feed = useQuery({ queryKey: ['discover', 'feed'], queryFn: () => api.discover.feed(false), staleTime: 60_000 })
+  const mix = feed.data?.mix ?? []
+  const arts = mix.map((t) => t.artUrl).filter(Boolean).slice(0, wide ? 6 : 3)
+  return (
+    <Link to="/discover" className={`tile tile-secondary${wide ? ' span-2x1' : ''}`} style={{ textDecoration: 'none' }}>
+      <CompassIcon size={28} />
+      <h2 className="tile-title" style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)' }}>
+        Discover
+      </h2>
+      <p className="tile-sub discover-tile-sub">
+        {mix.length ? `${plural(mix.length, 'new song')} picked for you` : 'New music based on what you like'}
+      </p>
+      {arts.length > 0 && (
+        <div className="discover-stack mt-auto" aria-hidden="true">
+          {arts.map((a, i) => (
+            <Art key={i} src={a} size={44} />
+          ))}
+        </div>
+      )}
+    </Link>
   )
 }

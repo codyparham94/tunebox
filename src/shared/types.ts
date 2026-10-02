@@ -232,3 +232,13 @@ export interface LocalScanProgress {
   total: number
   done: boolean
 }
+
+/** Auto-update progress, pushed from main. 'unsupported' = dev build (no release feed). */
+export interface UpdateStatus {
+  state: 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error' | 'unsupported'
+  version?: string
+  /** release notes as plain text */
+  notes?: string
+  percent?: number
+  error?: string
+}

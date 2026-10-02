@@ -20,3 +20,10 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   shortcutName: Tunebox
+# Writes latest.yml next to the installer; upload both (and the .blockmap) to the GitHub release
+# so installed copies can find and download updates.
+publish:
+  provider: github
+  owner: codyparham94
+  repo: tunebox
+  releaseType: release

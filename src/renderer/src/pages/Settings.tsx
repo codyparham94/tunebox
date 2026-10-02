@@ -1,11 +1,14 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import type { Settings as SettingsT } from '@shared/types'
 import { Equalizer } from '../components/Equalizer'
+import { DownloadIcon } from '../components/Icons'
 import { Loading } from '../components/States'
 import { timeAgo } from '../lib/format'
 import { THEMES } from '../lib/themes'
 import { api, errorMessage, keys, queryClient, useHealth, useSettings } from '../lib/queries'
 import { toast } from '../store/toast'
+import { updates, useUpdate } from '../store/update'
 
 async function save(patch: Partial<SettingsT>): Promise<void> {
   try {
@@ -110,6 +113,7 @@ export function Settings() {
         </section>
 
         <EngineTile />
+        <UpdatesTile />
 
         <section className="tile" aria-labelledby="kb-title">
           <h2 id="kb-title" className="tile-title">
@@ -325,6 +329,50 @@ function EngineTile() {
         >
           {updating ? <span className="spinner" /> : null} Update yt-dlp
         </button>
+      </div>
+    </section>
+  )
+}
+
+function UpdatesTile() {
+  const version = useQuery({ queryKey: ['appVersion'], queryFn: () => api.system.appVersion(), staleTime: Infinity })
+  const status = useUpdate((s) => s.status)
+  const [checking, setChecking] = useState(false)
+  const busy = checking || status.state === 'checking' || status.state === 'downloading' || status.state === 'ready'
+  return (
+    <section className="tile" aria-labelledby="up-title">
+      <h2 id="up-title" className="tile-title">
+        Updates
+      </h2>
+      <p className="tile-sub">
+        You have Tunebox <span className="mono">{version.data ?? '…'}</span>. Tunebox checks GitHub for new versions
+        and asks before installing one.
+      </p>
+      {status.state === 'available' && (
+        <p className="tile-sub" style={{ marginTop: 'var(--space-2)' }}>
+          Version <span className="mono">{status.version}</span> is available.
+        </p>
+      )}
+      <div className="row" style={{ marginTop: 'var(--space-4)' }}>
+        {status.state === 'available' ? (
+          <button className="btn btn-primary" onClick={() => useUpdate.setState({ open: true })}>
+            <DownloadIcon size={16} /> Update to {status.version}
+          </button>
+        ) : (
+          <button
+            className="btn btn-primary"
+            disabled={busy}
+            aria-busy={busy}
+            onClick={async () => {
+              setChecking(true)
+              await updates.check()
+              setChecking(false)
+            }}
+          >
+            {busy && <span className="spinner" aria-hidden="true" />}
+            {status.state === 'downloading' ? `Downloading ${status.percent ?? 0}%` : busy ? 'Checking…' : 'Check for updates'}
+          </button>
+        )}
       </div>
     </section>
   )

@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain, webContents, type WebContents } from 'electron'
+import { BrowserWindow, app, dialog, ipcMain, webContents, type WebContents } from 'electron'
 import { API_METHODS, EVENT, isLocalId, type TuneboxApi } from '@shared/api'
 import { DEFAULT_EQ, type EqState } from '@shared/eq'
 import type { ResolverHealth, Settings } from '@shared/types'
@@ -14,6 +14,7 @@ import { discoverFeed, staleDiscover } from '../discover/feed'
 import { importPlaylist } from '../import/importer'
 import { scanFolder } from '../local/library'
 import { updateTray } from '../os/tray'
+import { checkForUpdate, installUpdate, updateStatus } from '../os/updater'
 import { ensureTags, forgetStation, nextTracks, retuneStation, stationFeedback } from '../radio/station'
 import { resolveMatch } from '../sources/catalog'
 import * as deezer from '../sources/deezer'
@@ -173,7 +174,11 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         void deps.runHealthCheck()
         return msg
       },
-      nowPlaying: async (s) => updateTray(s)
+      nowPlaying: async (s) => updateTray(s),
+      appVersion: async () => app.getVersion(),
+      checkUpdate: () => checkForUpdate(),
+      updateStatus: async () => updateStatus(),
+      installUpdate: () => installUpdate()
     }
   }
 }

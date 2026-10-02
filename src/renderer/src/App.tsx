@@ -5,6 +5,7 @@ import { NavRail } from './components/NavRail'
 import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
 import { Toasts } from './components/Toasts'
+import { UpdatePrompt } from './components/UpdatePrompt'
 import { keys, queryClient, useSettings } from './lib/queries'
 import { useTheme } from './lib/themes'
 import { eq } from './store/eq'
@@ -21,6 +22,7 @@ import { Settings } from './pages/Settings'
 import { initPlayer, player } from './store/player'
 import { toast } from './store/toast'
 import { useUi } from './store/ui'
+import { initUpdates } from './store/update'
 
 export function App() {
   return (
@@ -40,6 +42,8 @@ function Shell() {
   useEffect(() => {
     void eq.load()
   }, [])
+
+  useEffect(() => initUpdates(), [])
 
   useEffect(() => {
     if (settings) initPlayer(settings.volume)
@@ -73,6 +77,7 @@ function Shell() {
       {queueOpen && <QueuePanel />}
       <PlayerBar />
       <AddToPlaylistDialog />
+      <UpdatePrompt />
       <Toasts />
     </div>
   )

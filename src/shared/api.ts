@@ -23,7 +23,8 @@ import type {
   Settings,
   Station,
   StationSeed,
-  Track
+  Track,
+  UpdateStatus
 } from './types'
 import type { EqState } from './eq'
 
@@ -103,6 +104,12 @@ export interface TuneboxApi {
     health(): Promise<ResolverHealth | null>
     updateYtdlp(): Promise<string>
     nowPlaying(state: NowPlaying): Promise<void>
+    appVersion(): Promise<string>
+    /** Asks GitHub for a newer release. */
+    checkUpdate(): Promise<UpdateStatus>
+    updateStatus(): Promise<UpdateStatus>
+    /** Downloads the update, installs it and restarts. Only after the user agrees. */
+    installUpdate(): Promise<void>
   }
 }
 
@@ -113,6 +120,7 @@ export interface TuneboxEvents {
   onHealth(cb: (h: ResolverHealth) => void): () => void
   onLocalScan(cb: (p: LocalScanProgress) => void): () => void
   onEq(cb: (msg: { state: EqState; clientId: string }) => void): () => void
+  onUpdate(cb: (status: UpdateStatus) => void): () => void
 }
 
 export type WindowApi = TuneboxApi & TuneboxEvents
@@ -122,7 +130,8 @@ export const EVENT = {
   importProgress: 'event:importProgress',
   health: 'event:health',
   localScan: 'event:localScan',
-  eq: 'event:eq'
+  eq: 'event:eq',
+  update: 'event:update'
 } as const
 
 /** Every invokable method, grouped. The preload builds the bridge from this list. */
@@ -150,7 +159,7 @@ export const API_METHODS = {
   local: ['chooseFolder', 'scan', 'tracks'],
   eq: ['get', 'set', 'popout'],
   settings: ['get', 'set'],
-  system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying']
+  system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying', 'appVersion', 'checkUpdate', 'updateStatus', 'installUpdate']
 } as const satisfies { [G in keyof TuneboxApi]: readonly (keyof TuneboxApi[G])[] }
 
 export const AUDIO_SCHEME = 'tunebox-audio'

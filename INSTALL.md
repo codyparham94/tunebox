@@ -42,7 +42,7 @@ The key stays on your computer.
 
 ## Updating
 
-Download the newest installer from the [releases page](https://github.com/codyparham94/tunebox/releases/latest) and run it. It installs over the old version, and your playlists, likes and stations are kept.
+From version 0.5.0 on, Tunebox tells you when a new version is out and installs it for you if you click **Update and restart** (or use **Settings → Updates → Check for updates**). On older versions, download the newest installer from the [releases page](https://github.com/codyparham94/tunebox/releases/latest) and run it. It installs over the old version, and your playlists, likes and stations are kept.
 
 ## Uninstalling
 

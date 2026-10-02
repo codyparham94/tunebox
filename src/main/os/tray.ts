@@ -1,15 +1,31 @@
 import { Menu, Tray, app, nativeImage, type BrowserWindow } from 'electron'
 import type { NowPlaying, OsCommand } from '@shared/types'
+import tray16 from '../../../resources/tray-16.png?asset'
+import tray20 from '../../../resources/tray-20.png?asset'
+import tray24 from '../../../resources/tray-24.png?asset'
+import tray32 from '../../../resources/tray-32.png?asset'
 
 let tray: Tray | null = null
 let state: NowPlaying = { playing: false, inStation: false }
 let getWindow: () => BrowserWindow | null = () => null
 let send: (cmd: OsCommand) => void = () => {}
 
-export function createTray(iconPath: string, win: () => BrowserWindow | null, sendCommand: (cmd: OsCommand) => void): void {
+/**
+ * The tray icon is a fixed image: the app's peach tile, drawn at each size Windows asks for
+ * (100–200% display scaling) so it stays sharp and never depends on the app theme.
+ */
+function trayImage(): Electron.NativeImage {
+  const img = nativeImage.createEmpty()
+  for (const [scaleFactor, file] of [[1, tray16], [1.25, tray20], [1.5, tray24], [2, tray32]] as const) {
+    img.addRepresentation({ scaleFactor, buffer: nativeImage.createFromPath(file).toPNG() })
+  }
+  return img
+}
+
+export function createTray(win: () => BrowserWindow | null, sendCommand: (cmd: OsCommand) => void): void {
   getWindow = win
   send = sendCommand
-  tray = new Tray(nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 }))
+  tray = new Tray(trayImage())
   tray.on('click', () => showWindow(getWindow()))
   render()
 }

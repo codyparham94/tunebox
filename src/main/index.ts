@@ -13,6 +13,7 @@ import { checkResolvers, runSmoke } from './health'
 import { registerIpc } from './ipc'
 import { setGlobalMediaKeys } from './os/mediaKeys'
 import { createTray, showWindow } from './os/tray'
+import { startUpdater } from './os/updater'
 import { loadWindowState, trackWindowState } from './os/windowState'
 import { configureYouTube } from './sources/ytmusic'
 import { handleAudioProtocol, registerAudioScheme } from './stream/protocol'
@@ -160,9 +161,10 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     handleAudioProtocol()
     registerIpc({ getHealth: () => health, runHealthCheck, onSettingsChanged, openEqWindow }, () => win?.webContents)
     win = createWindow()
-    createTray(icon, () => win, send)
+    createTray(() => win, send)
     onSettingsChanged(getSettings(db))
     win.webContents.once('did-finish-load', () => void runHealthCheck())
+    startUpdater((status) => win?.webContents.send(EVENT.update, status))
   })
 
   app.on('before-quit', () => {

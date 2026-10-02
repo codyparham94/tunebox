@@ -1,6 +1,6 @@
 {
   "name": "tunebox",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Desktop music streamer with a learning radio mode",
   "main": "./out/main/index.js",
   "author": "Cody Parham",
@@ -31,6 +31,7 @@
     "@fontsource/space-grotesk": "^5.3.0",
     "@fontsource/space-mono": "^5.3.0",
     "@tanstack/react-query": "^5.104.1",
+    "electron-updater": "^6.8.9",
     "music-metadata": "^11.16.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
