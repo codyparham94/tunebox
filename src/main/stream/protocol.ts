@@ -2,6 +2,7 @@ import { protocol } from 'electron'
 import { AUDIO_SCHEME } from '@shared/api'
 import { db } from '../context'
 import { getSettings } from '../db/settings'
+import { serveLocalArt, serveLocalFile } from '../local/library'
 import { invalidateStream, resolveStream, type ResolvedStream } from './resolver'
 
 /** Must run before `app.ready`. */
@@ -25,13 +26,23 @@ const fetchChunk = (s: ResolvedStream, from: number, to: number, signal: AbortSi
   fetch(s.url, { headers: { ...s.headers, Range: `bytes=${from}-${to}` }, signal })
 
 /**
+ * `tunebox-audio://local/<rowId>` and `tunebox-audio://localart/<rowId>` serve files
+ * from the user's music folder by database id.
+ *
  * `tunebox-audio://track/<videoId>` proxies the YouTube audio stream. The requested
  * range is served as a sequence of small upstream chunks, so seeking works. An
  * expired or rejected URL is re-resolved once.
  */
 export function handleAudioProtocol(): void {
   protocol.handle(AUDIO_SCHEME, async (request) => {
-    const videoId = new URL(request.url).pathname.replace(/^\//, '')
+    const url = new URL(request.url)
+    const ref = url.pathname.replace(/^\//, '')
+    if (url.hostname === 'local' || url.hostname === 'localart') {
+      const rowId = Number(ref)
+      if (!Number.isInteger(rowId) || rowId <= 0) return new Response('Bad id', { status: 400 })
+      return url.hostname === 'local' ? serveLocalFile(rowId, request.headers.get('range')) : serveLocalArt(rowId)
+    }
+    const videoId = ref
     if (!/^[\w-]{11}$/.test(videoId)) return new Response('Bad video id', { status: 400 })
     const { start, end } = parseRange(request.headers.get('range'))
     const quality = getSettings(db()).audioQuality

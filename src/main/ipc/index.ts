@@ -1,5 +1,5 @@
-import { ipcMain, type WebContents } from 'electron'
-import { API_METHODS, EVENT, type TuneboxApi } from '@shared/api'
+import { BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
+import { API_METHODS, EVENT, isLocalId, type TuneboxApi } from '@shared/api'
 import type { ResolverHealth, Settings } from '@shared/types'
 import { db } from '../context'
 import * as feedback from '../db/feedback'
@@ -7,7 +7,9 @@ import * as playlists from '../db/playlists'
 import { getSettings, setSettings } from '../db/settings'
 import * as stations from '../db/stations'
 import { upsertTrack } from '../db/tracks'
+import { clearLocal, listLocal } from '../db/localTracks'
 import { importPlaylist } from '../import/importer'
+import { scanFolder } from '../local/library'
 import { updateTray } from '../os/tray'
 import { ensureTags, forgetStation, nextTracks, stationFeedback } from '../radio/station'
 import { resolveMatch } from '../sources/catalog'
@@ -84,6 +86,29 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
     importer: {
       playlist: (url) => importPlaylist(url, (p) => sender()?.send(EVENT.importProgress, p))
     },
+    local: {
+      chooseFolder: async () => {
+        const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+        const current = getSettings(db()).musicFolder
+        const res = await dialog.showOpenDialog(win, {
+          title: 'Choose your music folder',
+          buttonLabel: 'Use this folder',
+          defaultPath: current || undefined,
+          properties: ['openDirectory']
+        })
+        const folder = res.filePaths[0]
+        if (res.canceled || !folder) return null
+        if (folder !== current) clearLocal(db())
+        setSettings(db(), { musicFolder: folder })
+        return scanFolder(folder, (p) => sender()?.send(EVENT.localScan, p))
+      },
+      scan: async () => {
+        const folder = getSettings(db()).musicFolder
+        if (!folder) throw new Error('Choose a music folder first.')
+        return scanFolder(folder, (p) => sender()?.send(EVENT.localScan, p))
+      },
+      tracks: async () => listLocal(db())
+    },
     settings: {
       get: async () => getSettings(db()),
       set: async (patch) => {
@@ -94,6 +119,7 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
     },
     system: {
       prefetch: async (id) => {
+        if (isLocalId(id)) return
         await resolveStream(id, { quality: getSettings(db()).audioQuality }).catch(() => undefined)
       },
       health: async () => deps.getHealth(),

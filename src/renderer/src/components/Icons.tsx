@@ -221,3 +221,7 @@ export const ChartIcon = make(
     <path d="M16 7h4v4" />
   </>
 )
+
+export const FolderIcon = make(
+  <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+)

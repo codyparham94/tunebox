@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router'
-import { ChartIcon, HomeIcon, LibraryIcon, RadioIcon, SearchIcon, SettingsIcon } from './Icons'
+import { ChartIcon, FolderIcon, HomeIcon, LibraryIcon, RadioIcon, SearchIcon, SettingsIcon } from './Icons'
 
 const LINKS = [
   { to: '/', label: 'Home', icon: HomeIcon, end: true },
   { to: '/search', label: 'Search', icon: SearchIcon },
   { to: '/charts', label: 'Charts', icon: ChartIcon },
   { to: '/radio', label: 'Radio', icon: RadioIcon },
-  { to: '/library', label: 'Library', icon: LibraryIcon }
+  { to: '/library', label: 'Library', icon: LibraryIcon },
+  { to: '/local', label: 'Local files', icon: FolderIcon }
 ]
 
 export function NavRail() {

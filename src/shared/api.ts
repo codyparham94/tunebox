@@ -9,6 +9,8 @@ import type {
   ImportResult,
   LocalPlaylist,
   LocalPlaylistDetail,
+  LocalScanProgress,
+  LocalScanResult,
   NowPlaying,
   OsCommand,
   PlayCount,
@@ -67,6 +69,12 @@ export interface TuneboxApi {
   importer: {
     playlist(url: string): Promise<ImportResult>
   }
+  local: {
+    /** Opens a folder picker; saves and scans the choice. null if cancelled. */
+    chooseFolder(): Promise<LocalScanResult | null>
+    scan(): Promise<LocalScanResult>
+    tracks(): Promise<Track[]>
+  }
   settings: {
     get(): Promise<Settings>
     set(patch: Partial<Settings>): Promise<Settings>
@@ -84,6 +92,7 @@ export interface TuneboxEvents {
   onCommand(cb: (cmd: OsCommand) => void): () => void
   onImportProgress(cb: (p: ImportProgress) => void): () => void
   onHealth(cb: (h: ResolverHealth) => void): () => void
+  onLocalScan(cb: (p: LocalScanProgress) => void): () => void
 }
 
 export type WindowApi = TuneboxApi & TuneboxEvents
@@ -91,7 +100,8 @@ export type WindowApi = TuneboxApi & TuneboxEvents
 export const EVENT = {
   command: 'event:command',
   importProgress: 'event:importProgress',
-  health: 'event:health'
+  health: 'event:health',
+  localScan: 'event:localScan'
 } as const
 
 /** Every invokable method, grouped. The preload builds the bridge from this list. */
@@ -115,9 +125,15 @@ export const API_METHODS = {
   ],
   radio: ['stations', 'create', 'remove', 'next', 'feedback'],
   importer: ['playlist'],
+  local: ['chooseFolder', 'scan', 'tracks'],
   settings: ['get', 'set'],
   system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying']
 } as const satisfies { [G in keyof TuneboxApi]: readonly (keyof TuneboxApi[G])[] }
 
 export const AUDIO_SCHEME = 'tunebox-audio'
-export const audioUrl = (videoId: string): string => `${AUDIO_SCHEME}://track/${videoId}`
+/** Local-file tracks use ids like `local:42`; everything else is a YouTube videoId. */
+export const LOCAL_PREFIX = 'local:'
+export const isLocalId = (id: string): boolean => id.startsWith(LOCAL_PREFIX)
+
+export const audioUrl = (id: string): string =>
+  isLocalId(id) ? `${AUDIO_SCHEME}://local/${id.slice(LOCAL_PREFIX.length)}` : `${AUDIO_SCHEME}://track/${id}`

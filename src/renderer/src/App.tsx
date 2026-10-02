@@ -13,6 +13,7 @@ import { Charts } from './pages/Charts'
 import { Album, Liked, Playlist, RemotePlaylist } from './pages/Collection'
 import { Home } from './pages/Home'
 import { Library } from './pages/Library'
+import { Local } from './pages/Local'
 import { Radio } from './pages/Radio'
 import { Search } from './pages/Search'
 import { Settings } from './pages/Settings'
@@ -59,6 +60,7 @@ function Shell() {
           <Route path="/liked" element={<Liked />} />
           <Route path="/radio" element={<Radio />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/local" element={<Local />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

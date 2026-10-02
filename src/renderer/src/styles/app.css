@@ -1165,3 +1165,24 @@ img {
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
+
+/* Local files */
+.progress {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent-text);
+  transition: width 200ms ease;
+}
+
+.local-artists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-1) var(--space-3);
+}

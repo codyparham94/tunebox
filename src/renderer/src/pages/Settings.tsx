@@ -51,6 +51,38 @@ export function Settings() {
           </fieldset>
         </section>
 
+        <section className="tile" aria-labelledby="lf2-title">
+          <h2 id="lf2-title" className="tile-title">
+            Local files
+          </h2>
+          <p className="tile-sub" style={{ marginBottom: 'var(--space-3)' }}>
+            {s.musicFolder ? (
+              <>
+                Music folder: <span className="mono">{s.musicFolder}</span>
+              </>
+            ) : (
+              'No music folder chosen yet.'
+            )}
+          </p>
+          <button
+            className="btn"
+            onClick={async () => {
+              try {
+                const r = await api.local.chooseFolder()
+                if (r) {
+                  void queryClient.invalidateQueries({ queryKey: keys.settings })
+                  void queryClient.invalidateQueries({ queryKey: ['local'] })
+                  toast.success(`Found ${r.total} songs in ${r.folder}`)
+                }
+              } catch (err) {
+                toast.error(errorMessage(err))
+              }
+            }}
+          >
+            {s.musicFolder ? 'Change folder' : 'Choose folder'}
+          </button>
+        </section>
+
         <section className="tile" aria-labelledby="ap-title">
           <h2 id="ap-title" className="tile-title">
             Appearance &amp; system

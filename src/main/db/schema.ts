@@ -98,5 +98,23 @@ export const MIGRATIONS: string[] = [
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+  `,
+  `
+  -- Files found in the user's music folder. Served by id, never by path from the renderer.
+  CREATE TABLE local_tracks (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    path       TEXT NOT NULL UNIQUE,
+    mtime      INTEGER NOT NULL,
+    size       INTEGER NOT NULL,
+    title      TEXT NOT NULL,
+    artist     TEXT NOT NULL,
+    album      TEXT,
+    track_no   INTEGER,
+    disc_no    INTEGER,
+    year       INTEGER,
+    duration   REAL NOT NULL DEFAULT 0,
+    scanned_at INTEGER NOT NULL
+  );
+  CREATE INDEX idx_local_tracks_order ON local_tracks(artist, album, disc_no, track_no);
   `
 ]

@@ -17,3 +17,6 @@ resources/bin/
 *.sqlite
 *.sqlite-journal
 *.db
+
+# TypeScript build cache
+*.tsbuildinfo

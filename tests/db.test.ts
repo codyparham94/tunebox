@@ -18,6 +18,9 @@ import { getSettings, setSettings } from '../src/main/db/settings'
 import { createStation, deleteStation, getStation, listStations } from '../src/main/db/stations'
 import { getMatch, putMatch, setTrackTags, upsertTrack } from '../src/main/db/tracks'
 import { HALF_LIFE_MS } from '../src/main/radio/affinity'
+import { MIGRATIONS } from '../src/main/db/schema'
+import { clearLocal, listLocal, localIndex, removeLocal, upsertLocal, type LocalTrackInput } from '../src/main/db/localTracks'
+import { audioUrl, isLocalId } from '../src/shared/api'
 
 const t = (id: string, artist = 'Artist', title = `Song ${id}`): Track => ({ id, title, artist, duration: 200 })
 
@@ -31,7 +34,7 @@ beforeEach(() => {
 describe('migrations', () => {
   it('are idempotent', () => {
     migrate(db)
-    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(1)
+    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(MIGRATIONS.length)
   })
 })
 
@@ -129,5 +132,40 @@ describe('stations, settings, match cache', () => {
     putMatch(db, 'c|d', { videoId: 'g0000000001', confidence: 0.8 })
     expect(getMatch(db, 'a|b')).toEqual({ videoId: null, confidence: 0 })
     expect(getMatch(db, 'c|d')?.videoId).toBe('g0000000001')
+  })
+})
+
+describe('local tracks', () => {
+  const file = (path: string, over: Partial<LocalTrackInput> = {}): LocalTrackInput => ({
+    path, mtime: 1, size: 100, title: path, artist: 'Artist', album: 'Album', track_no: null, disc_no: null, year: null, duration: 180.4, ...over
+  })
+
+  it('lists in artist / album / track order with local ids and art urls', () => {
+    upsertLocal(db, [
+      file('C:/m/b2.mp3', { artist: 'Beta', track_no: 2, title: 'Second' }),
+      file('C:/m/b1.mp3', { artist: 'Beta', track_no: 1, title: 'First' }),
+      file('C:/m/a.mp3', { artist: 'alpha', title: 'Alpha song' })
+    ])
+    const list = listLocal(db)
+    expect(list.map((t) => t.title)).toEqual(['Alpha song', 'First', 'Second'])
+    expect(isLocalId(list[0].id)).toBe(true)
+    expect(audioUrl(list[0].id)).toMatch(/^tunebox-audio:\/\/local\/\d+$/)
+    expect(list[0].artUrl).toMatch(/^tunebox-audio:\/\/localart\/\d+$/)
+    expect(list[0].duration).toBe(180)
+  })
+
+  it('updates in place on rescan and removes vanished files', () => {
+    upsertLocal(db, [file('C:/m/x.mp3'), file('C:/m/y.mp3')])
+    const id = localIndex(db).get('C:/m/x.mp3')!.id
+    upsertLocal(db, [file('C:/m/x.mp3', { mtime: 2, title: 'Retagged' })])
+    expect(localIndex(db).get('C:/m/x.mp3')).toMatchObject({ id, mtime: 2 })
+    removeLocal(db, ['C:/m/y.mp3'])
+    expect(listLocal(db).map((t) => t.title)).toEqual(['Retagged'])
+    clearLocal(db)
+    expect(listLocal(db)).toHaveLength(0)
+  })
+
+  it('keeps YouTube ids on the track protocol', () => {
+    expect(audioUrl('dQw4w9WgXcQ')).toBe('tunebox-audio://track/dQw4w9WgXcQ')
   })
 })

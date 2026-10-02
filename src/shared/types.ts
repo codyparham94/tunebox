@@ -132,6 +132,8 @@ export interface Settings {
   closeToTray: boolean
   globalMediaKeys: boolean
   volume: number
+  /** local music folder; empty until the user picks one */
+  musicFolder: string
 }
 
 export interface ResolverHealth {
@@ -177,4 +179,18 @@ export interface ChartArtist {
 export interface PlayCount {
   track: Track
   plays: number
+}
+
+export interface LocalScanResult {
+  folder: string
+  total: number
+  added: number
+  updated: number
+  removed: number
+}
+
+export interface LocalScanProgress {
+  scanned: number
+  total: number
+  done: boolean
 }

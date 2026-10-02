@@ -1,3 +1,4 @@
+import { isLocalId } from '@shared/api'
 import type { LocalPlaylist, StationSeed, Track } from '@shared/types'
 import { player } from '../store/player'
 import { toast } from '../store/toast'
@@ -15,7 +16,7 @@ async function start(seed: StationSeed, first?: Track): Promise<void> {
 }
 
 export async function startTrackRadio(track: Track): Promise<void> {
-  const t = track.id ? track : await api.catalog.match(track).catch(() => null)
+  const t = track.id && !isLocalId(track.id) ? track : await api.catalog.match({ ...track, id: '' }).catch(() => null)
   if (!t) return void toast.error(`Couldn’t find “${track.title}” on YouTube.`)
   const seedTrack = { ...t, artUrl: track.artUrl ?? t.artUrl }
   await start({ type: 'track', ref: t.id, name: `${t.title} Radio`, artUrl: seedTrack.artUrl, track: seedTrack }, seedTrack)

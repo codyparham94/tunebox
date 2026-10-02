@@ -11,6 +11,7 @@ A desktop music player for Windows. Search a big catalog, stream audio from YouT
 ## Features
 
 - **Search & browse:** songs, artists, albums and playlists from YouTube Music; artist pages. Song titles open their album and artist names open the artist page.
+- **Local files:** pick a music folder and play your own MP3, M4A, FLAC, WAV, OGG and Opus files, browsable by song, album or artist, with embedded cover art. Rescans only re-read changed files.
 - **Charts:** Top 40 for any genre, top albums and artists (from Deezer), and your own most-played songs.
 - **Playback:** audio-only streams, seeking, queue with drag-reorder, shuffle and repeat. Shows up in the Windows media flyout and responds to hardware media keys.
 - **Library:** local playlists (create, rename, reorder, delete), liked songs, listening history. Everything is stored in a local SQLite file, with no account and no login.

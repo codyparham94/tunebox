@@ -7,7 +7,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   closeToTray: true,
   globalMediaKeys: false,
-  volume: 0.8
+  volume: 0.8,
+  musicFolder: ''
 }
 
 export function getSettings(db: Db): Settings {
