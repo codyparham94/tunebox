@@ -2,6 +2,10 @@
 
 A desktop music player for Windows. Search a big catalog, stream audio from YouTube, build playlists, and start **radio stations** that keep playing similar songs and learn from your 👍, 👎, skips and full listens.
 
+## Download
+
+**[⬇ Download Tunebox for Windows](https://github.com/codyparham94/tunebox/releases/latest)**: run `Tunebox-Setup-x.y.z.exe`. Step-by-step instructions are in **[INSTALL.md](INSTALL.md)**.
+
 > **Personal use only.** Tunebox extracts audio streams from YouTube, which breaks YouTube’s Terms of Service. It can stop working whenever YouTube changes something (see [When playback breaks](#when-playback-breaks)).
 
 ## Features
@@ -13,9 +17,9 @@ A desktop music player for Windows. Search a big catalog, stream audio from YouT
 - **Import:** paste a public YouTube or YouTube Music playlist URL.
 - **System:** tray menu (play/pause, next, 👍/👎), close to tray, optional global media-key fallback, remembered window position.
 
-## Getting started
+## Development setup
 
-Requirements: Windows 10/11, Node.js 22.12 or newer.
+Just want to use the app? See [INSTALL.md](INSTALL.md). To work on the code you need Windows 10/11 and Node.js 22.12 or newer.
 
 ```bash
 npm install
