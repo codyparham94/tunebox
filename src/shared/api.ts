@@ -1,5 +1,7 @@
 import type {
   ArtistPage,
+  ChartAlbum,
+  ChartArtist,
   Collection,
   Genre,
   HistoryEntry,
@@ -9,6 +11,7 @@ import type {
   LocalPlaylistDetail,
   NowPlaying,
   OsCommand,
+  PlayCount,
   PlayEvent,
   RadioTrack,
   ResolverHealth,
@@ -29,7 +32,12 @@ export interface TuneboxApi {
     match(track: Track): Promise<Track | null>
     /** artist/album ids for a track that lacks them */
     locate(track: Track): Promise<{ artistId?: string; albumId?: string }>
-    charts(genreId?: number): Promise<Track[]>
+    charts(genreId?: number, limit?: number): Promise<Track[]>
+    chartAlbums(genreId?: number): Promise<ChartAlbum[]>
+    chartArtists(genreId?: number): Promise<ChartArtist[]>
+    /** YT Music ids for chart entries (which come from Deezer) */
+    findArtist(name: string): Promise<string | null>
+    findAlbum(title: string, artist: string): Promise<string | null>
     genres(): Promise<Genre[]>
     tags(): Promise<string[]>
   }
@@ -47,6 +55,7 @@ export interface TuneboxApi {
     setLiked(track: Track, liked: boolean): Promise<void>
     recordPlay(event: PlayEvent): Promise<void>
     history(limit?: number): Promise<HistoryEntry[]>
+    topPlayed(days: number, limit: number): Promise<PlayCount[]>
   }
   radio: {
     stations(): Promise<Station[]>
@@ -87,7 +96,7 @@ export const EVENT = {
 
 /** Every invokable method, grouped. The preload builds the bridge from this list. */
 export const API_METHODS = {
-  catalog: ['search', 'artist', 'album', 'remotePlaylist', 'match', 'locate', 'charts', 'genres', 'tags'],
+  catalog: ['search', 'artist', 'album', 'remotePlaylist', 'match', 'locate', 'charts', 'chartAlbums', 'chartArtists', 'findArtist', 'findAlbum', 'genres', 'tags'],
   library: [
     'playlists',
     'playlist',
@@ -101,7 +110,8 @@ export const API_METHODS = {
     'likedIds',
     'setLiked',
     'recordPlay',
-    'history'
+    'history',
+    'topPlayed'
   ],
   radio: ['stations', 'create', 'remove', 'next', 'feedback'],
   importer: ['playlist'],

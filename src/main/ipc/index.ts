@@ -39,7 +39,11 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
       remotePlaylist: (id) => ytm.playlist(id, { max: 300 }),
       match: async (t) => (await resolveMatch(t))?.track ?? null,
       locate: (t) => ytm.locate(t),
-      charts: (genreId) => deezer.chart(genreId ?? 0),
+      charts: (genreId, limit) => deezer.chart(genreId ?? 0, limit ?? 30),
+      chartAlbums: (genreId) => deezer.chartAlbums(genreId ?? 0),
+      chartArtists: (genreId) => deezer.chartArtists(genreId ?? 0),
+      findArtist: async (name) => (await ytm.findArtistId(name)) ?? null,
+      findAlbum: async (title, artist) => (await ytm.findAlbumId(title, artist)) ?? null,
       genres: () => deezer.genres(),
       tags: async () => (lastfm.lastfmAvailable() ? lastfm.topTags(24).catch(() => FALLBACK_TAGS) : FALLBACK_TAGS)
     },
@@ -64,7 +68,8 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         await ensureTags(e.track)
         feedback.recordPlay(db(), e)
       },
-      history: async (limit) => feedback.history(db(), limit)
+      history: async (limit) => feedback.history(db(), limit),
+      topPlayed: async (days, limit) => feedback.topPlayed(db(), days, limit)
     },
     radio: {
       stations: async () => stations.listStations(db()),

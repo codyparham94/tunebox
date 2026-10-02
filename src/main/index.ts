@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BrowserWindow, app, nativeTheme, shell } from 'electron'
 import { EVENT } from '@shared/api'
+import { DARK_THEME_IDS } from '@shared/themes'
 import type { OsCommand, ResolverHealth, Settings } from '@shared/types'
 import icon from '../../resources/icon.png?asset'
 import { db as currentDb, initContext } from './context'
@@ -56,12 +57,10 @@ function onSettingsChanged(s: Settings): void {
   setGlobalMediaKeys(s.globalMediaKeys, send)
 }
 
-const DARK_THEMES = new Set(['dark', 'enterprise', 'dramatic', 'neon', 'matrix'])
-
 /** Paint the window in roughly the theme's surface colour so startup doesn't flash. */
 function startupBackground(): string {
   const theme = getSettings(currentDb()).theme
-  const dark = theme === 'system' ? nativeTheme.shouldUseDarkColors : DARK_THEMES.has(theme)
+  const dark = theme === 'system' ? nativeTheme.shouldUseDarkColors : DARK_THEME_IDS.has(theme)
   return dark ? '#0B0B0F' : '#FFF5E6'
 }
 

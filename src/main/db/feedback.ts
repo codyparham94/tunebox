@@ -1,4 +1,4 @@
-import type { HistoryEntry, PlayEvent, Track } from '@shared/types'
+import type { HistoryEntry, PlayCount, PlayEvent, Track } from '@shared/types'
 import { combineAffinity, decay, playWeight, WEIGHTS } from '../radio/affinity'
 import { artistKey } from '../util/text'
 import { tx, type Db } from './index'
@@ -173,4 +173,16 @@ export function history(db: Db, limit = 30): HistoryEntry[] {
     )
     .all(limit) as unknown as (TrackRow & { played_at: number })[]
   return rows.map((r) => ({ track: rowToTrack(r), playedAt: r.played_at }))
+}
+
+/** Most-played tracks over the last `days` days. */
+export function topPlayed(db: Db, days = 30, limit = 10, now = Date.now()): PlayCount[] {
+  const rows = db
+    .prepare(
+      `SELECT ${TRACK_COLUMNS}, COUNT(*) AS plays, MAX(h.played_at) AS last FROM history h JOIN tracks t ON t.id = h.track_id
+       WHERE h.played_at >= ? AND (h.completed = 1 OR h.listened_ms >= 30000)
+       GROUP BY h.track_id ORDER BY plays DESC, last DESC LIMIT ?`
+    )
+    .all(now - days * 86_400_000, limit) as unknown as (TrackRow & { plays: number })[]
+  return rows.map((r) => ({ track: rowToTrack(r), plays: r.plays }))
 }

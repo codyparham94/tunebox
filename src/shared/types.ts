@@ -162,3 +162,19 @@ export interface NowPlaying {
   playing: boolean
   inStation: boolean
 }
+
+export interface ChartAlbum {
+  title: string
+  artist: string
+  artUrl?: string
+}
+
+export interface ChartArtist {
+  name: string
+  artUrl?: string
+}
+
+export interface PlayCount {
+  track: Track
+  plays: number
+}

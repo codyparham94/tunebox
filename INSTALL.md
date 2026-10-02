@@ -21,9 +21,10 @@ Tunebox opens, and you’ll find it in the Start menu and on your desktop.
 ## 3. First steps
 
 - **Search** (or press <kbd>/</kbd>) to find a song, then click it to play.
-- **Start a station**: use the ⋯ menu on any song and choose **Start radio**, or pick a mood on the Home screen. Use 👍 and 👎 to teach it what you like.
+- **Start a station**: use the ⋯ menu on any song and choose **Start radio**, or open the **Radio** tab and start one from an artist, genre or playlist. Use 👍 and 👎 to teach it what you like.
 - **Import a YouTube playlist**: **Library → Import from YouTube**, then paste a public playlist link.
-- **Change the look**: **Settings → Appearance** has 13 themes.
+- **See what’s popular**: the **Charts** tab has the Top 40 (for any genre), top albums and artists, and your own most-played songs.
+- **Change the look**: **Settings → Appearance** has 26 themes, with a Light/Dark filter.
 
 ### Optional: better radio with a free Last.fm key
 

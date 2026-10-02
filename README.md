@@ -10,11 +10,13 @@ A desktop music player for Windows. Search a big catalog, stream audio from YouT
 
 ## Features
 
-- **Search & browse:** songs, artists, albums and playlists from YouTube Music; artist pages; Deezer top charts; Last.fm moods and genres.
+- **Search & browse:** songs, artists, albums and playlists from YouTube Music; artist pages. Song titles open their album and artist names open the artist page.
+- **Charts:** Top 40 for any genre, top albums and artists (from Deezer), and your own most-played songs.
 - **Playback:** audio-only streams, seeking, queue with drag-reorder, shuffle and repeat. Shows up in the Windows media flyout and responds to hardware media keys.
 - **Library:** local playlists (create, rename, reorder, delete), liked songs, listening history. Everything is stored in a local SQLite file, with no account and no login.
 - **Radio:** seed a station from a song, artist, playlist or genre. Candidates come from Last.fm (similar tracks and artists, tag charts) and YouTube Music’s own radio, and a local scoring model ranks them. 👎 bans the track from that station and pushes the artist out; 👍 pulls in more like it. The player shows why each song was picked.
 - **Import:** paste a public YouTube or YouTube Music playlist URL.
+- **Themes:** 26 light and dark themes adapted from design skills and [awesome-design-md](https://github.com/VoltAgent/awesome-design-md), with a Light/Dark filter.
 - **System:** tray menu (play/pause, next, 👍/👎), close to tray, optional global media-key fallback, remembered window position.
 
 ## Development setup

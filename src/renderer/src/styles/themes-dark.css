@@ -1,0 +1,323 @@
+/*
+ * Additional dark themes. Palettes come from local design skills (cosmic, power,
+ * pacman) and from the awesome-design-md collection (VoltAgent/awesome-design-md).
+ * Same token contract as tokens.css; --on-primary / --on-secondary pass AA.
+ */
+
+/* cosmic skill: deep-space navy with blue/violet neon */
+:root[data-theme='cosmic'] {
+  --primary: #3b82f6;
+  --primary-strong: #2f74ea;
+  --on-primary: #06091a;
+  --secondary: #8b5cf6;
+  --on-secondary: #ffffff;
+  --accent-text: #93c5fd;
+  --surface: #070b1a;
+  --surface-raised: #0f1530;
+  --surface-sunken: #03050d;
+  --text: #e6ecff;
+  --text-muted: #9aa6c8;
+  --border: rgb(147 197 253 / 0.12);
+  --border-strong: rgb(147 197 253 / 0.3);
+  --shadow: 0 0 30px rgb(59 130 246 / 0.12);
+  --shadow-pop: 0 0 40px rgb(139 92 246 / 0.3);
+  --focus: #93c5fd;
+  --overlay: rgb(0 0 0 / 0.6);
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --radius-card: 18px;
+  color-scheme: dark;
+}
+
+/* power skill: monochrome premium black */
+:root[data-theme='power'] {
+  --primary: #fafafa;
+  --primary-strong: #e5e5e5;
+  --on-primary: #000000;
+  --secondary: #262626;
+  --on-secondary: #fafafa;
+  --accent-text: #ffffff;
+  --surface: #000000;
+  --surface-raised: #0e0e0e;
+  --surface-sunken: #000000;
+  --text: #ffffff;
+  --text-muted: #a3a3a3;
+  --border: rgb(255 255 255 / 0.1);
+  --border-strong: rgb(255 255 255 / 0.28);
+  --shadow: none;
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.8);
+  --focus: #ffffff;
+  --overlay: rgb(0 0 0 / 0.7);
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --radius-card: 12px;
+  color-scheme: dark;
+}
+
+/* pacman skill: arcade maze blue, pac-yellow, dashed borders */
+:root[data-theme='arcade'] {
+  --primary: #2a3fe5;
+  --primary-strong: #2234cc;
+  --on-primary: #ffffff;
+  --secondary: #ffe000;
+  --on-secondary: #000000;
+  --accent-text: #ffe000;
+  --surface: #000000;
+  --surface-raised: #0b0b1f;
+  --surface-sunken: #000000;
+  --text: #ffffff;
+  --text-muted: #b0b0d8;
+  --border: #2a3fe5;
+  --border-strong: #4f61ff;
+  --shadow: none;
+  --shadow-pop: 0 0 0 2px #2a3fe5;
+  --focus: #ffe000;
+  --overlay: rgb(0 0 0 / 0.7);
+  --font-sans: 'Space Mono', ui-monospace, monospace;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --radius-card: 0px;
+  --radius-md: 0px;
+  --radius-pill: 0px;
+  color-scheme: dark;
+}
+
+:root[data-theme='arcade'] .tile,
+:root[data-theme='arcade'] .card {
+  border-style: dashed;
+  border-width: 2px;
+}
+
+/* awesome-design-md / spotify: green on near-black */
+:root[data-theme='greenroom'] {
+  --primary: #1ed760;
+  --primary-strong: #1fdf64;
+  --on-primary: #000000;
+  --secondary: #2a2a2a;
+  --on-secondary: #ffffff;
+  --accent-text: #1ed760;
+  --surface: #121212;
+  --surface-raised: #181818;
+  --surface-sunken: #000000;
+  --text: #ffffff;
+  --text-muted: #b3b3b3;
+  --border: rgb(255 255 255 / 0.08);
+  --border-strong: #4d4d4d;
+  --shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 16px 24px rgb(0 0 0 / 0.6);
+  --focus: #1ed760;
+  --overlay: rgb(0 0 0 / 0.6);
+  --radius-card: 8px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / linear: indigo on the deepest black */
+:root[data-theme='indigo'] {
+  --primary: #5e6ad2;
+  --primary-strong: #6b77dc;
+  --on-primary: #ffffff;
+  --secondary: #23252a;
+  --on-secondary: #f7f8f8;
+  --accent-text: #828fff;
+  --surface: #08090a;
+  --surface-raised: #0f1011;
+  --surface-sunken: #010102;
+  --text: #f7f8f8;
+  --text-muted: #8a8f98;
+  --border: #23252a;
+  --border-strong: #34343a;
+  --shadow: none;
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.7);
+  --focus: #828fff;
+  --overlay: rgb(0 0 0 / 0.6);
+  --radius-card: 12px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / raycast: white primary, sky-blue accent */
+:root[data-theme='command'] {
+  --primary: #ffffff;
+  --primary-strong: #e8e8e8;
+  --on-primary: #000000;
+  --secondary: #57c1ff;
+  --on-secondary: #000000;
+  --accent-text: #57c1ff;
+  --surface: #07080a;
+  --surface-raised: #121212;
+  --surface-sunken: #000000;
+  --text: #f4f4f6;
+  --text-muted: #9c9c9d;
+  --border: #242728;
+  --border-strong: #434345;
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-pop: 0 16px 40px rgb(0 0 0 / 0.7);
+  --focus: #57c1ff;
+  --overlay: rgb(0 0 0 / 0.6);
+  --radius-card: 12px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / warp: warm brown terminal */
+:root[data-theme='ember'] {
+  --primary: #f7f5f0;
+  --primary-strong: #e9e5dc;
+  --on-primary: #2b2622;
+  --secondary: #4a4038;
+  --on-secondary: #f7f5f0;
+  --accent-text: #dad2c1;
+  --surface: #2b2622;
+  --surface-raised: #383330;
+  --surface-sunken: #221e1b;
+  --text: #f7f5f0;
+  --text-muted: #aea69c;
+  --border: #3f3a36;
+  --border-strong: #5a534d;
+  --shadow: none;
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.5);
+  --focus: #dad2c1;
+  --overlay: rgb(0 0 0 / 0.55);
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --radius-card: 10px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / supabase: mint on charcoal */
+:root[data-theme='mint'] {
+  --primary: #3ecf8e;
+  --primary-strong: #4ade80;
+  --on-primary: #171717;
+  --secondary: #24b47e;
+  --on-secondary: #0b0b0b;
+  --accent-text: #3ecf8e;
+  --surface: #1c1c1c;
+  --surface-raised: #232323;
+  --surface-sunken: #141414;
+  --text: #ededed;
+  --text-muted: #9a9a9a;
+  --border: #2e2e2e;
+  --border-strong: #454545;
+  --shadow: none;
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.6);
+  --focus: #3ecf8e;
+  --overlay: rgb(0 0 0 / 0.6);
+  --radius-card: 8px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / playstation: console blue + commerce orange */
+:root[data-theme='console'] {
+  --primary: #0070d1;
+  --primary-strong: #0064b7;
+  --on-primary: #ffffff;
+  --secondary: #d53b00;
+  --on-secondary: #ffffff;
+  --accent-text: #53b1ff;
+  --surface: #121314;
+  --surface-raised: #1f2024;
+  --surface-sunken: #000000;
+  --text: #ffffff;
+  --text-muted: #a8a8a8;
+  --border: rgb(255 255 255 / 0.08);
+  --border-strong: rgb(255 255 255 / 0.22);
+  --shadow: 0 5px 9px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 12px 32px rgb(0 0 0 / 0.6);
+  --focus: #53b1ff;
+  --overlay: rgb(0 0 0 / 0.6);
+  --radius-card: 12px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / sentry: deep violet with lime + pink */
+:root[data-theme='nightshade'] {
+  --primary: #c2ef4e;
+  --primary-strong: #b4e43a;
+  --on-primary: #150f23;
+  --secondary: #fa7faa;
+  --on-secondary: #150f23;
+  --accent-text: #c2ef4e;
+  --surface: #1f1633;
+  --surface-raised: #2a2045;
+  --surface-sunken: #150f23;
+  --text: #ffffff;
+  --text-muted: #b8b0cc;
+  --border: #362d59;
+  --border-strong: #4d4280;
+  --shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  --shadow-pop: 0 12px 32px rgb(0 0 0 / 0.5);
+  --focus: #c2ef4e;
+  --overlay: rgb(0 0 0 / 0.55);
+  --radius-card: 12px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / x.ai: stark white on black, sunset accent */
+:root[data-theme='void'] {
+  --primary: #ffffff;
+  --primary-strong: #fafaf7;
+  --on-primary: #0a0a0a;
+  --secondary: #ff7a17;
+  --on-secondary: #0a0a0a;
+  --accent-text: #ffc285;
+  --surface: #0a0a0a;
+  --surface-raised: #191919;
+  --surface-sunken: #000000;
+  --text: #ffffff;
+  --text-muted: #9a9ea4;
+  --border: #212327;
+  --border-strong: #363a3f;
+  --shadow: none;
+  --shadow-pop: 0 12px 40px rgb(0 0 0 / 0.8);
+  --focus: #ffc285;
+  --overlay: rgb(0 0 0 / 0.65);
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --radius-card: 4px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / nvidia: signal green on pure black */
+:root[data-theme='circuit'] {
+  --primary: #76b900;
+  --primary-strong: #84cc00;
+  --on-primary: #000000;
+  --secondary: #0046a4;
+  --on-secondary: #ffffff;
+  --accent-text: #76b900;
+  --surface: #000000;
+  --surface-raised: #1a1a1a;
+  --surface-sunken: #0d0d0d;
+  --text: #ffffff;
+  --text-muted: #a7a7a7;
+  --border: #2a2a2a;
+  --border-strong: #5e5e5e;
+  --shadow: none;
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.8);
+  --focus: #76b900;
+  --overlay: rgb(0 0 0 / 0.65);
+  --radius-card: 2px;
+  --radius-md: 2px;
+  --radius-pill: 2px;
+  color-scheme: dark;
+}
+
+/* awesome-design-md / lamborghini: gold on black, sharp corners */
+:root[data-theme='raging'] {
+  --primary: #ffc000;
+  --primary-strong: #ffcd33;
+  --on-primary: #000000;
+  --secondary: #3a3a3a;
+  --on-secondary: #ffffff;
+  --accent-text: #ffc000;
+  --surface: #000000;
+  --surface-raised: #181818;
+  --surface-sunken: #000000;
+  --text: #ffffff;
+  --text-muted: #a0a0a0;
+  --border: #202020;
+  --border-strong: #4a4a4a;
+  --shadow: none;
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.8);
+  --focus: #ffc000;
+  --overlay: rgb(0 0 0 / 0.65);
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --radius-card: 0px;
+  --radius-md: 0px;
+  --radius-pill: 0px;
+  color-scheme: dark;
+}

@@ -3,11 +3,10 @@ import { Link } from 'react-router'
 import { Art } from '../components/Art'
 import { NextIcon, PauseIcon, PlayIcon, PrevIcon, RadioIcon, ThumbDownIcon, ThumbUpIcon } from '../components/Icons'
 import { Empty, ErrorState, Loading } from '../components/States'
-import { TrackList } from '../components/TrackList'
 import { startArtistRadio } from '../lib/actions'
 import { plural, timeAgo } from '../lib/format'
 import { useTrackNav } from '../lib/nav'
-import { useCharts, useHistory, usePlaylists, useStations } from '../lib/queries'
+import { useHistory, usePlaylists, useStations } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
 
 export function Home() {
@@ -17,7 +16,6 @@ export function Home() {
       <div className="bento">
         <NowPlayingTile />
         <StationsTile />
-        <ChartsTile />
         <QuickRadioTile />
         <RecentTile />
         <PlaylistsTile />
@@ -151,35 +149,6 @@ function StationsTile() {
   )
 }
 
-function ChartsTile() {
-  const charts = useCharts()
-  return (
-    <section className="tile span-1x2" aria-labelledby="ch-title">
-      <div className="section-head">
-        <h2 id="ch-title" className="tile-title" style={{ margin: 0 }}>
-          Top charts
-        </h2>
-        {charts.data && charts.data.length > 0 && (
-          <button className="btn btn-sm" onClick={() => player.playList(charts.data!.slice(0, 30))}>
-            <PlayIcon size={12} /> Play
-          </button>
-        )}
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto" style={{ margin: '0 calc(var(--space-3) * -1)' }}>
-        {charts.isPending ? (
-          <Loading rows={6} />
-        ) : charts.isError ? (
-          <ErrorState error={charts.error} retry={() => void charts.refetch()} />
-        ) : charts.data.length === 0 ? (
-          <Empty>No chart data right now.</Empty>
-        ) : (
-          <TrackList label="Top charts" tracks={charts.data.slice(0, 12)} compact />
-        )}
-      </div>
-    </section>
-  )
-}
-
 function QuickRadioTile() {
   const [artist, setArtist] = useState('')
   return (
@@ -211,7 +180,7 @@ function QuickRadioTile() {
 function RecentTile() {
   const history = useHistory(12)
   return (
-    <section className="tile span-2x1" aria-labelledby="rp-title">
+    <section className="tile span-3x1" aria-labelledby="rp-title">
       <h2 id="rp-title" className="tile-title">
         Recently played
       </h2>
@@ -245,7 +214,7 @@ function RecentTile() {
 function PlaylistsTile() {
   const playlists = usePlaylists()
   return (
-    <section className="tile span-3x1" aria-labelledby="pl-title">
+    <section className="tile span-4x1" aria-labelledby="pl-title">
       <div className="section-head">
         <h2 id="pl-title" className="tile-title" style={{ margin: 0 }}>
           Your playlists

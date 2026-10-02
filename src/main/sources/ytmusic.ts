@@ -254,3 +254,13 @@ export async function locate(t: Pick<Track, 'id' | 'title' | 'artist'>): Promise
   const artistId = hit?.artistId ?? (await findArtistId(primary))
   return { artistId, albumId: hit?.albumId }
 }
+
+/** Best-matching YT Music album for a title + artist (e.g. from a Deezer chart). */
+export async function findAlbumId(title: string, artist: string): Promise<string | undefined> {
+  const yt = await innertube()
+  const res = await yt.music.search(`${artist} ${title}`, { type: 'album' })
+  const albums = compact((res.albums?.contents ?? []).map((i: Node) => toAlbum(i)))
+  const want = normalizeTitle(title)
+  const byArtist = (a: AlbumSummary) => normalizeArtist(a.artist) === normalizeArtist(artist)
+  return (albums.find((a) => normalizeTitle(a.title) === want && byArtist(a)) ?? albums.find(byArtist) ?? albums[0])?.id
+}

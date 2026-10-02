@@ -9,6 +9,7 @@ import { Toasts } from './components/Toasts'
 import { keys, queryClient, useSettings } from './lib/queries'
 import { resolveTheme } from './lib/themes'
 import { Artist } from './pages/Artist'
+import { Charts } from './pages/Charts'
 import { Album, Liked, Playlist, RemotePlaylist } from './pages/Collection'
 import { Home } from './pages/Home'
 import { Library } from './pages/Library'
@@ -50,6 +51,7 @@ function Shell() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/charts" element={<Charts />} />
           <Route path="/artist/:id" element={<Artist />} />
           <Route path="/album/:id" element={<Album />} />
           <Route path="/remote-playlist/:id" element={<RemotePlaylist />} />

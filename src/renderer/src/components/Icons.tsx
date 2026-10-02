@@ -213,3 +213,11 @@ export function Equalizer({ paused }: { paused?: boolean }) {
     </span>
   )
 }
+
+export const ChartIcon = make(
+  <>
+    <path d="M3 3v18h18" />
+    <path d="M7 15l4-4 3 3 6-7" />
+    <path d="M16 7h4v4" />
+  </>
+)

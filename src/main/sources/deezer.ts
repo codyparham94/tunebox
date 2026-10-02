@@ -1,4 +1,4 @@
-import type { Genre, Track } from '@shared/types'
+import type { ChartAlbum, ChartArtist, Genre, Track } from '@shared/types'
 
 const BASE = 'https://api.deezer.com'
 const TTL = 30 * 60 * 1000
@@ -36,4 +36,16 @@ export async function genres(): Promise<Genre[]> {
   return (d?.data ?? [])
     .filter((g: any) => g.id !== 0)
     .map((g: any): Genre => ({ id: g.id, name: g.name, artUrl: g.picture_xl ?? g.picture_big }))
+}
+
+export async function chartAlbums(genreId = 0, limit = 20): Promise<ChartAlbum[]> {
+  const d = await get(`/chart/${genreId}/albums?limit=${limit}`)
+  return (d?.data ?? []).map(
+    (a: any): ChartAlbum => ({ title: a.title, artist: a.artist?.name ?? '', artUrl: a.cover_xl ?? a.cover_big })
+  )
+}
+
+export async function chartArtists(genreId = 0, limit = 20): Promise<ChartArtist[]> {
+  const d = await get(`/chart/${genreId}/artists?limit=${limit}`)
+  return (d?.data ?? []).map((a: any): ChartArtist => ({ name: a.name, artUrl: a.picture_xl ?? a.picture_big }))
 }

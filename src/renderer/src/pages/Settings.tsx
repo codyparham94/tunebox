@@ -55,17 +55,7 @@ export function Settings() {
           <h2 id="ap-title" className="tile-title">
             Appearance &amp; system
           </h2>
-          <fieldset className="border-0 p-0 m-0" style={{ marginBottom: 'var(--space-4)' }}>
-            <legend className="field" style={{ marginBottom: 'var(--space-2)' }}>
-              Theme
-            </legend>
-            <div className="theme-grid">
-              <ThemeOption id="system" name="Match Windows" swatch={['#FAD4C0', '#FFF5E6', '#16120F']} checked={s.theme === 'system'} />
-              {THEMES.map((t) => (
-                <ThemeOption key={t.id} id={t.id} name={t.name} swatch={t.swatch} checked={s.theme === t.id} />
-              ))}
-            </div>
-          </fieldset>
+          <ThemePicker current={s.theme} />
           <Toggle
             label="Keep playing in the tray when the window is closed"
             checked={s.closeToTray}
@@ -112,7 +102,53 @@ export function Settings() {
   )
 }
 
-function ThemeOption({ id, name, swatch, checked }: { id: string; name: string; swatch: [string, string, string]; checked: boolean }) {
+type ThemeFilter = 'all' | 'light' | 'dark'
+
+function ThemePicker({ current }: { current: string }) {
+  const [filter, setFilter] = useState<ThemeFilter>(() => {
+    const t = THEMES.find((x) => x.id === current)
+    return t ? (t.dark ? 'dark' : 'light') : 'all'
+  })
+  const shown = THEMES.filter((t) => filter === 'all' || (filter === 'dark') === t.dark)
+  const count = (f: ThemeFilter) => (f === 'all' ? THEMES.length : THEMES.filter((t) => (f === 'dark') === t.dark).length)
+
+  return (
+    <fieldset className="border-0 p-0 m-0" style={{ marginBottom: 'var(--space-4)' }}>
+      <legend className="field" style={{ marginBottom: 'var(--space-2)' }}>
+        Theme
+      </legend>
+      <div className="tabs" role="group" aria-label="Filter themes">
+        {(['all', 'light', 'dark'] as const).map((f) => (
+          <button key={f} type="button" className="tab" aria-pressed={filter === f} onClick={() => setFilter(f)}>
+            {{ all: 'All', light: 'Light', dark: 'Dark' }[f]} ({count(f)})
+          </button>
+        ))}
+      </div>
+      <div className="theme-grid">
+        {filter === 'all' && (
+          <ThemeOption id="system" name="Match Windows" source="Bento, light or dark" swatch={['#FAD4C0', '#FFF5E6', '#16120F']} checked={current === 'system'} />
+        )}
+        {shown.map((t) => (
+          <ThemeOption key={t.id} id={t.id} name={t.name} source={t.source} swatch={t.swatch} checked={current === t.id} />
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
+function ThemeOption({
+  id,
+  name,
+  source,
+  swatch,
+  checked
+}: {
+  id: string
+  name: string
+  source: string
+  swatch: [string, string, string]
+  checked: boolean
+}) {
   return (
     <label className="theme-option">
       <input type="radio" name="theme" className="sr-only" checked={checked} onChange={() => void save({ theme: id })} />
@@ -121,7 +157,12 @@ function ThemeOption({ id, name, swatch, checked }: { id: string; name: string; 
           <span key={i} style={{ background: c }} />
         ))}
       </span>
-      {name}
+      <span>
+        {name}
+        <span className="field-hint block truncate" style={{ fontWeight: 400 }} title={source}>
+          {source}
+        </span>
+      </span>
     </label>
   )
 }

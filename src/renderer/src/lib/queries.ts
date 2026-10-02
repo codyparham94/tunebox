@@ -34,8 +34,6 @@ export const useArtist = (id: string) => useQuery({ queryKey: ['artist', id], qu
 export const useAlbum = (id: string) => useQuery({ queryKey: ['album', id], queryFn: () => api.catalog.album(id) })
 export const useRemotePlaylist = (id: string) =>
   useQuery({ queryKey: ['remotePlaylist', id], queryFn: () => api.catalog.remotePlaylist(id) })
-export const useCharts = (genreId = 0) =>
-  useQuery({ queryKey: ['charts', genreId], queryFn: () => api.catalog.charts(genreId), staleTime: 30 * 60 * 1000 })
 export const useGenres = () =>
   useQuery({ queryKey: ['genres'], queryFn: () => api.catalog.genres(), staleTime: Infinity })
 export const useTags = () => useQuery({ queryKey: ['tags'], queryFn: () => api.catalog.tags(), staleTime: Infinity })
