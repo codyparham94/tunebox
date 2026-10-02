@@ -45,8 +45,8 @@ async function ensurePool(stationId: number): Promise<StationState> {
   if (unused >= REFRESH_BELOW && Date.now() - s.builtAt < MAX_POOL_AGE) return s
   s.building ??= (async () => {
     try {
-      const { seed } = getStation(db(), stationId)
-      s.pool = await buildPool(seed, stationLikes(db(), stationId))
+      const { seed, station } = getStation(db(), stationId)
+      s.pool = await buildPool(seed, stationLikes(db(), stationId), station.artists)
       s.builtAt = Date.now()
     } finally {
       s.building = undefined
@@ -123,6 +123,15 @@ export async function stationFeedback(stationId: number | null, track: Track, va
   recordFeedback(db(), track, stationId, value)
   // A like widens the pool with tracks similar to it on the next refill.
   if (stationId && value > 0) state(stationId).builtAt = 0
+}
+
+/** The station's mix changed; rebuild its pool on the next request but keep what it already played. */
+export function retuneStation(stationId: number): void {
+  const s = states.get(stationId)
+  if (s) {
+    s.pool = []
+    s.builtAt = 0
+  }
 }
 
 export function forgetStation(stationId: number): void {

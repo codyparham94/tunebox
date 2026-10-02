@@ -116,5 +116,20 @@ export const MIGRATIONS: string[] = [
     scanned_at INTEGER NOT NULL
   );
   CREATE INDEX idx_local_tracks_order ON local_tracks(artist, album, disc_no, track_no);
+  `,
+  `
+  -- What the user searched for, with the top result, so Discover can learn from it.
+  CREATE TABLE searches (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    query          TEXT NOT NULL,
+    top_artist     TEXT,
+    top_track_json TEXT,
+    at             INTEGER NOT NULL
+  );
+  CREATE INDEX idx_searches_at ON searches(at DESC);
+  `,
+  `
+  -- Extra artists the user added to a station to widen it (JSON array of names).
+  ALTER TABLE stations ADD COLUMN artists_json TEXT;
   `
 ]

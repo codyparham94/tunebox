@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { SeedType } from '@shared/types'
+import type { SeedType, Station } from '@shared/types'
 import { Art } from '../components/Art'
-import { Equalizer, PlayIcon, TrashIcon } from '../components/Icons'
+import { Equalizer, PlayIcon, PlusIcon, TrashIcon } from '../components/Icons'
+import { StationArtistsDialog } from '../components/StationArtistsDialog'
 import { Empty, QueryView } from '../components/States'
 import { startArtistRadio, startPlaylistRadio, startTagRadio } from '../lib/actions'
 import { timeAgo } from '../lib/format'
@@ -15,6 +16,8 @@ export function Radio() {
   const stations = useStations()
   const active = usePlayer((s) => s.station?.id)
   const playing = usePlayer((s) => s.playing)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const editing: Station | null = stations.data?.find((s) => s.id === editingId) ?? null
 
   const remove = async (id: number, name: string) => {
     if (!window.confirm(`Delete “${name}” and what it learned?`)) return
@@ -63,6 +66,11 @@ export function Radio() {
                             'New'
                           )}
                         </p>
+                        {st.artists.length > 0 && (
+                          <p className="tile-sub truncate" title={st.artists.join(', ')}>
+                            + {st.artists.join(', ')}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="row mt-auto pt-4">
@@ -73,7 +81,15 @@ export function Radio() {
                       >
                         <PlayIcon size={14} /> {st.id === active ? 'Restart' : 'Play'}
                       </button>
-                      <button className="icon-btn" aria-label={`Delete ${st.name}`} onClick={() => void remove(st.id, st.name)}>
+                      <button
+                        className={`btn${st.id === active ? ' btn-dark' : ''}`}
+                        onClick={() => setEditingId(st.id)}
+                        aria-label={`Add artists to ${st.name}`}
+                        title="Add more artists for a wider mix"
+                      >
+                        <PlusIcon size={14} /> Artists{st.artists.length ? ` (${st.artists.length})` : ''}
+                      </button>
+                      <button className="icon-btn" style={{ marginLeft: 'auto' }} aria-label={`Delete ${st.name}`} onClick={() => void remove(st.id, st.name)}>
                         <TrashIcon size={18} />
                       </button>
                     </div>
@@ -84,6 +100,7 @@ export function Radio() {
           }
         </QueryView>
       </div>
+      <StationArtistsDialog station={editing} onClose={() => setEditingId(null)} />
     </div>
   )
 }

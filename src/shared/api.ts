@@ -3,6 +3,7 @@ import type {
   ChartAlbum,
   ChartArtist,
   Collection,
+  DiscoverFeed,
   Genre,
   HistoryEntry,
   ImportProgress,
@@ -17,12 +18,14 @@ import type {
   PlayEvent,
   RadioTrack,
   ResolverHealth,
+  SearchEntry,
   SearchResults,
   Settings,
   Station,
   StationSeed,
   Track
 } from './types'
+import type { EqState } from './eq'
 
 /** Request/response IPC handlers. The channel name is `<group>:<method>`. */
 export interface TuneboxApi {
@@ -65,15 +68,31 @@ export interface TuneboxApi {
     remove(id: number): Promise<void>
     next(stationId: number, count: number): Promise<RadioTrack[]>
     feedback(stationId: number | null, track: Track, value: 1 | -1): Promise<void>
+    /** Widen a station with another artist's songs and their similar artists. */
+    addArtist(stationId: number, name: string): Promise<Station>
+    removeArtist(stationId: number, name: string): Promise<Station>
   }
   importer: {
     playlist(url: string): Promise<ImportResult>
+  }
+  discover: {
+    /** Recommendations from likes, playlists, searches and plays. Cached; `refresh` rebuilds. */
+    feed(refresh?: boolean): Promise<DiscoverFeed>
+    searches(limit?: number): Promise<SearchEntry[]>
+    clearSearches(): Promise<void>
   }
   local: {
     /** Opens a folder picker; saves and scans the choice. null if cancelled. */
     chooseFolder(): Promise<LocalScanResult | null>
     scan(): Promise<LocalScanResult>
     tracks(): Promise<Track[]>
+  }
+  eq: {
+    get(): Promise<EqState>
+    /** Saves and broadcasts to every window; `clientId` lets the sender ignore its own echo. */
+    set(state: EqState, clientId: string): Promise<void>
+    /** Opens (or focuses) the pop-out equalizer window. */
+    popout(): Promise<void>
   }
   settings: {
     get(): Promise<Settings>
@@ -93,6 +112,7 @@ export interface TuneboxEvents {
   onImportProgress(cb: (p: ImportProgress) => void): () => void
   onHealth(cb: (h: ResolverHealth) => void): () => void
   onLocalScan(cb: (p: LocalScanProgress) => void): () => void
+  onEq(cb: (msg: { state: EqState; clientId: string }) => void): () => void
 }
 
 export type WindowApi = TuneboxApi & TuneboxEvents
@@ -101,7 +121,8 @@ export const EVENT = {
   command: 'event:command',
   importProgress: 'event:importProgress',
   health: 'event:health',
-  localScan: 'event:localScan'
+  localScan: 'event:localScan',
+  eq: 'event:eq'
 } as const
 
 /** Every invokable method, grouped. The preload builds the bridge from this list. */
@@ -123,9 +144,11 @@ export const API_METHODS = {
     'history',
     'topPlayed'
   ],
-  radio: ['stations', 'create', 'remove', 'next', 'feedback'],
+  radio: ['stations', 'create', 'remove', 'next', 'feedback', 'addArtist', 'removeArtist'],
   importer: ['playlist'],
+  discover: ['feed', 'searches', 'clearSearches'],
   local: ['chooseFolder', 'scan', 'tracks'],
+  eq: ['get', 'set', 'popout'],
   settings: ['get', 'set'],
   system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying']
 } as const satisfies { [G in keyof TuneboxApi]: readonly (keyof TuneboxApi[G])[] }

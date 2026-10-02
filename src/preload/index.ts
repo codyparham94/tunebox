@@ -24,5 +24,6 @@ api.onCommand = listen(EVENT.command)
 api.onImportProgress = listen(EVENT.importProgress)
 api.onHealth = listen(EVENT.health)
 api.onLocalScan = listen(EVENT.localScan)
+api.onEq = listen(EVENT.eq)
 
 contextBridge.exposeInMainWorld('api', api as unknown as WindowApi)

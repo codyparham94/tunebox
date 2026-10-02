@@ -1,17 +1,20 @@
-import { BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
+import { BrowserWindow, dialog, ipcMain, webContents, type WebContents } from 'electron'
 import { API_METHODS, EVENT, isLocalId, type TuneboxApi } from '@shared/api'
+import { DEFAULT_EQ, type EqState } from '@shared/eq'
 import type { ResolverHealth, Settings } from '@shared/types'
 import { db } from '../context'
+import { clearSearches, recentSearches, recordSearch } from '../db/discover'
 import * as feedback from '../db/feedback'
 import * as playlists from '../db/playlists'
-import { getSettings, setSettings } from '../db/settings'
+import { getSettings, getState, setSettings, setState } from '../db/settings'
 import * as stations from '../db/stations'
 import { upsertTrack } from '../db/tracks'
 import { clearLocal, listLocal } from '../db/localTracks'
+import { discoverFeed, staleDiscover } from '../discover/feed'
 import { importPlaylist } from '../import/importer'
 import { scanFolder } from '../local/library'
 import { updateTray } from '../os/tray'
-import { ensureTags, forgetStation, nextTracks, stationFeedback } from '../radio/station'
+import { ensureTags, forgetStation, nextTracks, retuneStation, stationFeedback } from '../radio/station'
 import { resolveMatch } from '../sources/catalog'
 import * as deezer from '../sources/deezer'
 import * as lastfm from '../sources/lastfm'
@@ -28,14 +31,26 @@ export interface IpcDeps {
   getHealth(): ResolverHealth | null
   runHealthCheck(): Promise<ResolverHealth>
   onSettingsChanged(s: Settings): void
+  openEqWindow(): void
 }
+
+let eqSaveTimer: NodeJS.Timeout | undefined
 
 type Handlers = { [G in keyof TuneboxApi]: TuneboxApi[G] }
 
 function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handlers {
   return {
     catalog: {
-      search: (q) => ytm.search(q),
+      search: async (q) => {
+        const results = await ytm.search(q)
+        const top = results.songs[0]
+        try {
+          recordSearch(db(), q, { artist: top?.artist ?? results.artists[0]?.name, track: top })
+        } catch (err) {
+          console.warn('[discover] could not record search', (err as Error).message)
+        }
+        return results
+      },
       artist: (id) => ytm.artist(id),
       album: (id) => ytm.album(id),
       remotePlaylist: (id) => ytm.playlist(id, { max: 300 }),
@@ -81,10 +96,28 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         forgetStation(id)
       },
       next: (id, count) => nextTracks(id, count),
-      feedback: (stationId, track, value) => stationFeedback(stationId, track, value)
+      feedback: (stationId, track, value) => stationFeedback(stationId, track, value),
+      addArtist: async (id, name) => {
+        const st = stations.addStationArtist(db(), id, name)
+        retuneStation(id)
+        return st
+      },
+      removeArtist: async (id, name) => {
+        const st = stations.removeStationArtist(db(), id, name)
+        retuneStation(id)
+        return st
+      }
     },
     importer: {
       playlist: (url) => importPlaylist(url, (p) => sender()?.send(EVENT.importProgress, p))
+    },
+    discover: {
+      feed: (refresh) => discoverFeed(refresh),
+      searches: async (limit) => recentSearches(db(), limit),
+      clearSearches: async () => {
+        clearSearches(db())
+        staleDiscover()
+      }
     },
     local: {
       chooseFolder: async () => {
@@ -108,6 +141,18 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         return scanFolder(folder, (p) => sender()?.send(EVENT.localScan, p))
       },
       tracks: async () => listLocal(db())
+    },
+    eq: {
+      get: async () => ({ ...DEFAULT_EQ, ...getState<EqState>(db(), 'eq') }),
+      set: async (state, clientId) => {
+        for (const wc of webContents.getAllWebContents()) {
+          if (!wc.isDestroyed() && wc.getType() === 'window') wc.send(EVENT.eq, { state, clientId })
+        }
+        // Slider drags send many updates; write the last one.
+        clearTimeout(eqSaveTimer)
+        eqSaveTimer = setTimeout(() => setState(db(), 'eq', state), 300)
+      },
+      popout: async () => deps.openEqWindow()
     },
     settings: {
       get: async () => getSettings(db()),

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Settings as SettingsT } from '@shared/types'
+import { Equalizer } from '../components/Equalizer'
 import { Loading } from '../components/States'
 import { timeAgo } from '../lib/format'
 import { THEMES } from '../lib/themes'
@@ -99,6 +100,13 @@ export function Settings() {
             checked={s.globalMediaKeys}
             onChange={(v) => void save({ globalMediaKeys: v })}
           />
+        </section>
+
+        <section className="tile" aria-labelledby="eq-title">
+          <h2 id="eq-title" className="tile-title">
+            Equalizer
+          </h2>
+          <Equalizer />
         </section>
 
         <EngineTile />

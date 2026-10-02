@@ -86,6 +86,42 @@ export interface LocalPlaylistDetail extends LocalPlaylist {
   tracks: Track[]
 }
 
+export interface SearchEntry {
+  query: string
+  /** artist of the top song result */
+  topArtist?: string
+  topTrack?: Track
+  at: number
+}
+
+/** A row of recommendations built around one thing the user liked, searched or saved. */
+export interface DiscoverShelf {
+  id: string
+  title: string
+  subtitle?: string
+  seed?: Track
+  tracks: RadioTrack[]
+}
+
+export interface DiscoverSignals {
+  likes: number
+  playlistTracks: number
+  searches: number
+  plays: number
+}
+
+export interface DiscoverFeed {
+  builtAt: number
+  /** the best picks across every signal, each with a reason */
+  mix: RadioTrack[]
+  shelves: DiscoverShelf[]
+  /** artists the user hasn't played yet; subtitle says why */
+  artists: ArtistSummary[]
+  /** genres/moods the user leans towards (needs Last.fm tags) */
+  tags: string[]
+  signals: DiscoverSignals
+}
+
 export interface HistoryEntry {
   track: Track
   playedAt: number
@@ -111,6 +147,8 @@ export interface Station {
   artUrl?: string
   createdAt: number
   lastPlayedAt?: number
+  /** artists the user added on top of the seed */
+  artists: string[]
 }
 
 export interface PlayEvent {

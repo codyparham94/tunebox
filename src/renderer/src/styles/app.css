@@ -386,6 +386,7 @@ img {
 .chip {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 32px;
   padding: 0 var(--space-3);
   border: 1px solid var(--border-strong);
@@ -778,6 +779,8 @@ img {
 }
 
 .dialog {
+  /* the CSS reset zeroes margins, which pins a modal dialog to the top-left */
+  margin: auto;
   width: min(440px, calc(100vw - 32px));
   padding: var(--space-5);
   border: 1px solid var(--border);
@@ -1011,6 +1014,13 @@ img {
   color: var(--on-secondary);
 }
 
+/* Inverted, so the selected tab reads on every theme (surface colours can match the text). */
+.tile-secondary .tab[aria-selected='true'],
+.tile-secondary .tab[aria-pressed='true'] {
+  background: var(--on-secondary);
+  color: var(--secondary);
+}
+
 .tile-secondary .chip {
   border-color: color-mix(in srgb, var(--on-secondary) 35%, transparent);
   color: var(--on-secondary);
@@ -1185,4 +1195,239 @@ img {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-1) var(--space-3);
+}
+
+/* ---------- equalizer ---------- */
+
+.eq-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.eq-select {
+  width: auto;
+  min-width: 200px;
+}
+
+.eq-save {
+  flex-wrap: nowrap;
+  margin-bottom: var(--space-3);
+}
+
+.eq-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.eq-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.eq-switch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  transition: background 150ms;
+}
+
+.eq-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 150ms, background 150ms;
+}
+
+.eq-switch input:checked + .eq-switch-track {
+  background: var(--primary);
+  border-color: transparent;
+}
+
+.eq-switch input:checked + .eq-switch-track::after {
+  transform: translateX(18px);
+  background: var(--on-primary);
+}
+
+.eq-switch input:focus-visible + .eq-switch-track {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.eq-curve {
+  display: block;
+  width: 100%;
+  height: 120px;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.eq-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.eq-grid-zero {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.eq-line {
+  fill: none;
+  stroke: var(--accent-text);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.eq-fill {
+  fill: color-mix(in srgb, var(--accent-text) 14%, transparent);
+}
+
+.eq-sliders {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.eq-band {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.eq-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 28px;
+  height: 160px;
+  accent-color: var(--accent-text);
+  cursor: pointer;
+}
+
+.eq-value,
+.eq-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.eq-label {
+  color: var(--text);
+}
+
+.eq-divider {
+  width: 1px;
+  margin: 0 var(--space-2);
+  background: var(--border);
+}
+
+.eq-off .eq-curve,
+.eq-off .eq-sliders {
+  opacity: 0.55;
+}
+
+.eq-window {
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--surface);
+}
+
+/* ---------- discover ---------- */
+.collage {
+  display: grid;
+  grid-template-columns: repeat(2, 32px);
+  gap: 2px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex: none;
+}
+
+.collage .art {
+  border-radius: 0;
+}
+
+.discover-card-play {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.discover-card:hover .discover-card-play,
+.discover-card:focus-visible .discover-card-play,
+.discover-card[aria-current] .discover-card-play {
+  opacity: 1;
+  transform: none;
+}
+
+.discover-card[aria-current] {
+  border-color: var(--accent-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-card-play {
+    transition: none;
+  }
+}
+
+/* ---------- station artists ---------- */
+.station-artist,
+.station-artist:hover {
+  padding-right: var(--space-1);
+  background: transparent;
+  color: inherit;
+  border-color: var(--border-strong);
+  cursor: default;
+}
+
+.chip-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.chip-remove:hover,
+.chip-remove:focus-visible {
+  background: var(--surface-sunken);
 }

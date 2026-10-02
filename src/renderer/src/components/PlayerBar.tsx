@@ -1,7 +1,7 @@
 import { setLiked } from '../lib/actions'
 import { formatTime } from '../lib/format'
 import { useTrackNav } from '../lib/nav'
-import { useLikedIds } from '../lib/queries'
+import { api, useLikedIds } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
 import { useUi } from '../store/ui'
 import { Art } from './Art'
@@ -19,6 +19,7 @@ import {
   RadioIcon,
   RepeatIcon,
   RepeatOneIcon,
+  SlidersIcon,
   ShuffleIcon,
   ThumbDownIcon,
   ThumbUpIcon,
@@ -179,6 +180,9 @@ export function PlayerBar() {
           aria-label="Volume"
           aria-valuetext={`${Math.round((s.muted ? 0 : s.volume) * 100)}%`}
         />
+        <button className="icon-btn" aria-label="Equalizer" title="Equalizer" onClick={() => void api.eq.popout()}>
+          <SlidersIcon size={18} />
+        </button>
         <button className="icon-btn" aria-label="Queue" aria-pressed={queueOpen} onClick={toggleQueue}>
           <QueueIcon size={18} />
         </button>

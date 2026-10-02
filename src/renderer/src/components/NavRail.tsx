@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router'
-import { ChartIcon, FolderIcon, HomeIcon, LibraryIcon, RadioIcon, SearchIcon, SettingsIcon } from './Icons'
+import { ChartIcon, CompassIcon, FolderIcon, HomeIcon, LibraryIcon, RadioIcon, SearchIcon, SettingsIcon } from './Icons'
 
 const LINKS = [
   { to: '/', label: 'Home', icon: HomeIcon, end: true },
   { to: '/search', label: 'Search', icon: SearchIcon },
+  { to: '/discover', label: 'Discover', icon: CompassIcon },
   { to: '/charts', label: 'Charts', icon: ChartIcon },
   { to: '/radio', label: 'Radio', icon: RadioIcon },
   { to: '/library', label: 'Library', icon: LibraryIcon },

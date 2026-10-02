@@ -10,7 +10,7 @@ import { mergeCandidates, type Candidate } from './scorer'
 
 type Source = () => Promise<Candidate[]>
 
-const cand = (
+export const cand = (
   t: { title: string; artist: string; id?: string; duration?: number; artUrl?: string; album?: string },
   similarity: number,
   source: string,
@@ -28,7 +28,7 @@ const cand = (
   reason
 })
 
-const first = (artist: string) => artist.split(',')[0].trim()
+export const first = (artist: string) => artist.split(',')[0].trim()
 
 function similarToTrack(t: { title: string; artist: string }, scale: number, limit: number, why: string): Source {
   return async () =>
@@ -37,7 +37,7 @@ function similarToTrack(t: { title: string; artist: string }, scale: number, lim
     )
 }
 
-function similarArtistsTop(artist: string, artists = 6, perArtist = 5): Source {
+export function similarArtistsTop(artist: string, artists = 6, perArtist = 5): Source {
   return async () => {
     const similar = (await lastfm.similarArtists(first(artist), artists * 2)).slice(0, artists)
     const lists = await mapLimit(similar, 3, async (a) =>
@@ -71,6 +71,22 @@ function sourcesForTrack(t: Track, weight: number, label: string): Source[] {
   return out
 }
 
+/** An artist's own top songs, plus songs by similar artists. `scale` shrinks it when it is one of several. */
+function artistSources(artist: string, scale: number, why?: string): Source[] {
+  const out: Source[] = []
+  const n = (x: number) => Math.max(2, Math.round(x * scale))
+  if (lastfm.lastfmAvailable()) {
+    out.push(artistOwnTop(artist, 0.75, n(15)), similarArtistsTop(artist, n(8), 5))
+  }
+  out.push(async () => {
+    const songs = await ytm.searchSongs(artist, n(5))
+    const own = songs.map((s, i) => cand(s, 0.7 - i * 0.02, 'ytm', why ?? `More from ${artist}`))
+    const next = songs[0] ? await ytUpNext(songs[0].id, artist, n(25))() : []
+    return [...own, ...next]
+  })
+  return out
+}
+
 async function seedSources(seed: StationSeed): Promise<Source[]> {
   const hasLastfm = lastfm.lastfmAvailable()
   switch (seed.type) {
@@ -80,19 +96,8 @@ async function seedSources(seed: StationSeed): Promise<Source[]> {
       if (hasLastfm && t.artist) out.push(artistOwnTop(t.artist, 0.55, 8))
       return out
     }
-    case 'artist': {
-      const out: Source[] = []
-      if (hasLastfm) {
-        out.push(artistOwnTop(seed.ref, 0.75, 15), similarArtistsTop(seed.ref, 8, 5))
-      }
-      out.push(async () => {
-        const songs = await ytm.searchSongs(seed.ref, 5)
-        const own = songs.map((s, i) => cand(s, 0.7 - i * 0.02, 'ytm', `More from ${seed.ref}`))
-        const next = songs[0] ? await ytUpNext(songs[0].id, seed.ref)() : []
-        return [...own, ...next]
-      })
-      return out
-    }
+    case 'artist':
+      return artistSources(seed.ref, 1)
     case 'playlist': {
       const pl = getPlaylist(db(), Number(seed.ref))
       const shuffled = [...pl.tracks].sort(() => Math.random() - 0.5)
@@ -123,7 +128,7 @@ async function seedSources(seed: StationSeed): Promise<Source[]> {
 }
 
 /** Fills `tags` from the artist-tag cache, looking up a few unknown artists per refill. */
-async function attachTags(cands: Candidate[], maxLookups = 15): Promise<void> {
+export async function attachTags(cands: Candidate[], maxLookups = 15): Promise<void> {
   const missing = new Set<string>()
   for (const c of cands) {
     const artist = first(c.artist)
@@ -138,8 +143,11 @@ async function attachTags(cands: Candidate[], maxLookups = 15): Promise<void> {
 }
 
 /** Builds the candidate pool (~100 tracks) for a seed plus tracks liked in this station. */
-export async function buildPool(seed: StationSeed, liked: Track[]): Promise<Candidate[]> {
+export async function buildPool(seed: StationSeed, liked: Track[], artists: string[] = []): Promise<Candidate[]> {
   const sources = await seedSources(seed)
+  // Added artists share the pool with the seed, so each gets a smaller slice as the list grows.
+  const scale = artists.length ? Math.max(0.35, 1 / Math.sqrt(artists.length + 1)) : 1
+  for (const a of artists) sources.push(...artistSources(a, scale, `You added ${a} to this station`))
   for (const t of liked.slice(0, 2)) {
     sources.push(...sourcesForTrack(t, 0.6, `"${t.title}", which you liked`))
   }
@@ -153,7 +161,7 @@ export async function buildPool(seed: StationSeed, liked: Track[]): Promise<Cand
     )
   }
   pool.sort((a, b) => b.similarity - a.similarity)
-  const top = pool.slice(0, 120)
+  const top = pool.slice(0, 120 + artists.length * 15)
   await attachTags(top)
   return top
 }

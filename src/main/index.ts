@@ -64,6 +64,13 @@ function startupBackground(): string {
   return dark ? '#0B0B0F' : '#FFF5E6'
 }
 
+const WEB_PREFERENCES = {
+  preload: join(here, '../preload/index.cjs'),
+  sandbox: true,
+  contextIsolation: true,
+  nodeIntegration: false
+}
+
 function createWindow(): BrowserWindow {
   const saved = loadWindowState()
   const w = new BrowserWindow({
@@ -75,12 +82,7 @@ function createWindow(): BrowserWindow {
     icon,
     backgroundColor: startupBackground(),
     autoHideMenuBar: true,
-    webPreferences: {
-      preload: join(here, '../preload/index.cjs'),
-      sandbox: true,
-      contextIsolation: true,
-      nodeIntegration: false
-    }
+    webPreferences: WEB_PREFERENCES
   })
   if (saved.maximized) w.maximize()
   trackWindowState(w)
@@ -92,6 +94,12 @@ function createWindow(): BrowserWindow {
       w.hide()
     }
   })
+  loadRenderer(w)
+  return w
+}
+
+/** Loads the renderer (optionally at a hash route) and locks down navigation. */
+function loadRenderer(w: BrowserWindow, hash = ''): void {
   w.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https:\/\//.test(url)) void shell.openExternal(url)
     return { action: 'deny' }
@@ -99,12 +107,33 @@ function createWindow(): BrowserWindow {
   w.webContents.on('will-navigate', (e, url) => {
     if (!url.startsWith(process.env.ELECTRON_RENDERER_URL ?? 'file://')) e.preventDefault()
   })
-
-  if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) void w.loadURL(process.env.ELECTRON_RENDERER_URL)
-  else void w.loadFile(join(here, '../renderer/index.html'))
-  return w
+  if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) void w.loadURL(`${process.env.ELECTRON_RENDERER_URL}${hash ? `#${hash}` : ''}`)
+  else void w.loadFile(join(here, '../renderer/index.html'), hash ? { hash } : undefined)
 }
 
+let eqWindow: BrowserWindow | null = null
+
+/** The pop-out equalizer. It only edits settings; audio stays in the main window. */
+function openEqWindow(): void {
+  if (eqWindow && !eqWindow.isDestroyed()) return showWindow(eqWindow)
+  eqWindow = new BrowserWindow({
+    width: 620,
+    height: 560,
+    minWidth: 520,
+    minHeight: 460,
+    show: false,
+    title: 'Tunebox Equalizer',
+    icon,
+    backgroundColor: startupBackground(),
+    autoHideMenuBar: true,
+    webPreferences: WEB_PREFERENCES
+  })
+  eqWindow.once('ready-to-show', () => eqWindow?.show())
+  eqWindow.on('closed', () => {
+    eqWindow = null
+  })
+  loadRenderer(eqWindow, '/eq-window')
+}
 
 if (!smoke && !app.requestSingleInstanceLock()) {
   app.quit()
@@ -129,7 +158,7 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     }
 
     handleAudioProtocol()
-    registerIpc({ getHealth: () => health, runHealthCheck, onSettingsChanged }, () => win?.webContents)
+    registerIpc({ getHealth: () => health, runHealthCheck, onSettingsChanged, openEqWindow }, () => win?.webContents)
     win = createWindow()
     createTray(icon, () => win, send)
     onSettingsChanged(getSettings(db))

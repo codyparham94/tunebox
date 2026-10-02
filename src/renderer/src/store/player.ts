@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { audioUrl } from '@shared/api'
 import type { RadioTrack, Station, Track } from '@shared/types'
 import { api, errorMessage, invalidateLikes, keys, queryClient } from '../lib/queries'
+import { connectEq } from '../lib/eqEngine'
 import { toast } from './toast'
 
 export interface QueueItem extends RadioTrack {
@@ -53,6 +54,8 @@ export const currentTrack = (s: PlayerState = get()): QueueItem | undefined => s
 
 const audio = new Audio()
 audio.preload = 'auto'
+// Needed for the equalizer: Web Audio only processes CORS-enabled media.
+audio.crossOrigin = 'anonymous'
 
 type EndKind = 'ended' | 'skip' | 'replace' | 'dislike'
 
@@ -105,6 +108,7 @@ async function startAt(i: number, kind: EndKind = 'replace'): Promise<void> {
 
   session = { qid: track.qid, track, listenedMs: 0, last: 0 }
   audio.src = audioUrl(track.id)
+  connectEq(audio)
   updateMediaSession(track)
   try {
     await audio.play()
@@ -312,6 +316,15 @@ export const player = {
       void refillStation()
     }
     void queryClient.invalidateQueries({ queryKey: keys.stations })
+  },
+
+  /** The playing station's artists changed: swap its queued picks for fresh ones. */
+  retuneStation(stationId: number): void {
+    const s = get()
+    if (s.station?.id !== stationId) return
+    const kept = s.queue.filter((item, i) => i <= s.index || !item.reason)
+    set({ queue: kept })
+    void refillStation()
   },
 
   leaveStation(): void {

@@ -1,16 +1,17 @@
 import { useEffect } from 'react'
 import { HashRouter, Route, Routes, useNavigate } from 'react-router'
-import type { ThemeSetting } from '@shared/types'
 import { AddToPlaylistDialog } from './components/AddToPlaylistDialog'
 import { NavRail } from './components/NavRail'
 import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
 import { Toasts } from './components/Toasts'
 import { keys, queryClient, useSettings } from './lib/queries'
-import { resolveTheme } from './lib/themes'
+import { useTheme } from './lib/themes'
+import { eq } from './store/eq'
 import { Artist } from './pages/Artist'
 import { Charts } from './pages/Charts'
 import { Album, Liked, Playlist, RemotePlaylist } from './pages/Collection'
+import { Discover } from './pages/Discover'
 import { Home } from './pages/Home'
 import { Library } from './pages/Library'
 import { Local } from './pages/Local'
@@ -37,6 +38,10 @@ function Shell() {
   useOsEvents()
 
   useEffect(() => {
+    void eq.load()
+  }, [])
+
+  useEffect(() => {
     if (settings) initPlayer(settings.volume)
     // only the first load sets volume; later changes come from the player itself
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,6 +57,7 @@ function Shell() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/discover" element={<Discover />} />
           <Route path="/charts" element={<Charts />} />
           <Route path="/artist/:id" element={<Artist />} />
           <Route path="/album/:id" element={<Album />} />
@@ -70,18 +76,6 @@ function Shell() {
       <Toasts />
     </div>
   )
-}
-
-function useTheme(setting: ThemeSetting) {
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const apply = () => {
-      document.documentElement.dataset.theme = resolveTheme(setting, media.matches)
-    }
-    apply()
-    media.addEventListener('change', apply)
-    return () => media.removeEventListener('change', apply)
-  }, [setting])
 }
 
 function useKeyboard() {
