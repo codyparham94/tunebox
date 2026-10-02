@@ -1,0 +1,77 @@
+/*
+ * Bento design tokens (.agents/skills/bento). Components use only these variables.
+ * --primary is a FILL colour: always put --on-primary text on it, never use it as text.
+ */
+:root {
+  --primary: #fad4c0;
+  --primary-strong: #f5b99a;
+  --on-primary: #111827;
+  --secondary: #80a1c1;
+  --on-secondary: #111827;
+  /* secondary darkened to pass AA as text on --surface */
+  --accent-text: #35577a;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --danger-text: #b91c1c;
+
+  --surface: #fff5e6;
+  --surface-raised: #fffbf5;
+  --surface-sunken: #f7e9d6;
+  --text: #111827;
+  --text-muted: #4b5563;
+  --border: rgb(17 24 39 / 0.1);
+  --border-strong: rgb(17 24 39 / 0.22);
+  --shadow: 0 1px 2px rgb(17 24 39 / 0.05), 0 4px 16px rgb(17 24 39 / 0.05);
+  --shadow-pop: 0 8px 32px rgb(17 24 39 / 0.16);
+  --focus: #35577a;
+  --overlay: rgb(17 24 39 / 0.45);
+
+  --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  --nav-width: 88px;
+  --player-height: 88px;
+  --queue-width: 360px;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --primary: #fad4c0;
+  --primary-strong: #f7c3a7;
+  --on-primary: #111827;
+  --secondary: #80a1c1;
+  --accent-text: #a9c3dc;
+  --danger-text: #f87171;
+
+  --surface: #16120f;
+  --surface-raised: #221d19;
+  --surface-sunken: #0f0c0a;
+  --text: #fff5e6;
+  --text-muted: #c9bfb2;
+  --border: rgb(255 245 230 / 0.1);
+  --border-strong: rgb(255 245 230 / 0.24);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.5);
+  --focus: #a9c3dc;
+  --overlay: rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}

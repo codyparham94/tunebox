@@ -1,0 +1,19 @@
+node_modules/
+out/
+dist/
+release/
+*.log
+.DS_Store
+
+# Secrets: never commit API keys
+.env
+.env.*
+!.env.example
+
+# Downloaded at build time (npm run fetch:ytdlp)
+resources/bin/
+
+# Local data
+*.sqlite
+*.sqlite-journal
+*.db
