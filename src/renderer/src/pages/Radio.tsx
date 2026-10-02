@@ -95,13 +95,13 @@ function CreateStation() {
   const playlists = usePlaylists()
 
   return (
-    <section className="tile span-2x2" aria-labelledby="create-title" style={{ background: 'var(--secondary)', color: 'var(--on-secondary)' }}>
+    <section className="tile tile-secondary span-2x2" aria-labelledby="create-title">
       <h2 id="create-title" className="tile-title">
         Create a station
       </h2>
-      <div className="tabs" role="tablist" aria-label="Station seed" style={{ background: 'rgb(255 255 255 / 0.35)' }}>
+      <div className="tabs" role="tablist" aria-label="Station seed">
         {(['artist', 'tag', 'playlist'] as const).map((m) => (
-          <button key={m} role="tab" className="tab" aria-selected={mode === m} onClick={() => setMode(m)} style={{ color: 'var(--on-secondary)' }}>
+          <button key={m} role="tab" className="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
             {{ artist: 'From an artist', tag: 'From a genre', playlist: 'From a playlist' }[m]}
           </button>
         ))}
@@ -131,7 +131,7 @@ function CreateStation() {
             {(list) => (
               <div className="chips">
                 {list.map((t) => (
-                  <button key={t} className="chip" style={{ borderColor: 'rgb(17 24 39 / 0.3)' }} onClick={() => void startTagRadio(t)}>
+                  <button key={t} className="chip" onClick={() => void startTagRadio(t)}>
                     {t}
                   </button>
                 ))}
@@ -144,7 +144,7 @@ function CreateStation() {
             {(list) => (
               <div className="grid gap-1">
                 {list.map((pl) => (
-                  <button key={pl.id} className="menu-item" style={{ minHeight: 44, color: 'inherit' }} onClick={() => void startPlaylistRadio(pl)}>
+                  <button key={pl.id} className="menu-item" style={{ minHeight: 44 }} onClick={() => void startPlaylistRadio(pl)}>
                     <Art src={pl.artUrl} size={32} />
                     {pl.name}
                   </button>

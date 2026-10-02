@@ -29,6 +29,7 @@
 
   --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: var(--font-sans);
   --text-xs: 12px;
   --text-sm: 14px;
   --text-md: 16px;

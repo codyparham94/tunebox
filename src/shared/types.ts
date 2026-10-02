@@ -122,7 +122,8 @@ export interface PlayEvent {
 }
 
 export type AudioQuality = 'high' | 'low'
-export type ThemeSetting = 'system' | 'light' | 'dark'
+/** 'system', or a theme id from renderer/src/lib/themes.ts */
+export type ThemeSetting = string
 
 export interface Settings {
   lastfmApiKey: string

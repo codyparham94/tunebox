@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { Art } from '../components/Art'
-import { PauseIcon, PlayIcon, RadioIcon } from '../components/Icons'
+import { NextIcon, PauseIcon, PlayIcon, PrevIcon, RadioIcon, ThumbDownIcon, ThumbUpIcon } from '../components/Icons'
 import { Empty, ErrorState, Loading } from '../components/States'
 import { TrackList } from '../components/TrackList'
 import { startArtistRadio, startTagRadio } from '../lib/actions'
@@ -38,26 +38,49 @@ function NowPlayingTile() {
   const history = useHistory(1)
   const resume = !t ? history.data?.[0] : undefined
   const shown = t ?? resume?.track
+  const thumb = t?.id ? s.thumbs[t.id] : undefined
 
   return (
-    <section className="tile tile-primary span-2x2" aria-labelledby="np-title">
-      <div className="flex h-full gap-5" style={{ alignItems: 'flex-end' }}>
-        <Art src={shown?.artUrl} size="min(260px, 40%)" className="shadow-lg" />
-        <div className="min-w-0 flex-1 grid grid-cols-1 gap-2">
-          <span className="eyebrow">{t ? (s.station ? s.station.name : 'Now playing') : resume ? 'Pick up where you left off' : 'Welcome'}</span>
-          <h2 id="np-title" className="m-0 text-2xl font-extrabold leading-tight" style={{ letterSpacing: '-0.02em' }}>
+    <section className="tile tile-primary span-2x1" aria-labelledby="np-title" style={{ padding: 'var(--space-4)' }}>
+      <div className="flex h-full items-center gap-5">
+        <Art src={shown?.artUrl} size={180} className="shadow-lg" />
+        <div className="min-w-0 flex-1 grid grid-cols-1 gap-1">
+          <span className="eyebrow truncate">
+            {t ? (s.station ? s.station.name : 'Now playing') : resume ? 'Pick up where you left off' : 'Welcome'}
+          </span>
+          <h2 id="np-title" className="now-title" title={shown?.title}>
             {shown?.title ?? 'Your music, your radio'}
           </h2>
           <p className={`tile-sub${shown ? ' truncate' : ''}`}>
             {shown ? shown.artist : 'Search for a song, or start a station and let Tunebox learn what you like.'}
             {resume && ` · ${timeAgo(resume.playedAt)}`}
           </p>
-          {t?.reason && s.station && <p className="tile-sub">Why this song? {t.reason}</p>}
-          <div className="row mt-2">
+          {t?.reason && s.station && <p className="tile-sub truncate">Why this song? {t.reason}</p>}
+          <div className="row mt-2" style={{ gap: 'var(--space-1)' }}>
             {t ? (
-              <button className="icon-btn play-btn" aria-label={s.playing ? 'Pause' : 'Play'} onClick={player.toggle}>
-                {s.playing ? <PauseIcon /> : <PlayIcon />}
-              </button>
+              <>
+                <button className="icon-btn on-primary" aria-label="Previous" onClick={player.prev}>
+                  <PrevIcon />
+                </button>
+                <button className="icon-btn play-btn" aria-label={s.playing ? 'Pause' : 'Play'} onClick={player.toggle}>
+                  {s.playing ? <PauseIcon /> : <PlayIcon />}
+                </button>
+                <button className="icon-btn on-primary" aria-label="Next" onClick={player.next}>
+                  <NextIcon />
+                </button>
+                <button
+                  className="icon-btn on-primary"
+                  aria-label="Thumbs down (skips)"
+                  aria-pressed={thumb === -1}
+                  onClick={() => player.thumb(-1)}
+                  style={{ marginLeft: 'var(--space-2)' }}
+                >
+                  <ThumbDownIcon size={18} />
+                </button>
+                <button className="icon-btn on-primary" aria-label="Thumbs up" aria-pressed={thumb === 1} onClick={() => player.thumb(1)}>
+                  <ThumbUpIcon size={18} />
+                </button>
+              </>
             ) : resume ? (
               <button className="btn btn-dark" onClick={() => player.playList([resume.track])}>
                 <PlayIcon size={16} /> Resume
@@ -148,7 +171,7 @@ function ChartsTile() {
 function QuickRadioTile() {
   const [artist, setArtist] = useState('')
   return (
-    <section className="tile" aria-labelledby="qr-title" style={{ background: 'var(--secondary)', color: 'var(--on-secondary)', borderColor: 'transparent' }}>
+    <section className="tile tile-secondary" aria-labelledby="qr-title">
       <RadioIcon size={28} />
       <h2 id="qr-title" className="tile-title" style={{ marginTop: 'var(--space-3)' }}>
         Start radio from…

@@ -1,0 +1,267 @@
+/*
+ * Extra themes, each adapted from a design skill in .agents/skills/<name>.
+ * Every theme sets the full token contract from tokens.css. --primary is always a
+ * fill; --on-primary is the text colour that passes WCAG AA on it.
+ */
+
+/* cafe: warm espresso browns, Poppins */
+:root[data-theme='cafe'] {
+  --primary: #5d4432;
+  --primary-strong: #4a3627;
+  --on-primary: #ffffff;
+  --secondary: #e9e3dd;
+  --on-secondary: #3e2b1e;
+  --accent-text: #5d4432;
+  --surface: #f9f7f5;
+  --surface-raised: #ffffff;
+  --surface-sunken: #efe9e3;
+  --text: #3e2b1e;
+  --text-muted: #6b5646;
+  --border: rgb(62 43 30 / 0.12);
+  --border-strong: rgb(62 43 30 / 0.25);
+  --focus: #5d4432;
+  --font-sans: 'Poppins', system-ui, sans-serif;
+  --radius-card: 20px;
+  color-scheme: light;
+}
+
+/* terracotta: sun-baked clay on cream, DM Serif Display headings */
+:root[data-theme='terracotta'] {
+  --primary: #c56a3c;
+  --primary-strong: #b25b2f;
+  --on-primary: #1f140e;
+  --secondary: #f3e9d8;
+  --on-secondary: #2b1d14;
+  --accent-text: #9a4a22;
+  --surface: #fbf6ee;
+  --surface-raised: #fffdf9;
+  --surface-sunken: #f3e9d8;
+  --text: #2b1d14;
+  --text-muted: #6e5546;
+  --border: rgb(43 29 20 / 0.12);
+  --border-strong: rgb(43 29 20 / 0.25);
+  --focus: #9a4a22;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --radius-card: 12px;
+  color-scheme: light;
+}
+
+/* claude: research journal on warm parchment, near-black ink */
+:root[data-theme='claude'] {
+  --primary: #141413;
+  --primary-strong: #2b2b28;
+  --on-primary: #faf9f6;
+  --secondary: #e8e6dc;
+  --on-secondary: #141413;
+  --accent-text: #9c4a2f;
+  --surface: #f0eee6;
+  --surface-raised: #faf9f6;
+  --surface-sunken: #e8e6dc;
+  --text: #141413;
+  --text-muted: #5e5d59;
+  --border: rgb(20 20 19 / 0.1);
+  --border-strong: rgb(20 20 19 / 0.22);
+  --shadow: none;
+  --focus: #9c4a2f;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --radius-card: 10px;
+  color-scheme: light;
+}
+
+/* riso: two-colour risograph, pink + blue on off-white paper */
+:root[data-theme='riso'] {
+  --primary: #f237a1;
+  --primary-strong: #e0208e;
+  --on-primary: #111111;
+  --secondary: #2c40a7;
+  --on-secondary: #ffffff;
+  --accent-text: #2c40a7;
+  --surface: #f7f1e6;
+  --surface-raised: #fffbf3;
+  --surface-sunken: #ede4d3;
+  --text: #1b1f3b;
+  --text-muted: #4a4f72;
+  --border: rgb(44 64 167 / 0.18);
+  --border-strong: rgb(44 64 167 / 0.4);
+  --shadow: none;
+  --focus: #2c40a7;
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --radius-card: 6px;
+  color-scheme: light;
+}
+
+/* neobrutalism: thick ink borders, hard offset shadows, yellow + violet */
+:root[data-theme='neobrutalism'] {
+  --primary: #fdc800;
+  --primary-strong: #f0bd00;
+  --on-primary: #1c293c;
+  --secondary: #432dd7;
+  --on-secondary: #ffffff;
+  --accent-text: #432dd7;
+  --surface: #fbfbf9;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f0efea;
+  --text: #1c293c;
+  --text-muted: #4b5563;
+  --border: #1c293c;
+  --border-strong: #1c293c;
+  --shadow: 4px 4px 0 #1c293c;
+  --shadow-pop: 6px 6px 0 #1c293c;
+  --focus: #432dd7;
+  --radius-card: 8px;
+  --radius-md: 6px;
+  color-scheme: light;
+}
+
+:root[data-theme='neobrutalism'] .tile,
+:root[data-theme='neobrutalism'] .card {
+  border-width: 2px;
+}
+
+/* lingo: bright, rounded, friendly */
+:root[data-theme='lingo'] {
+  --primary: #58cc02;
+  --primary-strong: #4cb000;
+  --on-primary: #0f2a00;
+  --secondary: #ce82ff;
+  --on-secondary: #1a0a2b;
+  --accent-text: #2f7d00;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f2f4f5;
+  --text: #3c3c3c;
+  --text-muted: #6b6b6b;
+  --border: #e5e5e5;
+  --border-strong: #cfcfcf;
+  --shadow: 0 4px 0 #e5e5e5;
+  --focus: #1cb0f6;
+  --font-sans: 'Nunito', system-ui, sans-serif;
+  --radius-card: 20px;
+  --radius-md: 12px;
+  color-scheme: light;
+}
+
+/* vintage: 90s desktop OS, grey bevels and teal */
+:root[data-theme='vintage'] {
+  --primary: #008080;
+  --primary-strong: #006a6a;
+  --on-primary: #ffffff;
+  --secondary: #000080;
+  --on-secondary: #ffffff;
+  --accent-text: #000080;
+  --surface: #c0c0c0;
+  --surface-raised: #d4d0c8;
+  --surface-sunken: #a8a8a8;
+  --text: #000000;
+  --text-muted: #303030;
+  --border: #808080;
+  --border-strong: #404040;
+  --shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #ffffff;
+  --shadow-pop: 2px 2px 0 #000000;
+  --focus: #000080;
+  --font-sans: Tahoma, 'MS Sans Serif', 'Segoe UI', sans-serif;
+  --radius-card: 0px;
+  --radius-md: 0px;
+  --radius-sm: 0px;
+  --radius-pill: 0px;
+  color-scheme: light;
+}
+
+/* enterprise: dark cloud console, IBM Plex */
+:root[data-theme='enterprise'] {
+  --primary: #0c5cab;
+  --primary-strong: #0a4f94;
+  --on-primary: #ffffff;
+  --secondary: #0a4a8a;
+  --on-secondary: #ffffff;
+  --accent-text: #60a5fa;
+  --surface: #09090b;
+  --surface-raised: #18181b;
+  --surface-sunken: #000000;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --border: rgb(250 250 250 / 0.08);
+  --border-strong: rgb(250 250 250 / 0.2);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.6);
+  --focus: #60a5fa;
+  --overlay: rgb(0 0 0 / 0.6);
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --radius-card: 8px;
+  color-scheme: dark;
+}
+
+/* dramatic: theatrical violet + rose on black, Outfit */
+:root[data-theme='dramatic'] {
+  --primary: #8b5cf6;
+  --primary-strong: #7c4ef0;
+  --on-primary: #ffffff;
+  --secondary: #f43f5e;
+  --on-secondary: #09090b;
+  --accent-text: #c4b5fd;
+  --surface: #09090b;
+  --surface-raised: #17171c;
+  --surface-sunken: #000000;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --border: rgb(250 250 250 / 0.08);
+  --border-strong: rgb(250 250 250 / 0.22);
+  --shadow: 0 8px 30px rgb(139 92 246 / 0.12);
+  --shadow-pop: 0 8px 32px rgb(0 0 0 / 0.6);
+  --focus: #c4b5fd;
+  --overlay: rgb(0 0 0 / 0.6);
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --radius-card: 24px;
+  color-scheme: dark;
+}
+
+/* neon: electric lime + cyan glow */
+:root[data-theme='neon'] {
+  --primary: #bbf351;
+  --primary-strong: #a8e43a;
+  --on-primary: #0a0a0a;
+  --secondary: #00bcff;
+  --on-secondary: #0a0a0a;
+  --accent-text: #bbf351;
+  --surface: #0a0a0f;
+  --surface-raised: #15151d;
+  --surface-sunken: #050507;
+  --text: #f5f5f5;
+  --text-muted: #a3a3b2;
+  --border: rgb(187 243 81 / 0.14);
+  --border-strong: rgb(187 243 81 / 0.35);
+  --shadow: 0 0 24px rgb(187 243 81 / 0.08);
+  --shadow-pop: 0 0 32px rgb(0 188 255 / 0.25);
+  --focus: #00bcff;
+  --overlay: rgb(0 0 0 / 0.6);
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --radius-card: 14px;
+  color-scheme: dark;
+}
+
+/* matrix: terminal green on deep navy-black, Space Mono */
+:root[data-theme='matrix'] {
+  --primary: #2db58a;
+  --primary-strong: #26a07a;
+  --on-primary: #0b0c14;
+  --secondary: #1e3a32;
+  --on-secondary: #cffbea;
+  --accent-text: #4fd8a8;
+  --surface: #0b0c14;
+  --surface-raised: #121521;
+  --surface-sunken: #06070c;
+  --text: #d7fbea;
+  --text-muted: #7fb8a2;
+  --border: rgb(45 181 138 / 0.16);
+  --border-strong: rgb(45 181 138 / 0.4);
+  --shadow: none;
+  --shadow-pop: 0 0 24px rgb(45 181 138 / 0.2);
+  --focus: #4fd8a8;
+  --overlay: rgb(0 0 0 / 0.6);
+  --font-sans: 'Space Mono', ui-monospace, monospace;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --radius-card: 4px;
+  --radius-md: 4px;
+  --radius-pill: 4px;
+  color-scheme: dark;
+}

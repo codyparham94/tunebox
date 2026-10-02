@@ -204,22 +204,6 @@ export const DownloadIcon = make(
   </>
 )
 
-export function Logo({ size = 40 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 256 256" aria-hidden="true">
-      <rect width="256" height="256" rx="56" fill="var(--primary)" />
-      {[
-        [64, 112, 160],
-        [104, 72, 184],
-        [144, 96, 176],
-        [184, 128, 152]
-      ].map(([x, t, b]) => (
-        <line key={x} x1={x} x2={x} y1={t + 11} y2={b - 11} stroke="var(--on-primary)" strokeWidth="22" strokeLinecap="round" />
-      ))}
-    </svg>
-  )
-}
-
 export function Equalizer({ paused }: { paused?: boolean }) {
   return (
     <span className={`eq${paused ? ' paused' : ''}`} aria-hidden="true">

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router'
-import { HomeIcon, LibraryIcon, Logo, RadioIcon, SearchIcon, SettingsIcon } from './Icons'
+import { HomeIcon, LibraryIcon, RadioIcon, SearchIcon, SettingsIcon } from './Icons'
 
 const LINKS = [
   { to: '/', label: 'Home', icon: HomeIcon, end: true },
@@ -12,9 +12,6 @@ export function NavRail() {
   const cls = ({ isActive }: { isActive: boolean }) => `nav-link${isActive ? ' active' : ''}`
   return (
     <nav className="nav" aria-label="Main">
-      <div className="nav-logo" title="Tunebox">
-        <Logo />
-      </div>
       {LINKS.map(({ to, label, icon: Icon, end }) => (
         <NavLink key={to} to={to} end={end} className={cls}>
           <Icon size={22} />

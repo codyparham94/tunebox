@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './tokens.css';
+@import './themes.css';
 
 /* Tailwind utilities mapped onto the Bento tokens. */
 @theme inline {
@@ -96,15 +97,10 @@ img {
   flex-direction: column;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-4) 0;
+  padding: var(--space-5) 0 var(--space-4);
   border-right: 1px solid var(--border);
 }
 
-.nav-logo {
-  width: 40px;
-  height: 40px;
-  margin-bottom: var(--space-4);
-}
 
 .nav-link {
   display: flex;
@@ -147,6 +143,7 @@ img {
 }
 
 .page-title {
+  font-family: var(--font-display);
   margin: 0 0 var(--space-5);
   font-size: var(--text-2xl);
   font-weight: 700;
@@ -166,6 +163,7 @@ img {
 }
 
 .section-title {
+  font-family: var(--font-display);
   margin: 0;
   font-size: var(--text-lg);
   font-weight: 650;
@@ -177,6 +175,7 @@ img {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-rows: 212px;
+  grid-auto-flow: dense;
   gap: var(--space-4);
 }
 
@@ -232,7 +231,7 @@ img {
 
 .tile-primary .tile-sub,
 .tile-primary .muted {
-  color: rgb(17 24 39 / 0.72);
+  color: color-mix(in srgb, var(--on-primary) 78%, transparent);
 }
 
 /* ---------- buttons & inputs ---------- */
@@ -330,7 +329,7 @@ img {
 }
 
 .icon-btn.on-primary:hover {
-  background: rgb(17 24 39 / 0.08);
+  background: color-mix(in srgb, var(--on-primary) 10%, transparent);
   color: var(--on-primary);
 }
 
@@ -539,7 +538,7 @@ img {
 .track.current .muted,
 .track.current .link-btn,
 .track.current .icon-btn {
-  color: rgb(17 24 39 / 0.75);
+  color: color-mix(in srgb, var(--on-primary) 78%, transparent);
 }
 
 .track.dragging {
@@ -884,6 +883,7 @@ img {
 }
 
 .hero-title {
+  font-family: var(--font-display);
   margin: var(--space-1) 0 var(--space-2);
   font-size: 40px;
   line-height: 1.1;
@@ -968,13 +968,13 @@ img {
 
 /* Controls placed on a peach (--primary) tile keep AA contrast in both themes. */
 .tile-primary .btn:not(.btn-primary) {
-  background: rgb(255 255 255 / 0.55);
+  background: color-mix(in srgb, var(--on-primary) 10%, transparent);
   color: var(--on-primary);
-  border-color: rgb(17 24 39 / 0.2);
+  border-color: color-mix(in srgb, var(--on-primary) 35%, transparent);
 }
 
 .tile-primary .btn:not(.btn-primary):hover:not(:disabled) {
-  background: rgb(255 255 255 / 0.8);
+  background: color-mix(in srgb, var(--on-primary) 18%, transparent);
 }
 
 .tile-primary .btn-dark,
@@ -992,4 +992,87 @@ img {
 
 .tile > svg {
   flex: none;
+}
+
+/* Controls placed on a --secondary tile. */
+.tile-secondary {
+  background: var(--secondary);
+  color: var(--on-secondary);
+  border-color: transparent;
+}
+
+.tile-secondary .tabs {
+  background: color-mix(in srgb, var(--on-secondary) 12%, transparent);
+}
+
+.tile-secondary .tab {
+  color: var(--on-secondary);
+}
+
+.tile-secondary .chip {
+  border-color: color-mix(in srgb, var(--on-secondary) 35%, transparent);
+  color: var(--on-secondary);
+}
+
+.tile-secondary .menu-item {
+  color: var(--on-secondary);
+}
+
+.tile-secondary .menu-item:hover {
+  background: color-mix(in srgb, var(--on-secondary) 12%, transparent);
+}
+
+/* Now playing tile */
+.now-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Theme picker */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.theme-option {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-option:has(input:checked) {
+  border-color: var(--accent-text);
+  box-shadow: 0 0 0 2px var(--accent-text);
+}
+
+.theme-option:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.theme-swatch {
+  display: flex;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.theme-swatch span {
+  flex: 1;
 }

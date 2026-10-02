@@ -7,6 +7,7 @@ import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
 import { Toasts } from './components/Toasts'
 import { keys, queryClient, useSettings } from './lib/queries'
+import { resolveTheme } from './lib/themes'
 import { Artist } from './pages/Artist'
 import { Album, Liked, Playlist, RemotePlaylist } from './pages/Collection'
 import { Home } from './pages/Home'
@@ -71,8 +72,7 @@ function useTheme(setting: ThemeSetting) {
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const apply = () => {
-      const dark = setting === 'dark' || (setting === 'system' && media.matches)
-      document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      document.documentElement.dataset.theme = resolveTheme(setting, media.matches)
     }
     apply()
     media.addEventListener('change', apply)

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Settings as SettingsT } from '@shared/types'
 import { Loading } from '../components/States'
 import { timeAgo } from '../lib/format'
+import { THEMES } from '../lib/themes'
 import { api, errorMessage, keys, queryClient, useHealth, useSettings } from '../lib/queries'
 import { toast } from '../store/toast'
 
@@ -54,16 +55,16 @@ export function Settings() {
           <h2 id="ap-title" className="tile-title">
             Appearance &amp; system
           </h2>
-          <fieldset className="row border-0 p-0 m-0" style={{ marginBottom: 'var(--space-4)' }}>
+          <fieldset className="border-0 p-0 m-0" style={{ marginBottom: 'var(--space-4)' }}>
             <legend className="field" style={{ marginBottom: 'var(--space-2)' }}>
               Theme
             </legend>
-            {(['system', 'light', 'dark'] as const).map((t) => (
-              <label key={t} className="chip" style={s.theme === t ? { background: 'var(--primary)', color: 'var(--on-primary)', borderColor: 'transparent' } : undefined}>
-                <input type="radio" name="theme" className="sr-only" checked={s.theme === t} onChange={() => void save({ theme: t })} />
-                {t}
-              </label>
-            ))}
+            <div className="theme-grid">
+              <ThemeOption id="system" name="Match Windows" swatch={['#FAD4C0', '#FFF5E6', '#16120F']} checked={s.theme === 'system'} />
+              {THEMES.map((t) => (
+                <ThemeOption key={t.id} id={t.id} name={t.name} swatch={t.swatch} checked={s.theme === t.id} />
+              ))}
+            </div>
           </fieldset>
           <Toggle
             label="Keep playing in the tray when the window is closed"
@@ -108,6 +109,20 @@ export function Settings() {
         </section>
       </div>
     </div>
+  )
+}
+
+function ThemeOption({ id, name, swatch, checked }: { id: string; name: string; swatch: [string, string, string]; checked: boolean }) {
+  return (
+    <label className="theme-option">
+      <input type="radio" name="theme" className="sr-only" checked={checked} onChange={() => void save({ theme: id })} />
+      <span className="theme-swatch" aria-hidden="true">
+        {swatch.map((c, i) => (
+          <span key={i} style={{ background: c }} />
+        ))}
+      </span>
+      {name}
+    </label>
   )
 }
 
