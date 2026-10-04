@@ -4,6 +4,8 @@ import tray16 from '../../../resources/tray-16.png?asset'
 import tray20 from '../../../resources/tray-20.png?asset'
 import tray24 from '../../../resources/tray-24.png?asset'
 import tray32 from '../../../resources/tray-32.png?asset'
+import trayMac from '../../../resources/trayTemplate.png?asset'
+import trayMac2x from '../../../resources/trayTemplate@2x.png?asset'
 
 let tray: Tray | null = null
 let state: NowPlaying = { playing: false, inStation: false }
@@ -16,12 +18,16 @@ let send: (cmd: OsCommand) => void = () => {}
  */
 function trayImage(): Electron.NativeImage {
   const img = nativeImage.createEmpty()
-  for (const [scaleFactor, file] of [[1, tray16], [1.25, tray20], [1.5, tray24], [2, tray32]] as const) {
+  const mac = process.platform === 'darwin'
+  // macOS menu bar: monochrome template, recoloured by the system for light/dark menu bars.
+  const reps = mac ? ([[1, trayMac], [2, trayMac2x]] as const) : ([[1, tray16], [1.25, tray20], [1.5, tray24], [2, tray32]] as const)
+  for (const [scaleFactor, file] of reps) {
     const rep = nativeImage.createFromPath(file)
     // A missing file would leave a blank slot in the tray, so skip it and say so.
     if (rep.isEmpty()) console.warn(`[tray] missing icon ${file}`)
     else img.addRepresentation({ scaleFactor, buffer: rep.toPNG() })
   }
+  if (mac) img.setTemplateImage(true)
   return img
 }
 
@@ -29,7 +35,8 @@ export function createTray(win: () => BrowserWindow | null, sendCommand: (cmd: O
   getWindow = win
   send = sendCommand
   tray = new Tray(trayImage())
-  tray.on('click', () => showWindow(getWindow()))
+  // On macOS a click opens the menu (the menu-bar convention); on Windows it shows the window.
+  if (process.platform !== 'darwin') tray.on('click', () => showWindow(getWindow()))
   render()
 }
 

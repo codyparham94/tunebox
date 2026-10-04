@@ -1,6 +1,8 @@
 # Installing Tunebox
 
-Tunebox runs on **Windows 10 and Windows 11** (64-bit). You don’t need to install anything else first.
+Tunebox runs on **Windows 10 and 11** (64-bit) and on **macOS 12 Monterey or newer** (Apple Silicon and Intel Macs). You don’t need to install anything else first.
+
+**On a Mac?** Skip to [Installing on a Mac](#installing-on-a-mac).
 
 ## 1. Download
 
@@ -17,6 +19,21 @@ On that page, under **Assets**, click **`Tunebox-Setup-x.y.z.exe`** (about 140 M
 4. Click **Install**, then **Finish**.
 
 Tunebox opens, and you’ll find it in the Start menu and on your desktop.
+
+## Installing on a Mac
+
+1. Open the [latest release](https://github.com/codyparham94/tunebox/releases/latest) and, under **Assets**, download **`Tunebox-x.y.z-mac.dmg`**. It works on both Apple Silicon and Intel Macs.
+2. Open the `.dmg` and drag **Tunebox** into **Applications**.
+3. Open Tunebox from Applications. The first time, macOS says it **can’t verify the app** (Tunebox isn’t signed with a paid Apple developer certificate). Click **Done**, then:
+   - open **System Settings → Privacy & Security**, scroll down to the message about Tunebox, and click **Open Anyway**;
+   - confirm with your password or Touch ID, then click **Open**.
+
+   You only do this once. If macOS instead says the app **“is damaged”**, run this in Terminal and open it again:
+   ```bash
+   xattr -cr /Applications/Tunebox.app
+   ```
+
+Closing the window keeps the music playing; Tunebox stays in the Dock and the menu bar (the bars icon). Press <kbd>⌘</kbd><kbd>Q</kbd> to quit.
 
 ## 3. First steps
 
@@ -44,11 +61,15 @@ The key stays on your computer.
 
 From version 0.5.0 on, Tunebox tells you when a new version is out and installs it for you if you click **Update and restart** (or use **Settings → Updates → Check for updates**). On older versions, download the newest installer from the [releases page](https://github.com/codyparham94/tunebox/releases/latest) and run it. It installs over the old version, and your playlists, likes and stations are kept.
 
+**On a Mac**, Tunebox tells you when a new version is out, but macOS doesn’t let unsigned apps update themselves: click **Open download page**, download the new `.dmg`, and drag Tunebox into Applications again (choose **Replace**). Your library is kept.
+
 ## Uninstalling
 
 **Windows Settings → Apps → Installed apps → Tunebox → Uninstall.**
 
 Your library is stored separately in `%APPDATA%\tunebox`. Delete that folder too if you want to remove all your data.
+
+**Mac:** quit Tunebox and drag it from Applications to the Trash. Your library is in `~/Library/Application Support/tunebox`; delete that folder too to remove all your data.
 
 ## Troubleshooting
 
@@ -58,7 +79,8 @@ Your library is stored separately in `%APPDATA%\tunebox`. Delete that folder too
 | “Windows protected your PC” | Click **More info → Run anyway** (see step 2 above). |
 | Antivirus blocks the installer | Some antivirus tools flag unsigned apps. Allow it, or build from source (below). |
 | Closing the window doesn’t quit | That’s on purpose: music keeps playing from the tray icon near the clock. Right-click it and choose **Quit**, or turn this off in **Settings**. |
-| Media keys don’t work | Turn on **Settings → Global media keys**. |
+| Media keys don’t work | Turn on **Settings → Global media keys**. On a Mac, also allow Tunebox in **System Settings → Privacy & Security → Accessibility**. |
+| Mac: “can’t verify” or “damaged” | See [Installing on a Mac](#installing-on-a-mac), step 3. |
 
 Still stuck? [Open an issue](https://github.com/codyparham94/tunebox/issues) and describe what happened.
 
@@ -70,9 +92,9 @@ Requires [Node.js](https://nodejs.org) 22.12 or newer and Git.
 git clone https://github.com/codyparham94/tunebox.git
 cd tunebox
 npm install
-npm run fetch:ytdlp   # downloads yt-dlp.exe
+npm run fetch:ytdlp   # downloads yt-dlp for your platform
 npm run dev           # run it
-npm run build:win     # or build your own installer into release/
+npm run build:win     # Windows installer into release/  (on a Mac: npm run build:mac)
 ```
 
 ---

@@ -36,6 +36,7 @@ export function UpdatePrompt() {
       </h2>
       <p className="tile-sub" style={{ marginBottom: 'var(--space-4)' }}>
         You have {current.data ?? 'an older version'}. Updating keeps your library, playlists and settings.
+        {status.manual && ' Download the new .dmg and drag Tunebox into Applications to replace this one.'}
       </p>
 
       {status.notes && !busy && (
@@ -68,7 +69,8 @@ export function UpdatePrompt() {
           </button>
         )}
         <button className="btn btn-primary" disabled={busy} onClick={() => void updates.install()} autoFocus>
-          <DownloadIcon size={16} /> {status.state === 'error' ? 'Try again' : busy ? 'Updating…' : 'Update and restart'}
+          <DownloadIcon size={16} />{' '}
+          {status.state === 'error' ? 'Try again' : busy ? 'Updating…' : status.manual ? 'Open download page' : 'Update and restart'}
         </button>
       </div>
     </dialog>

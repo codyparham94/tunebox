@@ -18,6 +18,7 @@ import { startUpdater } from './os/updater'
 import { loadWindowState, trackWindowState } from './os/windowState'
 import { configureYouTube } from './sources/ytmusic'
 import { handleAudioProtocol, registerAudioScheme } from './stream/protocol'
+import { YTDLP_BIN } from './stream/ytdlp'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const smoke = process.argv.includes('--smoke')
@@ -91,7 +92,8 @@ function createWindow(): BrowserWindow {
 
   w.once('ready-to-show', () => w.show())
   w.on('close', (e) => {
-    if (!quitting && getSettings(currentDb()).closeToTray) {
+    // macOS convention: closing the window keeps the app (and the music) running; ⌘Q quits.
+    if (!quitting && (process.platform === 'darwin' || getSettings(currentDb()).closeToTray)) {
       e.preventDefault()
       w.hide()
     }
@@ -141,6 +143,8 @@ if (!smoke && !app.requestSingleInstanceLock()) {
   app.quit()
 } else {
   app.on('second-instance', () => showWindow(win))
+  // macOS: clicking the Dock icon brings back a closed (hidden) window.
+  app.on('activate', () => showWindow(win))
 
   void app.whenReady().then(async () => {
     const userData = app.getPath('userData')
@@ -148,8 +152,8 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     initContext(db, {
       userData,
       ytdlpBundled: app.isPackaged
-        ? join(process.resourcesPath, 'bin', 'yt-dlp.exe')
-        : join(app.getAppPath(), 'resources', 'bin', 'yt-dlp.exe')
+        ? join(process.resourcesPath, 'bin', YTDLP_BIN)
+        : join(app.getAppPath(), 'resources', 'bin', YTDLP_BIN)
     })
     configureYouTube({ cacheDir: join(userData, 'yt-cache') })
 

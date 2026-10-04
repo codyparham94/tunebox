@@ -247,4 +247,6 @@ export interface UpdateStatus {
   notes?: string
   percent?: number
   error?: string
+  /** unsigned macOS builds can't install themselves: "install" opens the download page instead */
+  manual?: boolean
 }

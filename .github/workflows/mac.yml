@@ -1,0 +1,54 @@
+# Builds the macOS .dmg on GitHub's Mac runners (it can't be built on Windows).
+# - When a release is published: attaches Tunebox-<version>-mac.dmg to that release.
+# - Pushes to the `mac` branch (and manual runs): uploads the .dmg as a workflow artifact to try out.
+name: macOS build
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [mac]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dmg:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:mac
+
+      - name: Smoke test the packaged app
+        # Resolves a few known videos through the bundled yt-dlp. YouTube sometimes blocks CI
+        # machines, so a failure here is reported but doesn't stop the build.
+        continue-on-error: true
+        run: |
+          app=$(ls -d release/*/mac-universal/Tunebox.app)
+          "$app/Contents/MacOS/Tunebox" --smoke
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" release/*/Tunebox-*-mac.dmg --clobber
+
+      - name: Upload for testing
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tunebox-mac-dmg
+          path: release/*/Tunebox-*-mac.dmg
+          retention-days: 14

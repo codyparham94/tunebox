@@ -1,6 +1,7 @@
 import { setLiked } from '../lib/actions'
 import { formatTime } from '../lib/format'
 import { useSwapIn } from '../lib/motion'
+import { modKey } from '../lib/platform'
 import { useTrackNav } from '../lib/nav'
 import { api, useLikedIds } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
@@ -105,7 +106,7 @@ export function PlayerBar() {
           >
             <ShuffleIcon size={18} />
           </button>
-          <button className="icon-btn" aria-label="Previous" title="Previous (Ctrl+←)" onClick={player.prev} disabled={!t}>
+          <button className="icon-btn" aria-label="Previous" title={`Previous (${modKey}+←)`} onClick={player.prev} disabled={!t}>
             <PrevIcon />
           </button>
           <button
@@ -119,7 +120,7 @@ export function PlayerBar() {
               {playState === 'loading' ? <span className="spinner" style={{ borderTopColor: 'var(--surface)' }} /> : playState === 'pause' ? <PauseIcon /> : <PlayIcon />}
             </span>
           </button>
-          <button className="icon-btn" aria-label="Next" title="Next (Ctrl+→)" onClick={player.next} disabled={!t}>
+          <button className="icon-btn" aria-label="Next" title={`Next (${modKey}+→)`} onClick={player.next} disabled={!t}>
             <NextIcon />
           </button>
           <button

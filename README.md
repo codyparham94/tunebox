@@ -1,10 +1,10 @@
 # Tunebox
 
-A desktop music player for Windows. Search a big catalog, stream audio from YouTube, build playlists, and start **radio stations** that keep playing similar songs and learn from your 👍, 👎, skips and full listens.
+A desktop music player for Windows and macOS. Search a big catalog, stream audio from YouTube, build playlists, and start **radio stations** that keep playing similar songs and learn from your 👍, 👎, skips and full listens.
 
 ## Download
 
-**[⬇ Download Tunebox for Windows](https://github.com/codyparham94/tunebox/releases/latest)**: run `Tunebox-Setup-x.y.z.exe`. Step-by-step instructions are in **[INSTALL.md](INSTALL.md)**.
+**[⬇ Download Tunebox](https://github.com/codyparham94/tunebox/releases/latest)**: on Windows run `Tunebox-Setup-x.y.z.exe`; on a Mac open `Tunebox-x.y.z-mac.dmg` (Apple Silicon and Intel). Step-by-step instructions, including the one-time macOS approval, are in **[INSTALL.md](INSTALL.md)**.
 
 > **Personal use only.** Tunebox extracts audio streams from YouTube, which breaks YouTube’s Terms of Service. It can stop working whenever YouTube changes something (see [When playback breaks](#when-playback-breaks)).
 
@@ -14,19 +14,19 @@ A desktop music player for Windows. Search a big catalog, stream audio from YouT
 - **Local files:** pick a music folder and play your own MP3, M4A, FLAC, WAV, OGG and Opus files, browsable by song, album or artist, with embedded cover art. Rescans only re-read changed files.
 - **Discover:** a page of songs and artists you haven’t played yet, built from your likes, playlists, searches and listening. A 25-song mix (each with the reason it was picked), shelves like “Because you searched…”, related artists to try, and your top genres. Search history stays local and can be cleared.
 - **Charts:** Top 40 for any genre, top albums and artists (from Deezer), and your own most-played songs.
-- **Playback:** audio-only streams, seeking, queue with drag-reorder, shuffle and repeat. Autoplay keeps going with Discover picks when the queue runs out (Settings → Playback). Shows up in the Windows media flyout and responds to hardware media keys.
+- **Playback:** audio-only streams, seeking, queue with drag-reorder, shuffle and repeat. Autoplay keeps going with Discover picks when the queue runs out (Settings → Playback). Shows up in the Windows media flyout and macOS Now Playing, and responds to hardware media keys.
 - **Library:** local playlists (create, rename, reorder, delete), liked songs, listening history. Everything is stored in a local SQLite file, with no account and no login.
 - **Radio:** seed a station from a song, artist, playlist or genre. Candidates come from Last.fm (similar tracks and artists, tag charts) and YouTube Music’s own radio, and a local scoring model ranks them. 👎 bans the track from that station and pushes the artist out; 👍 pulls in more like it. The player shows why each song was picked. Add up to 10 more artists to any station to widen its mix.
 - **Import:** paste a public YouTube or YouTube Music playlist URL.
 - **Updates:** checks GitHub Releases on startup and every few hours. When a new version is out it asks first, then downloads, installs and restarts. **Settings → Updates** checks by hand.
 - **Equalizer:** 10-band EQ with preamp and a live response curve, 26 presets, saved custom presets. Lives in Settings and pops out into its own window (also from the sliders button in the player).
 - **Themes:** 26 light and dark themes adapted from design skills and [awesome-design-md](https://github.com/VoltAgent/awesome-design-md), with a Light/Dark filter.
-- **Motion:** springy, interruptible transitions throughout. **Settings → Motion** follows Windows’ animation setting, or forces full or reduced motion. Deleting a station or playlist is hold-to-confirm.
+- **Motion:** springy, interruptible transitions throughout. **Settings → Motion** follows the system’s animation setting, or forces full or reduced motion. Deleting a station or playlist is hold-to-confirm.
 - **System:** tray menu (play/pause, next, 👍/👎), previous/play/next buttons on the taskbar thumbnail, close to tray, optional global media-key fallback, remembered window position.
 
 ## Development setup
 
-Just want to use the app? See [INSTALL.md](INSTALL.md). To work on the code you need Windows 10/11 and Node.js 22.12 or newer.
+Just want to use the app? See [INSTALL.md](INSTALL.md). To work on the code you need Windows 10/11 or macOS, and Node.js 22.12 or newer.
 
 ```bash
 npm install
@@ -52,8 +52,9 @@ For development you can instead copy `.env.example` to `.env` and set `LASTFM_AP
 | `npm run smoke` | Resolves 5 known videos with youtubei.js **and** yt-dlp and reports which works. Run it when playback breaks. |
 | `npm run typecheck` | Type-check main and renderer |
 | `npm run build:win` | Download yt-dlp, build, and package an NSIS installer into `release/` |
+| `npm run build:mac` | Same for macOS: a universal `.dmg` (must run on a Mac; CI does this) |
 
-**Releasing:** bump `version` in `package.json`, run `npm run build:win`, and attach **all three** files from `release/<version>/` to the GitHub release: `Tunebox-Setup-<version>.exe`, its `.blockmap`, and `latest.yml`. Installed copies read `latest.yml` to find updates, so a release without it won't be offered.
+**Releasing:** bump `version` in `package.json`, run `npm run build:win`, and attach **all three** files from `release/<version>/` to the GitHub release: `Tunebox-Setup-<version>.exe`, its `.blockmap`, and `latest.yml`. Installed copies read `latest.yml` to find updates, so a release without it won't be offered. Publishing the release triggers the **macOS build** workflow, which attaches `Tunebox-<version>-mac.dmg` about 10 minutes later. Macs are only offered an update once that `.dmg` is attached.
 | `npm run icon` | Regenerate `resources/icon.png` |
 
 Set `TUNEBOX_USER_DATA=<folder>` to run against a throwaway profile.

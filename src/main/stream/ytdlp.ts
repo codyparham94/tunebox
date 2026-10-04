@@ -1,19 +1,27 @@
 import { execFile } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
+import { chmodSync, copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { appPaths } from '../context'
 
+/** yt-dlp.exe on Windows; the universal yt-dlp_macos build, saved as plain `yt-dlp`, on macOS. */
+export const YTDLP_BIN = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp'
+
 /**
- * The installer ships yt-dlp.exe read-only under resources/bin. We copy it into
+ * The installer ships yt-dlp read-only under resources/bin. We copy it into
  * userData on first use so `yt-dlp -U` can update it in place.
  */
 export function ytdlpPath(): string | null {
   const { userData, ytdlpBundled } = appPaths()
-  const local = join(userData, 'bin', 'yt-dlp.exe')
+  const local = join(userData, 'bin', YTDLP_BIN)
   if (existsSync(local)) return local
   if (ytdlpBundled && existsSync(ytdlpBundled)) {
     mkdirSync(join(userData, 'bin'), { recursive: true })
     copyFileSync(ytdlpBundled, local)
+    if (process.platform !== 'win32') {
+      chmodSync(local, 0o755)
+      // A copy out of a downloaded (quarantined) app is quarantined too, and macOS refuses to run it.
+      if (process.platform === 'darwin') execFile('xattr', ['-d', 'com.apple.quarantine', local], () => undefined)
+    }
     return local
   }
   return null

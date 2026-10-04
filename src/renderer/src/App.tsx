@@ -8,6 +8,7 @@ import { Toasts } from './components/Toasts'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { keys, queryClient, useSettings } from './lib/queries'
 import { useMotion } from './lib/motion'
+import { hasMod } from './lib/platform'
 import { useTheme } from './lib/themes'
 import { eq } from './store/eq'
 import { Artist } from './pages/Artist'
@@ -130,13 +131,13 @@ function useKeyboard() {
       } else if (e.key === ' ' && !el.closest('button, a, [role="menuitem"], [role="tab"]')) {
         e.preventDefault()
         player.toggle()
-      } else if (e.ctrlKey && e.key === 'ArrowRight') {
+      } else if (hasMod(e) && e.key === 'ArrowRight') {
         e.preventDefault()
         player.next()
-      } else if (e.ctrlKey && e.key === 'ArrowLeft') {
+      } else if (hasMod(e) && e.key === 'ArrowLeft') {
         e.preventDefault()
         player.prev()
-      } else if (!isRange && !e.altKey && !e.ctrlKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+      } else if (!isRange && !e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
         e.preventDefault()
         player.seekBy(e.key === 'ArrowRight' ? 5 : -5)
       }

@@ -31,6 +31,8 @@ export const updates = {
   install: async (): Promise<void> => {
     try {
       await api.system.installUpdate()
+      // macOS: the download page is open in the browser; nothing else happens in here
+      if (get().status.manual) set({ open: false })
     } catch (err) {
       set({ status: { ...get().status, state: 'error', error: errorMessage(err) } })
     }

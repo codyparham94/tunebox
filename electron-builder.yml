@@ -9,19 +9,39 @@ files:
   # Window and tray icons, loaded at runtime from ../../resources relative to out/main.
   - resources/*.png
   - '!**/*.map'
-extraResources:
-  - from: resources/bin
-    to: bin
-    filter: ['yt-dlp.exe']
 win:
   target: nsis
   icon: resources/icon.png
+  extraResources:
+    - from: resources/bin
+      to: bin
+      filter: ['yt-dlp.exe']
 nsis:
   artifactName: Tunebox-Setup-${version}.${ext}
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   shortcutName: Tunebox
+# macOS: one universal .dmg (Apple Silicon + Intel), built on GitHub's Mac runners
+# (.github/workflows/mac.yml). Unsigned: ad-hoc signed so Apple Silicon will run it at all;
+# users approve it once in Privacy & Security. Unsigned apps can't self-update on macOS, so the
+# app checks GitHub itself and opens the download page.
+mac:
+  target:
+    - target: dmg
+      arch: universal
+  icon: resources/icon-mac.png
+  category: public.app-category.music
+  identity: '-'
+  hardenedRuntime: false
+  # yt-dlp_macos is already universal: copy it as-is instead of merging x64 and arm64 copies.
+  x64ArchFiles: 'Contents/Resources/bin/yt-dlp'
+  extraResources:
+    - from: resources/bin
+      to: bin
+      filter: ['yt-dlp']
+dmg:
+  artifactName: Tunebox-${version}-mac.dmg
 # Writes latest.yml next to the installer; upload both (and the .blockmap) to the GitHub release
 # so installed copies can find and download updates.
 publish:

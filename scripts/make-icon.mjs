@@ -1,14 +1,21 @@
 // Renders the app icon (resources/icon.png, 256×256): a peach rounded tile with dark equalizer bars.
 // Also renders the tray icon at each size Windows uses (100%–200% scaling). At 16 px the app icon's thin
 // bars blur into the tile, so the tray version has three bolder bars on the same tile.
+// macOS: icon-mac.png (1024×1024, tile inset on Apple's icon grid) and a monochrome menu-bar
+// "template" icon (trayTemplate.png + @2x) that macOS recolours for light and dark menu bars.
 import { writeFileSync } from 'node:fs'
 import { deflateSync } from 'node:zlib'
 
 const SS = 4 // supersampling
 const peach = [0xfa, 0xd4, 0xc0], ink = [0x11, 0x18, 0x27]
 
-/** Bars are [x, top, bottom]; every measurement is a fraction of the icon size. */
-function render(S, { radius, barWidth, bars }) {
+/**
+ * Bars are [x, top, bottom]; every measurement is a fraction of the tile size.
+ * `margin` insets the tile inside the canvas (a fraction of S); `template` draws only the bars, in black.
+ */
+function render(S, { radius, barWidth, bars, margin = 0, template = false }) {
+  const o = margin * S, T = S - 2 * o
+  const toTile = (p) => ((p - o) * S) / T
   const r = radius * S
   const inRounded = (x, y) => {
     const cx = Math.min(Math.max(x, r), S - r), cy = Math.min(Math.max(y, r), S - r)
@@ -28,9 +35,11 @@ function render(S, { radius, barWidth, bars }) {
     for (let x = 0; x < S; x++) {
       let a = 0, rr = 0, gg = 0, bb = 0
       for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
-        const px = x + (sx + 0.5) / SS, py = y + (sy + 0.5) / SS
+        const px = toTile(x + (sx + 0.5) / SS), py = toTile(y + (sy + 0.5) / SS)
         if (!inRounded(px, py)) continue
-        const c = inBar(px, py) ? ink : peach
+        const bar = inBar(px, py)
+        if (template && !bar) continue
+        const c = template ? [0, 0, 0] : bar ? ink : peach
         a++; rr += c[0]; gg += c[1]; bb += c[2]
       }
       const o = y * (S * 4 + 1) + 1 + x * 4
@@ -68,3 +77,16 @@ out('icon.png', render(256, {
 
 const TRAY = { radius: 0.22, barWidth: 0.17, bars: [[0.28, 0.36, 0.68], [0.5, 0.22, 0.78], [0.72, 0.42, 0.62]] }
 for (const size of [16, 20, 24, 32]) out(`tray-${size}.png`, render(size, TRAY))
+
+// macOS app icon: Apple's grid puts an 824 px tile in a 1024 px canvas.
+const APP = {
+  radius: 56 / 256,
+  barWidth: 22 / 256,
+  bars: [[64, 112, 160], [104, 72, 184], [144, 96, 176], [184, 128, 152]].map((b) => b.map((v) => v / 256))
+}
+out('icon-mac.png', render(1024, { ...APP, radius: 0.225, margin: 100 / 1024 }))
+
+// macOS menu bar: bars only, black on transparent; Electron marks it as a template image.
+const MENUBAR = { ...TRAY, barWidth: 0.2, bars: [[0.22, 0.3, 0.74], [0.5, 0.14, 0.88], [0.78, 0.38, 0.64]], template: true }
+out('trayTemplate.png', render(16, MENUBAR))
+out('trayTemplate@2x.png', render(32, MENUBAR))

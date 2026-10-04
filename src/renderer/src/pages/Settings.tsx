@@ -5,6 +5,7 @@ import { Equalizer } from '../components/Equalizer'
 import { DownloadIcon } from '../components/Icons'
 import { Loading } from '../components/States'
 import { timeAgo } from '../lib/format'
+import { altKey, isMac, modKey, osName } from '../lib/platform'
 import { THEMES } from '../lib/themes'
 import { api, errorMessage, keys, queryClient, useHealth, useSettings } from '../lib/queries'
 import { toast } from '../store/toast'
@@ -104,8 +105,14 @@ export function Settings() {
             </legend>
             {(
               [
-                ['system', 'Follow Windows', 'Uses Settings → Accessibility → Visual effects → Animation effects.'],
-                ['full', 'Always', 'Full animations, even when Windows has them turned off.'],
+                [
+                  'system',
+                  `Follow ${osName}`,
+                  isMac
+                    ? 'Uses System Settings → Accessibility → Display → Reduce motion.'
+                    : 'Uses Settings → Accessibility → Visual effects → Animation effects.'
+                ],
+                ['full', 'Always', `Full animations, even when ${osName} asks for less motion.`],
                 ['reduced', 'Reduced', 'Gentle fades only: nothing slides, scales or bounces.']
               ] as const
             ).map(([value, label, hint]) => (
@@ -117,14 +124,21 @@ export function Settings() {
               </label>
             ))}
           </fieldset>
-          <Toggle
-            label="Keep playing in the tray when the window is closed"
-            checked={s.closeToTray}
-            onChange={(v) => void save({ closeToTray: v })}
-          />
+          {/* On macOS closing the window always keeps playing (⌘Q quits), so there's nothing to choose. */}
+          {!isMac && (
+            <Toggle
+              label="Keep playing in the tray when the window is closed"
+              checked={s.closeToTray}
+              onChange={(v) => void save({ closeToTray: v })}
+            />
+          )}
           <Toggle
             label="Global media keys (fallback)"
-            hint="Only needed if your keyboard’s play/next keys don’t work. Windows usually routes them to Tunebox already."
+            hint={
+              isMac
+                ? 'Only needed if your keyboard’s play/next keys don’t reach Tunebox. macOS may ask you to allow Tunebox under Privacy & Security → Accessibility.'
+                : 'Only needed if your keyboard’s play/next keys don’t work. Windows usually routes them to Tunebox already.'
+            }
             checked={s.globalMediaKeys}
             onChange={(v) => void save({ globalMediaKeys: v })}
           />
@@ -148,10 +162,10 @@ export function Settings() {
             {[
               [['Space'], 'Play / pause'],
               [['←', '→'], 'Seek 5 seconds'],
-              [['Ctrl', '←'], 'Previous track'],
-              [['Ctrl', '→'], 'Next track'],
+              [[modKey, '←'], 'Previous track'],
+              [[modKey, '→'], 'Next track'],
               [['/'], 'Search'],
-              [['Alt', '↑/↓'], 'Move a focused playlist or queue row']
+              [[altKey, '↑/↓'], 'Move a focused playlist or queue row']
             ].map(([k, d]) => (
               <div key={d as string} className="contents">
                 <dt className="row" style={{ gap: 4 }}>
@@ -195,7 +209,7 @@ function ThemePicker({ current }: { current: string }) {
       </div>
       <div className="theme-grid">
         {filter === 'all' && (
-          <ThemeOption id="system" name="Match Windows" source="Bento, light or dark" swatch={['#FAD4C0', '#FFF5E6', '#16120F']} checked={current === 'system'} />
+          <ThemeOption id="system" name={`Match ${osName}`} source="Bento, light or dark" swatch={['#FAD4C0', '#FFF5E6', '#16120F']} checked={current === 'system'} />
         )}
         {shown.map((t) => (
           <ThemeOption key={t.id} id={t.id} name={t.name} source={t.source} swatch={t.swatch} checked={current === t.id} />
