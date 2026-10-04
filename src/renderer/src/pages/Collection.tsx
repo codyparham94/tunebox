@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import type { Track } from '@shared/types'
 import { Art } from '../components/Art'
 import { DownloadIcon, PlayIcon, RadioIcon, ShuffleIcon, TrashIcon } from '../components/Icons'
+import { HoldButton } from '../components/HoldButton'
 import { Empty, QueryView } from '../components/States'
 import { TrackList } from '../components/TrackList'
 import { saveAsPlaylist, startPlaylistRadio, startTrackRadio } from '../lib/actions'
@@ -169,16 +170,16 @@ export function Playlist() {
                   <button className="btn" onClick={() => void startPlaylistRadio(p)} disabled={!p.tracks.length}>
                     <RadioIcon size={16} /> Radio
                   </button>
-                  <button
+                  <HoldButton
                     className="btn btn-danger"
-                    onClick={async () => {
-                      if (!window.confirm(`Delete “${p.name}”? This can’t be undone.`)) return
+                    label={`Delete ${p.name}`}
+                    onConfirm={async () => {
                       await mutate(() => api.library.deletePlaylist(id))
                       navigate('/library')
                     }}
                   >
-                    <TrashIcon size={16} /> Delete
-                  </button>
+                    <TrashIcon size={16} /> Hold to delete
+                  </HoldButton>
                 </>
               }
             />

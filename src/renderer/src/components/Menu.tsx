@@ -12,7 +12,7 @@ export interface MenuItem {
 /** A "⋯" button with a keyboard-navigable popup menu. */
 export function Menu({ items, label, className = 'icon-btn' }: { items: MenuItem[]; label: string; className?: string }) {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const [pos, setPos] = useState({ top: 0, left: 0, transformOrigin: 'top right' })
   const button = useRef<HTMLButtonElement>(null)
   const menu = useRef<HTMLDivElement>(null)
   const visible = items.filter((i) => !i.hidden)
@@ -21,9 +21,12 @@ export function Menu({ items, label, className = 'icon-btn' }: { items: MenuItem
     if (!open || !button.current || !menu.current) return
     const b = button.current.getBoundingClientRect()
     const m = menu.current.getBoundingClientRect()
-    const top = b.bottom + m.height + 8 > window.innerHeight ? b.top - m.height - 4 : b.bottom + 4
+    const above = b.bottom + m.height + 8 > window.innerHeight
+    const top = above ? b.top - m.height - 4 : b.bottom + 4
     const left = Math.max(8, Math.min(b.right - m.width, window.innerWidth - m.width - 8))
-    setPos({ top, left })
+    // grow out of the trigger, wherever the menu ended up relative to it
+    const originX = Math.min(Math.max(b.left + b.width / 2 - left, 0), m.width)
+    setPos({ top, left, transformOrigin: `${originX}px ${above ? '100%' : '0'}` })
     menu.current.querySelector<HTMLButtonElement>('button')?.focus()
   }, [open])
 

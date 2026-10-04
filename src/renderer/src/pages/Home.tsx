@@ -17,6 +17,7 @@ import {
 import { Empty, ErrorState, Loading } from '../components/States'
 import { startArtistRadio } from '../lib/actions'
 import { plural, timeAgo } from '../lib/format'
+import { useSwapIn } from '../lib/motion'
 import { useTrackNav } from '../lib/nav'
 import { api, errorMessage, invalidatePlaylists, useHistory, usePlaylists, useStations } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
@@ -51,16 +52,19 @@ function NowPlayingTile() {
   const shown = t ?? resume?.track
   const thumb = t?.id ? s.thumbs[t.id] : undefined
   const nav = useTrackNav()
+  const shownKey = t ? `q${t.qid}` : resume ? `r${resume.track.id}` : 'none'
+  const swap = useSwapIn(shownKey) ? ' swap-in' : ''
+  const swapIcon = useSwapIn(s.playing) ? ' icon-swap' : ''
 
   return (
     <section className="tile tile-primary span-3x1" aria-labelledby="np-title" style={{ padding: 'var(--space-4)' }}>
       <div className="flex h-full items-center gap-5">
-        <Art src={shown?.artUrl} size={180} className="shadow-lg" />
+        <Art key={`art-${shownKey}`} src={shown?.artUrl} size={180} className={`shadow-lg${swap}`} />
         <div className="min-w-0 flex-1 grid grid-cols-1 gap-1">
           <span className="eyebrow truncate">
             {t ? (s.station ? s.station.name : 'Now playing') : resume ? 'Pick up where you left off' : 'Welcome'}
           </span>
-          <h2 id="np-title" className="now-title">
+          <h2 key={`title-${shownKey}`} id="np-title" className={`now-title${swap}`} data-long={(shown?.title.length ?? 0) > 40 || undefined}>
             {shown ? (
               <button className="now-link" title={`${shown.title}: go to album`} onClick={() => void nav.album(shown)}>
                 {shown.title}
@@ -69,7 +73,7 @@ function NowPlayingTile() {
               'Your music, your radio'
             )}
           </h2>
-          <p className={`tile-sub${shown ? ' truncate' : ''}`}>
+          <p key={`artist-${shownKey}`} className={`tile-sub${shown ? ' truncate' : ''}${swap}`}>
             {shown ? (
               <button className="now-link" title={`Go to ${shown.artist}`} onClick={() => void nav.artist(shown)}>
                 {shown.artist}
@@ -87,7 +91,9 @@ function NowPlayingTile() {
                   <PrevIcon />
                 </button>
                 <button className="icon-btn play-btn" aria-label={s.playing ? 'Pause' : 'Play'} onClick={player.toggle}>
-                  {s.playing ? <PauseIcon /> : <PlayIcon />}
+                  <span key={String(s.playing)} className={`icon-slot${swapIcon}`}>
+                    {s.playing ? <PauseIcon /> : <PlayIcon />}
+                  </span>
                 </button>
                 <button className="icon-btn on-primary" aria-label="Next" onClick={player.next}>
                   <NextIcon />

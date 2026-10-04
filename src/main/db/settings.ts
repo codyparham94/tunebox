@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastfmApiKey: '',
   audioQuality: 'high',
   theme: 'system',
+  motion: 'system',
   closeToTray: true,
   globalMediaKeys: false,
   autoplay: true,

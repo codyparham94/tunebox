@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { SeedType, Station } from '@shared/types'
 import { Art } from '../components/Art'
 import { Equalizer, PlayIcon, PlusIcon, TrashIcon } from '../components/Icons'
+import { HoldButton } from '../components/HoldButton'
 import { StationArtistsDialog } from '../components/StationArtistsDialog'
 import { Empty, QueryView } from '../components/States'
 import { startArtistRadio, startPlaylistRadio, startTagRadio } from '../lib/actions'
@@ -19,8 +20,7 @@ export function Radio() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const editing: Station | null = stations.data?.find((s) => s.id === editingId) ?? null
 
-  const remove = async (id: number, name: string) => {
-    if (!window.confirm(`Delete “${name}” and what it learned?`)) return
+  const remove = async (id: number) => {
     try {
       if (active === id) player.leaveStation()
       await api.radio.remove(id)
@@ -89,9 +89,11 @@ export function Radio() {
                       >
                         <PlusIcon size={14} /> Artists{st.artists.length ? ` (${st.artists.length})` : ''}
                       </button>
-                      <button className="icon-btn" style={{ marginLeft: 'auto' }} aria-label={`Delete ${st.name}`} onClick={() => void remove(st.id, st.name)}>
-                        <TrashIcon size={18} />
-                      </button>
+                      <span style={{ marginLeft: 'auto' }}>
+                        <HoldButton className="icon-btn" label={`Delete ${st.name} and what it learned`} onConfirm={() => void remove(st.id)}>
+                          <TrashIcon size={18} />
+                        </HoldButton>
+                      </span>
                     </div>
                   </article>
                 ))}

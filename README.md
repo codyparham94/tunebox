@@ -21,6 +21,7 @@ A desktop music player for Windows. Search a big catalog, stream audio from YouT
 - **Updates:** checks GitHub Releases on startup and every few hours. When a new version is out it asks first, then downloads, installs and restarts. **Settings → Updates** checks by hand.
 - **Equalizer:** 10-band EQ with preamp and a live response curve, 26 presets, saved custom presets. Lives in Settings and pops out into its own window (also from the sliders button in the player).
 - **Themes:** 26 light and dark themes adapted from design skills and [awesome-design-md](https://github.com/VoltAgent/awesome-design-md), with a Light/Dark filter.
+- **Motion:** springy, interruptible transitions throughout. **Settings → Motion** follows Windows’ animation setting, or forces full or reduced motion. Deleting a station or playlist is hold-to-confirm.
 - **System:** tray menu (play/pause, next, 👍/👎), previous/play/next buttons on the taskbar thumbnail, close to tray, optional global media-key fallback, remembered window position.
 
 ## Development setup

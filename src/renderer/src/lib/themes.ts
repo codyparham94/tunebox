@@ -19,6 +19,7 @@ import '@fontsource/dm-serif-display/latin-400.css'
 import { useEffect } from 'react'
 import type { ThemeSetting } from '@shared/types'
 import { THEMES } from '@shared/themes'
+import { motionReduced } from './motion'
 
 export { THEMES, type ThemeInfo } from '@shared/themes'
 
@@ -33,7 +34,12 @@ export function useTheme(setting: ThemeSetting): void {
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const apply = () => {
-      document.documentElement.dataset.theme = resolveTheme(setting, media.matches)
+      const root = document.documentElement
+      const next = resolveTheme(setting, media.matches)
+      if (root.dataset.theme === next) return
+      // Cross-fade instead of jumping, so a light↔dark switch doesn't flash the whole window.
+      if (!root.dataset.theme || motionReduced() || !document.startViewTransition) root.dataset.theme = next
+      else document.startViewTransition(() => (root.dataset.theme = next))
     }
     apply()
     media.addEventListener('change', apply)

@@ -6,7 +6,7 @@ export function Toasts() {
   return (
     <div className="toasts" aria-live="polite" role="status">
       {toasts.map((t) => (
-        <div key={t.id} className={`toast ${t.kind}`} role={t.kind === 'error' ? 'alert' : undefined}>
+        <div key={t.id} className={`toast ${t.kind}`} role={t.kind === 'error' ? 'alert' : undefined} data-leaving={t.leaving || undefined}>
           <span>{t.message}</span>
           <button className="icon-btn" aria-label="Dismiss" onClick={() => dismiss(t.id)}>
             <CloseIcon size={14} />

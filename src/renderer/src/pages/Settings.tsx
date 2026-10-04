@@ -98,6 +98,25 @@ export function Settings() {
             Appearance &amp; system
           </h2>
           <ThemePicker current={s.theme} />
+          <fieldset className="border-0 p-0 m-0 grid gap-2" style={{ marginBottom: 'var(--space-4)' }}>
+            <legend className="field" style={{ marginBottom: 'var(--space-2)' }}>
+              Motion
+            </legend>
+            {(
+              [
+                ['system', 'Follow Windows', 'Uses Settings → Accessibility → Visual effects → Animation effects.'],
+                ['full', 'Always', 'Full animations, even when Windows has them turned off.'],
+                ['reduced', 'Reduced', 'Gentle fades only: nothing slides, scales or bounces.']
+              ] as const
+            ).map(([value, label, hint]) => (
+              <label key={value} className="flex items-start gap-2" style={{ fontSize: 'var(--text-sm)' }}>
+                <input type="radio" name="motion" checked={s.motion === value} onChange={() => void save({ motion: value })} />
+                <span>
+                  <strong>{label}</strong> <span className="muted">{hint}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
           <Toggle
             label="Keep playing in the tray when the window is closed"
             checked={s.closeToTray}

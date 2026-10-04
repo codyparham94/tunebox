@@ -163,10 +163,14 @@ export type AudioQuality = 'high' | 'low'
 /** 'system', or a theme id from renderer/src/lib/themes.ts */
 export type ThemeSetting = string
 
+/** 'system' follows Windows' “Animation effects” switch. */
+export type MotionSetting = 'system' | 'full' | 'reduced'
+
 export interface Settings {
   lastfmApiKey: string
   audioQuality: AudioQuality
   theme: ThemeSetting
+  motion: MotionSetting
   closeToTray: boolean
   globalMediaKeys: boolean
   /** when the queue ends, keep playing with Discover picks */

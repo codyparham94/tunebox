@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { HashRouter, Route, Routes, useNavigate } from 'react-router'
 import { AddToPlaylistDialog } from './components/AddToPlaylistDialog'
 import { NavRail } from './components/NavRail'
@@ -7,6 +7,7 @@ import { QueuePanel } from './components/QueuePanel'
 import { Toasts } from './components/Toasts'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { keys, queryClient, useSettings } from './lib/queries'
+import { useMotion } from './lib/motion'
 import { useTheme } from './lib/themes'
 import { eq } from './store/eq'
 import { Artist } from './pages/Artist'
@@ -24,6 +25,9 @@ import { toast } from './store/toast'
 import { useUi } from './store/ui'
 import { initUpdates } from './store/update'
 
+// Dev-only fixture lab (#/lab?data=worst); compiled out of production builds.
+const DataLab = import.meta.env.DEV ? lazy(() => import('./dev/DataLab')) : null
+
 export function App() {
   return (
     <HashRouter>
@@ -34,8 +38,10 @@ export function App() {
 
 function Shell() {
   const queueOpen = useUi((s) => s.queueOpen)
+  const queueMounted = usePresence(queueOpen, 320)
   const settings = useSettings().data
   useTheme(settings?.theme ?? 'system')
+  useMotion(settings?.motion ?? 'system')
   useKeyboard()
   useOsEvents()
 
@@ -72,15 +78,39 @@ function Shell() {
           <Route path="/library" element={<Library />} />
           <Route path="/local" element={<Local />} />
           <Route path="/settings" element={<Settings />} />
+          {DataLab && (
+            <Route
+              path="/lab"
+              element={
+                <Suspense>
+                  <DataLab />
+                </Suspense>
+              }
+            />
+          )}
         </Routes>
       </main>
-      {queueOpen && <QueuePanel />}
+      {queueMounted && <QueuePanel open={queueOpen} />}
       <PlayerBar />
       <AddToPlaylistDialog />
       <UpdatePrompt />
       <Toasts />
     </div>
   )
+}
+
+/** True while open, and for `exitMs` after closing so an exit transition can play. */
+function usePresence(open: boolean, exitMs: number) {
+  const [mounted, setMounted] = useState(open)
+  useEffect(() => {
+    if (open) {
+      setMounted(true)
+      return
+    }
+    const t = setTimeout(() => setMounted(false), exitMs)
+    return () => clearTimeout(t)
+  }, [open, exitMs])
+  return open || mounted
 }
 
 function useKeyboard() {

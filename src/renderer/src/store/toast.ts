@@ -6,6 +6,8 @@ export interface Toast {
   message: string
   /** sticky toasts stay until updated or dismissed */
   sticky?: boolean
+  /** playing its exit; removed once that finishes */
+  leaving?: boolean
 }
 
 interface ToastState {
@@ -15,6 +17,8 @@ interface ToastState {
 }
 
 let nextId = 1
+/** matches .toast[data-leaving] in app.css */
+const EXIT_MS = 200
 
 export const useToasts = create<ToastState>((set, get) => ({
   toasts: [],
@@ -26,7 +30,9 @@ export const useToasts = create<ToastState>((set, get) => ({
     return id
   },
   dismiss(id) {
-    set({ toasts: get().toasts.filter((x) => x.id !== id) })
+    if (!get().toasts.some((x) => x.id === id && !x.leaving)) return
+    set({ toasts: get().toasts.map((x) => (x.id === id ? { ...x, leaving: true } : x)) })
+    setTimeout(() => set({ toasts: get().toasts.filter((x) => !(x.id === id && x.leaving)) }), EXIT_MS)
   }
 }))
 

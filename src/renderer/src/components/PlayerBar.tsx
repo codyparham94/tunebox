@@ -1,5 +1,6 @@
 import { setLiked } from '../lib/actions'
 import { formatTime } from '../lib/format'
+import { useSwapIn } from '../lib/motion'
 import { useTrackNav } from '../lib/nav'
 import { api, useLikedIds } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
@@ -36,12 +37,16 @@ export function PlayerBar() {
   const thumb = t?.id ? s.thumbs[t.id] : undefined
   const duration = s.duration || t?.duration || 0
   const repeatLabel = { off: 'Repeat off', all: 'Repeat all', one: 'Repeat one' }[s.repeat]
+  const trackKey = t?.qid ?? 0
+  const swapTrack = useSwapIn(trackKey) ? ' swap-in' : ''
+  const playState = s.loading && !s.playing ? 'loading' : s.playing ? 'pause' : 'play'
+  const swapIcon = useSwapIn(playState) ? ' icon-swap' : ''
 
   return (
     <footer className="player" aria-label="Player">
       <div className="player-track">
-        <Art src={t?.artUrl} size={56} />
-        <div className="min-w-0">
+        <Art key={`art-${trackKey}`} src={t?.artUrl} size={56} className={swapTrack} />
+        <div key={`text-${trackKey}`} className={`min-w-0${swapTrack}`}>
           {t ? (
             <>
               <div className="truncate">
@@ -110,7 +115,9 @@ export function PlayerBar() {
             onClick={player.toggle}
             disabled={!t && s.queue.length === 0}
           >
-            {s.loading && !s.playing ? <span className="spinner" style={{ borderTopColor: 'var(--surface)' }} /> : s.playing ? <PauseIcon /> : <PlayIcon />}
+            <span key={playState} className={`icon-slot${swapIcon}`}>
+              {playState === 'loading' ? <span className="spinner" style={{ borderTopColor: 'var(--surface)' }} /> : playState === 'pause' ? <PauseIcon /> : <PlayIcon />}
+            </span>
           </button>
           <button className="icon-btn" aria-label="Next" title="Next (Ctrl+→)" onClick={player.next} disabled={!t}>
             <NextIcon />

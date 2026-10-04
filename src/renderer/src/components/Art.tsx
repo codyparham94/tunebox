@@ -19,7 +19,18 @@ export function Art({
   return (
     <div className={`art${round ? ' round' : ''} ${className}`} style={style}>
       {src && !failed ? (
-        <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          // cached covers are complete before first paint: mark them now so they don't fade
+          ref={(img) => {
+            if (img?.complete && img.naturalWidth) img.dataset.loaded = ''
+          }}
+          onLoad={(e) => (e.currentTarget.dataset.loaded = '')}
+          onError={() => setFailed(true)}
+        />
       ) : (
         <div className="art-fallback">
           <MusicIcon size={typeof size === 'number' ? Math.max(16, size / 3) : 32} />

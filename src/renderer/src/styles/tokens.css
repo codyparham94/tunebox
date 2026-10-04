@@ -49,6 +49,17 @@
   --radius-card: 16px;
   --radius-pill: 999px;
 
+  /* Motion. --spring samples a critically damped spring (damping 1, response ~0.4s):
+     front-loaded like a real settle, with no overshoot since nothing here is flicked. */
+  --spring: linear(0, 0.058, 0.18, 0.321, 0.455, 0.573, 0.671, 0.75, 0.812, 0.86, 0.897, 0.924, 0.945, 0.96, 0.971, 0.979, 0.985, 0.989, 0.992, 0.994, 0.996, 0.997, 0.998, 0.999, 1);
+  --spring-duration: 480ms;
+  --press-duration: 90ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Translucent chrome: the player floats over content that scrolls beneath it. */
+  --material: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+  --material-blur: blur(24px) saturate(180%);
+
   --nav-width: 88px;
   --player-height: 88px;
   --queue-width: 360px;

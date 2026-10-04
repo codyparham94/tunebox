@@ -1,4 +1,4 @@
-import '@fontsource-variable/inter'
+import '@fontsource-variable/inter/opsz.css'
 import '@fontsource/jetbrains-mono/400.css'
 import './styles/app.css'
 import { QueryClientProvider } from '@tanstack/react-query'

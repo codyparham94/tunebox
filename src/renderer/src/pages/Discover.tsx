@@ -18,9 +18,12 @@ const SEARCHES_KEY = ['discover', 'searches'] as const
 export function Discover() {
   const feed = useQuery({ queryKey: FEED_KEY, queryFn: () => api.discover.feed(false), staleTime: 60_000 })
   const [refreshing, setRefreshing] = useState(false)
+  // Stagger the mix in only when fresh picks arrive (first build or Refresh), not on every visit.
+  const [stagger, setStagger] = useState(feed.isPending)
 
   const refresh = async () => {
     setRefreshing(true)
+    setStagger(true)
     try {
       queryClient.setQueryData(FEED_KEY, await api.discover.feed(true))
     } catch (err) {
@@ -57,7 +60,7 @@ export function Discover() {
       ) : !hasSignals(feed.data.signals) ? (
         <ColdStart />
       ) : (
-        <FeedView feed={feed.data} />
+        <FeedView feed={feed.data} stagger={stagger} />
       )}
     </div>
   )
@@ -100,7 +103,7 @@ function ColdStart() {
   )
 }
 
-function FeedView({ feed }: { feed: DiscoverFeed }) {
+function FeedView({ feed, stagger }: { feed: DiscoverFeed; stagger: boolean }) {
   const nothing = feed.mix.length === 0 && feed.shelves.length === 0 && feed.artists.length === 0
   return (
     <>
@@ -111,7 +114,7 @@ function FeedView({ feed }: { feed: DiscoverFeed }) {
         </Empty>
       ) : (
         <div className="charts-layout">
-          <MixTile mix={feed.mix} />
+          <MixTile mix={feed.mix} stagger={stagger} />
           <div className="grid gap-4 content-start">
             {feed.artists.length > 0 && <ArtistsTile artists={feed.artists} />}
             {feed.tags.length > 0 && <TagsTile tags={feed.tags} />}
@@ -126,7 +129,7 @@ function FeedView({ feed }: { feed: DiscoverFeed }) {
   )
 }
 
-function MixTile({ mix }: { mix: DiscoverFeed['mix'] }) {
+function MixTile({ mix, stagger }: { mix: DiscoverFeed['mix']; stagger: boolean }) {
   return (
     <section className="tile" aria-labelledby="mix-title">
       <div className="section-head">
@@ -159,7 +162,9 @@ function MixTile({ mix }: { mix: DiscoverFeed['mix'] }) {
       {mix.length === 0 ? (
         <Empty>No new songs found this time. Try Refresh.</Empty>
       ) : (
-        <TrackList label="Your Discover Mix" tracks={mix} />
+        <div className={stagger ? 'rise-stagger' : undefined}>
+          <TrackList label="Your Discover Mix" tracks={mix} />
+        </div>
       )}
     </section>
   )

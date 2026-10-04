@@ -4,13 +4,14 @@ import { CloseIcon } from './Icons'
 import { Empty } from './States'
 import { TrackList } from './TrackList'
 
-export function QueuePanel() {
+/** Stays mounted briefly after closing so it can leave the way it came in. */
+export function QueuePanel({ open }: { open: boolean }) {
   const { queue, index, station, refilling } = usePlayer()
   const toggleQueue = useUi((s) => s.toggleQueue)
   const upcoming = queue.length - index - 1
 
   return (
-    <aside className="queue" aria-label="Queue">
+    <aside className="queue" aria-label="Queue" data-state={open ? 'open' : 'closed'} inert={!open}>
       <div className="queue-head">
         <div>
           <h2 className="section-title">Queue</h2>
