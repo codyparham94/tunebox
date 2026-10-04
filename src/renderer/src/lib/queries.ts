@@ -19,6 +19,7 @@ export const keys = {
   playlist: (id: number) => ['playlist', id] as const,
   liked: ['liked'] as const,
   likedIds: ['likedIds'] as const,
+  likedAlbums: ['likedAlbums'] as const,
   history: ['history'] as const,
   stations: ['stations'] as const,
   settings: ['settings'] as const,
@@ -44,6 +45,7 @@ export const usePlaylist = (id: number) =>
 export const useLiked = () => useQuery({ queryKey: keys.liked, queryFn: () => api.library.liked(), ...local })
 export const useLikedIds = () =>
   useQuery({ queryKey: keys.likedIds, queryFn: async () => new Set(await api.library.likedIds()), ...local })
+export const useLikedAlbums = () => useQuery({ queryKey: keys.likedAlbums, queryFn: () => api.library.likedAlbums(), ...local })
 export const useHistory = (limit = 30) =>
   useQuery({ queryKey: [...keys.history, limit], queryFn: () => api.library.history(limit), ...local })
 export const useStations = () => useQuery({ queryKey: keys.stations, queryFn: () => api.radio.stations(), ...local })

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { HashRouter, Route, Routes, useNavigate } from 'react-router'
+import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
 import { AddToPlaylistDialog } from './components/AddToPlaylistDialog'
 import { NavRail } from './components/NavRail'
 import { PlayerBar } from './components/PlayerBar'
@@ -8,16 +8,17 @@ import { Toasts } from './components/Toasts'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { keys, queryClient, useSettings } from './lib/queries'
 import { useMotion } from './lib/motion'
-import { hasMod } from './lib/platform'
+import { hasMod, isMac } from './lib/platform'
 import { useTheme } from './lib/themes'
 import { eq } from './store/eq'
 import { Artist } from './pages/Artist'
 import { Charts } from './pages/Charts'
-import { Album, Liked, Playlist, RemotePlaylist } from './pages/Collection'
+import { Album, Playlist, RemotePlaylist } from './pages/Collection'
 import { Discover } from './pages/Discover'
 import { Home } from './pages/Home'
-import { Library } from './pages/Library'
+import { Liked } from './pages/Liked'
 import { Local } from './pages/Local'
+import { Playlists } from './pages/Playlists'
 import { Radio } from './pages/Radio'
 import { Search } from './pages/Search'
 import { Settings } from './pages/Settings'
@@ -76,7 +77,9 @@ function Shell() {
           <Route path="/playlist/:id" element={<Playlist />} />
           <Route path="/liked" element={<Liked />} />
           <Route path="/radio" element={<Radio />} />
-          <Route path="/library" element={<Library />} />
+          <Route path="/playlists" element={<Playlists />} />
+          {/* the old Library tab split into Liked and Playlists */}
+          <Route path="/library" element={<Navigate to="/liked" replace />} />
           <Route path="/local" element={<Local />} />
           <Route path="/settings" element={<Settings />} />
           {DataLab && (
@@ -131,6 +134,10 @@ function useKeyboard() {
       } else if (e.key === ' ' && !el.closest('button, a, [role="menuitem"], [role="tab"]')) {
         e.preventDefault()
         player.toggle()
+      } else if (isMac ? e.metaKey && (e.key === '[' || e.key === ']') : e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        // Back / forward: Alt+←/→ on Windows, ⌘[ / ⌘] on macOS, as in a browser
+        e.preventDefault()
+        navigate(e.key === '[' || e.key === 'ArrowLeft' ? -1 : 1)
       } else if (hasMod(e) && e.key === 'ArrowRight') {
         e.preventDefault()
         player.next()
@@ -142,8 +149,19 @@ function useKeyboard() {
         player.seekBy(e.key === 'ArrowRight' ? 5 : -5)
       }
     }
+    // The mouse's side buttons go back and forward too.
+    const onMouse = (e: MouseEvent) => {
+      if (e.button === 3 || e.button === 4) {
+        e.preventDefault()
+        navigate(e.button === 3 ? -1 : 1)
+      }
+    }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('mouseup', onMouse)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('mouseup', onMouse)
+    }
   }, [navigate])
 }
 

@@ -164,6 +164,7 @@ export function Settings() {
               [['←', '→'], 'Seek 5 seconds'],
               [[modKey, '←'], 'Previous track'],
               [[modKey, '→'], 'Next track'],
+              [isMac ? ['⌘', '[', ']'] : ['Alt', '←', '→'], 'Back / forward (or the mouse’s side buttons)'],
               [['/'], 'Search'],
               [[altKey, '↑/↓'], 'Move a focused playlist or queue row']
             ].map(([k, d]) => (

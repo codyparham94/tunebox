@@ -89,7 +89,8 @@ img {
 .shell {
   display: grid;
   grid-template-columns: var(--nav-width) 1fr auto;
-  grid-template-rows: 1fr var(--player-height);
+  /* minmax(0, …): a tall nav rail must scroll, never push the player off a short window */
+  grid-template-rows: minmax(0, 1fr) var(--player-height);
   height: 100%;
 }
 
@@ -98,9 +99,23 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-5) 0 var(--space-4);
+  gap: var(--space-1);
+  padding: var(--space-3) 0 var(--space-4);
   border-right: 1px solid var(--border);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+/* Back / forward, above Home */
+.nav-history {
+  display: flex;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+}
+
+.nav-history .icon-btn {
+  width: 32px;
+  height: 32px;
 }
 
 
@@ -115,6 +130,8 @@ img {
   color: var(--text-muted);
   font-size: var(--text-xs);
   font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
   text-decoration: none;
 }
 
@@ -970,7 +987,8 @@ img {
   display: grid;
   grid-template-columns: 220px 1fr;
   gap: var(--space-5);
-  align-items: end;
+  /* art sits at the top of the card, level with the title, however long the text runs */
+  align-items: start;
   padding: var(--space-5);
 }
 
@@ -1538,19 +1556,6 @@ img {
 }
 
 /* ---------- home ---------- */
-.span-1x3 {
-  grid-row: span 3;
-}
-
-/* Two columns: recently played moves under the other tiles at full width. */
-@media (max-width: 1180px) {
-  .home-bento .recent-tile {
-    order: 10;
-    grid-column: 1 / -1;
-    grid-row: span 2;
-  }
-}
-
 .recent-list {
   display: grid;
   align-content: start;
@@ -1645,11 +1650,6 @@ img {
   color: color-mix(in srgb, var(--on-primary) 72%, transparent);
 }
 
-@media (max-width: 1320px) {
-  .up-next {
-    display: none;
-  }
-}
 
 .discover-stack {
   display: flex;
@@ -1897,4 +1897,88 @@ img {
 .hold-btn[data-holding] .hold-fill.hold-fill {
   clip-path: inset(0 0 0 0);
   transition: clip-path var(--hold-duration, 1500ms) linear !important;
+}
+
+/* ---------- full-width page layout (Home, Discover, Playlists) ---------- */
+
+.stack {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Now Playing (and Discover's mix card): full width, at least as tall as its art */
+.now-playing {
+  min-height: 212px;
+  padding: var(--space-4);
+}
+
+/* Song rows across the full width, in as many columns as fit */
+.recent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  column-gap: var(--space-4);
+  overflow: visible;
+}
+
+.recent-grid .recent-item {
+  text-decoration: none;
+}
+
+.collage-lg {
+  grid-template-columns: repeat(2, 89px);
+  gap: 2px;
+}
+
+/* Discover shelves: one row of picks that scrolls sideways instead of wrapping into a wall */
+.shelf-row {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: 168px;
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.shelf-row > * {
+  scroll-snap-align: start;
+}
+
+/* ---------- home: collection on the left, playing + recent on the right ---------- */
+
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Narrow windows: one column, with what's playing first. */
+@media (max-width: 1100px) {
+  .home-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-main {
+    order: -1;
+  }
+}
+
+.side-list {
+  margin: 0 calc(var(--space-2) * -1);
+}
+
+.side-list .recent-item {
+  min-height: 56px;
+}
+
+/* Up next needs room: drop it when the Now Playing card itself gets narrow, not the window. */
+.now-playing {
+  container-type: inline-size;
+}
+
+@container (max-width: 760px) {
+  .up-next {
+    display: none;
+  }
 }

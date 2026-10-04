@@ -1,39 +1,28 @@
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { Art } from '../components/Art'
-import {
-  CompassIcon,
-  Equalizer,
-  NextIcon,
-  PauseIcon,
-  PlayIcon,
-  PlusIcon,
-  PrevIcon,
-  RadioIcon,
-  ThumbDownIcon,
-  ThumbUpIcon
-} from '../components/Icons'
+import { HeartIcon, NextIcon, PauseIcon, PlayIcon, PlusIcon, PrevIcon, ThumbDownIcon, ThumbUpIcon } from '../components/Icons'
 import { Empty, ErrorState, Loading } from '../components/States'
-import { startArtistRadio } from '../lib/actions'
+import { TrackList } from '../components/TrackList'
 import { plural, timeAgo } from '../lib/format'
 import { useSwapIn } from '../lib/motion'
 import { useTrackNav } from '../lib/nav'
-import { api, errorMessage, invalidatePlaylists, useHistory, usePlaylists, useStations } from '../lib/queries'
+import { useHistory, useLikedAlbums, usePlaylists } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
-import { toast } from '../store/toast'
 
 export function Home() {
   return (
     <div className="page">
       <h1 className="page-title">{greeting()}</h1>
-      {/* Recently played runs down the left; the other tiles fill the three columns beside it. */}
-      <div className="bento home-bento">
-        <RecentTile />
-        <NowPlayingTile />
-        <StationsTile />
-        <QuickRadioTile />
-        <PlaylistsRow />
+      {/* Your collection down the left; what's playing and what you just played on the right. */}
+      <div className="home-layout">
+        <div className="stack home-side">
+          <LikedAlbumsTile />
+          <PlaylistsTile />
+        </div>
+        <div className="stack home-main">
+          <NowPlayingTile />
+          <RecentTile />
+        </div>
       </div>
     </div>
   )
@@ -57,7 +46,7 @@ function NowPlayingTile() {
   const swapIcon = useSwapIn(s.playing) ? ' icon-swap' : ''
 
   return (
-    <section className="tile tile-primary span-3x1" aria-labelledby="np-title" style={{ padding: 'var(--space-4)' }}>
+    <section className="tile tile-primary now-playing" aria-labelledby="np-title" style={{ padding: 'var(--space-4)' }}>
       <div className="flex h-full items-center gap-5">
         <Art key={`art-${shownKey}`} src={shown?.artUrl} size={180} className={`shadow-lg${swap}`} />
         <div className="min-w-0 flex-1 grid grid-cols-1 gap-1">
@@ -133,7 +122,7 @@ function UpNext() {
   const queue = usePlayer((s) => s.queue)
   const index = usePlayer((s) => s.index)
   const refilling = usePlayer((s) => s.refilling)
-  const upcoming = queue.slice(index + 1, index + 4)
+  const upcoming = queue.slice(index + 1, index + 6)
   return (
     <div className="up-next" aria-label="Up next">
       <span className="eyebrow">Up next</span>
@@ -160,82 +149,11 @@ function UpNext() {
   )
 }
 
-function StationsTile() {
-  const stations = useStations()
-  const active = usePlayer((s) => s.station?.id)
-  return (
-    <section className="tile span-2x1" aria-labelledby="st-title">
-      <div className="section-head">
-        <h2 id="st-title" className="tile-title" style={{ margin: 0 }}>
-          Your stations
-        </h2>
-        <Link to="/radio" className="btn btn-sm">
-          All stations
-        </Link>
-      </div>
-      {stations.isPending ? (
-        <Loading />
-      ) : stations.isError ? (
-        <ErrorState error={stations.error} retry={() => void stations.refetch()} />
-      ) : stations.data.length === 0 ? (
-        <Empty>Start a station from any song, artist or mood and it learns from your 👍 and 👎.</Empty>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {stations.data.slice(0, 4).map((st) => (
-            <button
-              key={st.id}
-              className="card"
-              style={{ flexDirection: 'row', alignItems: 'center', padding: 'var(--space-2)' }}
-              onClick={() => player.playStation(st)}
-              aria-label={`Play ${st.name}`}
-            >
-              <Art src={st.artUrl} size={44} />
-              <span className="min-w-0">
-                <span className="card-title truncate block">{st.name}</span>
-                <span className="card-sub">{st.id === active ? 'Playing' : st.seedType}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function QuickRadioTile() {
-  const [artist, setArtist] = useState('')
-  return (
-    <section className="tile tile-secondary" aria-labelledby="qr-title">
-      <RadioIcon size={28} />
-      <h2 id="qr-title" className="tile-title" style={{ marginTop: 'var(--space-3)' }}>
-        Start radio from…
-      </h2>
-      <form
-        className="grid gap-2 mt-auto"
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (artist.trim()) void startArtistRadio(artist)
-          setArtist('')
-        }}
-      >
-        <label htmlFor="qr-artist" className="sr-only">
-          Artist name
-        </label>
-        <input id="qr-artist" className="input" placeholder="An artist you love" value={artist} onChange={(e) => setArtist(e.target.value)} />
-        <button className="btn btn-dark" disabled={!artist.trim()}>
-          Start station
-        </button>
-      </form>
-    </section>
-  )
-}
-
+/** Recently played as a track list, the same rows as Discover's mix. */
 function RecentTile() {
-  const history = useHistory(25)
-  const current = usePlayer((s) => currentTrack(s)?.id)
-  const playing = usePlayer((s) => s.playing)
+  const history = useHistory(20)
   return (
-    <section className="tile span-1x3 recent-tile" aria-labelledby="rp-title">
+    <section className="tile" aria-labelledby="rp-title">
       <h2 id="rp-title" className="tile-title">
         Recently played
       </h2>
@@ -246,76 +164,44 @@ function RecentTile() {
       ) : history.data.length === 0 ? (
         <Empty>Songs you listen to will show up here.</Empty>
       ) : (
-        <ol className="recent-list" aria-label="Recently played songs">
-          {history.data.map((h, i) => {
-            const isCurrent = h.track.id === current
-            return (
-              <li key={h.track.id}>
-                <button
-                  className={`recent-item${isCurrent ? ' active' : ''}`}
-                  onClick={() => player.playList(history.data.map((x) => x.track), i)}
-                  aria-label={`Play ${h.track.title} by ${h.track.artist}`}
-                  aria-current={isCurrent || undefined}
-                >
-                  <span className="relative flex-none">
-                    <Art src={h.track.artUrl} size={40} />
-                    <span className="recent-play" aria-hidden="true">
-                      {isCurrent ? <Equalizer paused={!playing} /> : <PlayIcon size={14} />}
-                    </span>
-                  </span>
-                  <span className="min-w-0 flex-1 grid">
-                    <span className="truncate recent-title">{h.track.title}</span>
-                    <span className="truncate card-sub">{h.track.artist}</span>
-                  </span>
-                  <span className="card-sub flex-none">{timeAgo(h.playedAt)}</span>
-                </button>
-              </li>
-            )
-          })}
-        </ol>
+        <TrackList label="Recently played" tracks={history.data.map((h) => h.track)} />
       )}
     </section>
   )
 }
 
-/** Playlists beside a Discover tile. With no playlists, a small suggestion takes their place. */
-function PlaylistsRow() {
-  const playlists = usePlaylists()
-  if (playlists.isPending) return <section className="tile span-2x1" aria-busy="true" />
-  const has = !!playlists.data?.length
+function LikedAlbumsTile() {
+  const albums = useLikedAlbums()
+  const list = albums.data ?? []
   return (
-    <>
-      {has ? <PlaylistsTile /> : <NewPlaylistTile />}
-      <DiscoverTile wide={!has} />
-    </>
-  )
-}
-
-function PlaylistsTile() {
-  const playlists = usePlaylists()
-  return (
-    <section className="tile span-2x1" aria-labelledby="pl-title">
+    <section className="tile" aria-labelledby="la-title">
       <div className="section-head">
-        <h2 id="pl-title" className="tile-title" style={{ margin: 0 }}>
-          Your playlists
+        <h2 id="la-title" className="tile-title" style={{ margin: 0 }}>
+          Liked albums
         </h2>
-        <Link to="/library" className="btn btn-sm">
-          Library
-        </Link>
+        {list.length > 0 && (
+          <Link to="/liked" className="btn btn-sm">
+            All
+          </Link>
+        )}
       </div>
-      {playlists.isError ? (
-        <ErrorState error={playlists.error} />
+      {albums.isPending ? (
+        <Loading />
+      ) : list.length === 0 ? (
+        <p className="tile-sub">
+          <HeartIcon size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Like an album from its page and it shows up here.
+        </p>
       ) : (
-        <ul className="playlist-strip list-none m-0 p-0">
-          {(playlists.data ?? []).slice(0, 6).map((pl) => (
-            <li key={pl.id}>
-              <Link to={`/playlist/${pl.id}`} className="menu-item" style={{ textDecoration: 'none', minHeight: 44 }}>
-                <Art src={pl.artUrl} size={32} />
-                <span className="min-w-0">
-                  <span className="truncate block" style={{ fontWeight: 600 }}>
-                    {pl.name}
+        <ul className="list-none m-0 p-0 grid gap-1 side-list">
+          {list.slice(0, 6).map((a) => (
+            <li key={a.id}>
+              <Link to={`/album/${a.id}`} className="recent-item" style={{ textDecoration: 'none' }}>
+                <Art src={a.artUrl} size={44} />
+                <span className="min-w-0 grid">
+                  <span className="truncate recent-title" title={a.title}>
+                    {a.title}
                   </span>
-                  <span className="card-sub">{plural(pl.trackCount, 'song')}</span>
+                  <span className="truncate card-sub">{[a.artist, a.year].filter(Boolean).join(' · ')}</span>
                 </span>
               </Link>
             </li>
@@ -326,51 +212,40 @@ function PlaylistsTile() {
   )
 }
 
-function NewPlaylistTile() {
-  const navigate = useNavigate()
-  const create = async () => {
-    try {
-      const pl = await api.library.createPlaylist('New playlist')
-      invalidatePlaylists()
-      navigate(`/playlist/${pl.id}`)
-    } catch (err) {
-      toast.error(errorMessage(err))
-    }
-  }
+function PlaylistsTile() {
+  const playlists = usePlaylists()
+  const list = playlists.data ?? []
   return (
-    <section className="tile" aria-labelledby="np-suggest">
-      <PlusIcon size={28} />
-      <h2 id="np-suggest" className="tile-title" style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)' }}>
-        Make a playlist
-      </h2>
-      <p className="tile-sub">Collect songs you love, or import one from YouTube in Library.</p>
-      <button className="btn btn-primary mt-auto" onClick={() => void create()}>
-        <PlusIcon size={14} /> New playlist
-      </button>
-    </section>
-  )
-}
-
-function DiscoverTile({ wide }: { wide: boolean }) {
-  const feed = useQuery({ queryKey: ['discover', 'feed'], queryFn: () => api.discover.feed(false), staleTime: 60_000 })
-  const mix = feed.data?.mix ?? []
-  const arts = mix.map((t) => t.artUrl).filter(Boolean).slice(0, wide ? 6 : 3)
-  return (
-    <Link to="/discover" className={`tile tile-secondary${wide ? ' span-2x1' : ''}`} style={{ textDecoration: 'none' }}>
-      <CompassIcon size={28} />
-      <h2 className="tile-title" style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)' }}>
-        Discover
-      </h2>
-      <p className="tile-sub discover-tile-sub">
-        {mix.length ? `${plural(mix.length, 'new song')} picked for you` : 'New music based on what you like'}
-      </p>
-      {arts.length > 0 && (
-        <div className="discover-stack mt-auto" aria-hidden="true">
-          {arts.map((a, i) => (
-            <Art key={i} src={a} size={44} />
+    <section className="tile" aria-labelledby="pl-title">
+      <div className="section-head">
+        <h2 id="pl-title" className="tile-title" style={{ margin: 0 }}>
+          Playlists
+        </h2>
+        <Link to="/playlists" className="btn btn-sm">
+          {list.length ? 'All' : <><PlusIcon size={14} /> New</>}
+        </Link>
+      </div>
+      {playlists.isPending ? (
+        <Loading />
+      ) : list.length === 0 ? (
+        <p className="tile-sub">Make one, or import one from YouTube, Spotify, Apple Music or Deezer.</p>
+      ) : (
+        <ul className="list-none m-0 p-0 grid gap-1 side-list">
+          {list.slice(0, 8).map((pl) => (
+            <li key={pl.id}>
+              <Link to={`/playlist/${pl.id}`} className="recent-item" style={{ textDecoration: 'none' }}>
+                <Art src={pl.artUrl} size={44} />
+                <span className="min-w-0 grid">
+                  <span className="truncate recent-title" title={pl.name}>
+                    {pl.name}
+                  </span>
+                  <span className="truncate card-sub">{plural(pl.trackCount, 'song')}</span>
+                </span>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </Link>
+    </section>
   )
 }

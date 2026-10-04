@@ -4,6 +4,7 @@ import { DEFAULT_EQ, type EqState } from '@shared/eq'
 import type { ResolverHealth, Settings } from '@shared/types'
 import { db } from '../context'
 import { clearSearches, recentSearches, recordSearch } from '../db/discover'
+import * as albums from '../db/albums'
 import * as feedback from '../db/feedback'
 import * as playlists from '../db/playlists'
 import { getSettings, getState, setSettings, setState } from '../db/settings'
@@ -88,7 +89,9 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         feedback.recordPlay(db(), e)
       },
       history: async (limit) => feedback.history(db(), limit),
-      topPlayed: async (days, limit) => feedback.topPlayed(db(), days, limit)
+      topPlayed: async (days, limit) => feedback.topPlayed(db(), days, limit),
+      likedAlbums: async () => albums.likedAlbums(db()),
+      setAlbumLiked: async (album, liked) => albums.setAlbumLiked(db(), album, liked)
     },
     radio: {
       stations: async () => stations.listStations(db()),

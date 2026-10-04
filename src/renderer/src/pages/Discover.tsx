@@ -105,77 +105,76 @@ function ColdStart() {
 
 function FeedView({ feed, stagger }: { feed: DiscoverFeed; stagger: boolean }) {
   const nothing = feed.mix.length === 0 && feed.shelves.length === 0 && feed.artists.length === 0
+  if (nothing) {
+    return (
+      <Empty>
+        Couldn’t find recommendations right now. Check your connection and press Refresh. A Last.fm API key in Settings also widens the
+        picks.
+      </Empty>
+    )
+  }
   return (
-    <>
-      {nothing ? (
-        <Empty>
-          Couldn’t find recommendations right now. Check your connection and press Refresh. A Last.fm API key in Settings
-          also widens the picks.
-        </Empty>
-      ) : (
-        <div className="charts-layout">
-          <MixTile mix={feed.mix} stagger={stagger} />
-          <div className="grid gap-4 content-start">
-            {feed.artists.length > 0 && <ArtistsTile artists={feed.artists} />}
-            {feed.tags.length > 0 && <TagsTile tags={feed.tags} />}
-            <SearchesTile />
+    <div className="stack">
+      <MixHero mix={feed.mix} />
+      {feed.mix.length > 0 && (
+        <section className="tile" aria-labelledby="mix-title">
+          <h2 id="mix-title" className="tile-title">
+            In your mix
+          </h2>
+          <div className={stagger ? 'rise-stagger' : undefined}>
+            <TrackList label="Your Discover Mix" tracks={feed.mix} />
           </div>
-        </div>
+        </section>
       )}
+      {feed.artists.length > 0 && <ArtistsTile artists={feed.artists} />}
       {feed.shelves.map((s) => (
         <Shelf key={s.id} shelf={s} />
       ))}
-    </>
+      <YourSoundTile tags={feed.tags} />
+    </div>
   )
 }
 
-function MixTile({ mix, stagger }: { mix: DiscoverFeed['mix']; stagger: boolean }) {
+/** The mix, presented like Home's Now Playing card. */
+function MixHero({ mix }: { mix: DiscoverFeed['mix'] }) {
   return (
-    <section className="tile" aria-labelledby="mix-title">
-      <div className="section-head">
-        <div className="flex items-center gap-3 min-w-0">
-          <Collage arts={mix.slice(0, 4).map((t) => t.artUrl)} />
-          <div className="min-w-0">
-            <h2 id="mix-title" className="section-title">
-              Your Discover Mix
-            </h2>
-            <p className="tile-sub">{plural(mix.length, 'song')} you haven’t played yet</p>
+    <section className="tile tile-primary now-playing" aria-labelledby="mix-hero">
+      <div className="flex h-full items-center gap-5">
+        <Collage arts={mix.slice(0, 4).map((t) => t.artUrl)} />
+        <div className="min-w-0 flex-1 grid grid-cols-1 gap-1">
+          <span className="eyebrow">Your Discover Mix</span>
+          <h2 id="mix-hero" className="now-title">
+            {mix.length ? `${plural(mix.length, 'song')} you haven’t played yet` : 'No new songs this time'}
+          </h2>
+          <p className="tile-sub">Picked from your likes, playlists, searches and plays. Each one says why.</p>
+          <div className="row mt-2">
+            <button className="btn btn-dark" disabled={!mix.length} onClick={() => player.playList(mix, 0, { shuffle: false })}>
+              <PlayIcon size={14} /> Play
+            </button>
+            <button className="btn" disabled={!mix.length} onClick={() => player.playList(mix, 0, { shuffle: true })}>
+              <ShuffleIcon size={14} /> Shuffle
+            </button>
+            <button
+              className="btn"
+              disabled={!mix.length}
+              onClick={() => void saveAsPlaylist(`Discover Mix · ${new Date().toLocaleDateString()}`, mix)}
+              title="Save this mix as a playlist"
+            >
+              <PlusIcon size={14} /> Save
+            </button>
           </div>
         </div>
-        <div className="row">
-          <button className="btn btn-primary" disabled={!mix.length} onClick={() => player.playList(mix, 0, { shuffle: false })}>
-            <PlayIcon size={14} /> Play
-          </button>
-          <button className="btn" disabled={!mix.length} onClick={() => player.playList(mix, 0, { shuffle: true })}>
-            <ShuffleIcon size={14} /> Shuffle
-          </button>
-          <button
-            className="btn"
-            disabled={!mix.length}
-            onClick={() => void saveAsPlaylist(`Discover Mix · ${new Date().toLocaleDateString()}`, mix)}
-            title="Save this mix as a playlist"
-          >
-            <PlusIcon size={14} /> Save
-          </button>
-        </div>
       </div>
-      {mix.length === 0 ? (
-        <Empty>No new songs found this time. Try Refresh.</Empty>
-      ) : (
-        <div className={stagger ? 'rise-stagger' : undefined}>
-          <TrackList label="Your Discover Mix" tracks={mix} />
-        </div>
-      )}
     </section>
   )
 }
 
 function Collage({ arts }: { arts: (string | undefined)[] }) {
-  if (arts.length < 4) return <Art src={arts[0]} size={64} />
+  if (arts.length < 4) return <Art src={arts[0]} size={180} className="shadow-lg" />
   return (
-    <div className="collage" aria-hidden="true">
+    <div className="collage collage-lg shadow-lg" aria-hidden="true">
       {arts.map((a, i) => (
-        <Art key={i} src={a} size={32} />
+        <Art key={i} src={a} size={89} />
       ))}
     </div>
   )
@@ -184,18 +183,16 @@ function Collage({ arts }: { arts: (string | undefined)[] }) {
 function ArtistsTile({ artists }: { artists: ArtistSummary[] }) {
   return (
     <section className="tile" aria-labelledby="try-artists">
-      <h2 id="try-artists" className="section-title" style={{ marginBottom: 'var(--space-3)' }}>
+      <h2 id="try-artists" className="tile-title">
         Artists to try
       </h2>
-      <ul className="list-none m-0 p-0 grid gap-1">
-        {artists.slice(0, 8).map((a) => (
-          <li key={a.id} className="flex items-center gap-2">
-            <Link to={`/artist/${a.id}`} className="menu-item flex-1 min-w-0" style={{ minHeight: 52 }}>
+      <ul className="list-none m-0 p-0 recent-grid">
+        {artists.slice(0, 12).map((a) => (
+          <li key={a.id} className="flex items-center gap-2 min-w-0">
+            <Link to={`/artist/${a.id}`} className="recent-item flex-1 min-w-0" style={{ textDecoration: 'none' }}>
               <Art src={a.artUrl} size={40} round />
               <span className="min-w-0 grid">
-                <span className="truncate" style={{ fontWeight: 600 }}>
-                  {a.name}
-                </span>
+                <span className="truncate recent-title">{a.name}</span>
                 {a.subtitle && <span className="card-sub truncate">{a.subtitle}</span>}
               </span>
             </Link>
@@ -214,30 +211,12 @@ function ArtistsTile({ artists }: { artists: ArtistSummary[] }) {
   )
 }
 
-function TagsTile({ tags }: { tags: string[] }) {
-  return (
-    <section className="tile" aria-labelledby="your-sound">
-      <h2 id="your-sound" className="section-title">
-        Your sound
-      </h2>
-      <p className="tile-sub" style={{ marginBottom: 'var(--space-3)' }}>
-        Genres and moods you lean towards. Pick one for a station.
-      </p>
-      <div className="chips">
-        {tags.map((t) => (
-          <button key={t} className="chip" onClick={() => void startTagRadio(t)}>
-            <RadioIcon size={14} /> {t}
-          </button>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function SearchesTile() {
+/** Genres you lean towards and what you searched, together at the bottom. */
+function YourSoundTile({ tags }: { tags: string[] }) {
   const navigate = useNavigate()
-  const searches = useQuery({ queryKey: SEARCHES_KEY, queryFn: () => api.discover.searches(8), staleTime: 0 })
-  if (!searches.data?.length) return null
+  const searches = useQuery({ queryKey: SEARCHES_KEY, queryFn: () => api.discover.searches(10), staleTime: 0 })
+  const recent = searches.data ?? []
+  if (tags.length === 0 && recent.length === 0) return null
 
   const clear = async () => {
     try {
@@ -250,25 +229,43 @@ function SearchesTile() {
   }
 
   return (
-    <section className="tile" aria-labelledby="recent-searches">
-      <div className="section-head">
-        <h2 id="recent-searches" className="section-title">
-          Recent searches
-        </h2>
-        <button className="btn btn-sm" onClick={() => void clear()} title="Forget your search history">
-          <TrashIcon size={14} /> Clear
-        </button>
-      </div>
-      <p className="tile-sub" style={{ marginBottom: 'var(--space-3)' }}>
-        Discover uses these too. They stay on this computer.
-      </p>
-      <div className="chips">
-        {searches.data.map((s) => (
-          <button key={s.query} className="chip" onClick={() => navigate(`/search?q=${encodeURIComponent(s.query)}`)}>
-            <SearchIcon size={14} /> {s.query}
-          </button>
-        ))}
-      </div>
+    <section className="tile" aria-labelledby="your-sound">
+      <h2 id="your-sound" className="tile-title">
+        Your sound
+      </h2>
+      {tags.length > 0 && (
+        <>
+          <p className="tile-sub" style={{ marginBottom: 'var(--space-2)' }}>
+            Genres and moods you lean towards. Pick one for a station.
+          </p>
+          <div className="chips">
+            {tags.map((t) => (
+              <button key={t} className="chip" onClick={() => void startTagRadio(t)}>
+                <RadioIcon size={14} /> {t}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {recent.length > 0 && (
+        <>
+          <div className="section-head" style={{ marginTop: tags.length ? 'var(--space-5)' : 0, marginBottom: 'var(--space-2)' }}>
+            <p className="tile-sub" style={{ margin: 0 }}>
+              Recent searches. Discover learns from these too; they stay on this computer.
+            </p>
+            <button className="btn btn-sm" onClick={() => void clear()} title="Forget your search history">
+              <TrashIcon size={14} /> Clear
+            </button>
+          </div>
+          <div className="chips">
+            {recent.map((s) => (
+              <button key={s.query} className="chip" onClick={() => navigate(`/search?q=${encodeURIComponent(s.query)}`)}>
+                <SearchIcon size={14} /> {s.query}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   )
 }
@@ -276,7 +273,7 @@ function SearchesTile() {
 function Shelf({ shelf }: { shelf: DiscoverShelf }) {
   const id = `shelf-${shelf.id}`
   return (
-    <section className="section" aria-labelledby={id}>
+    <section className="tile" aria-labelledby={id}>
       <div className="section-head">
         <div className="min-w-0">
           <h2 id={id} className="section-title truncate">
@@ -295,7 +292,7 @@ function Shelf({ shelf }: { shelf: DiscoverShelf }) {
           )}
         </div>
       </div>
-      <div className="card-grid">
+      <div className="card-grid shelf-row">
         {shelf.tracks.map((t, i) => (
           <TrackCard key={t.id} shelf={shelf} index={i} />
         ))}

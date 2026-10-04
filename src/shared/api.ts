@@ -1,4 +1,5 @@
 import type {
+  AlbumSummary,
   ArtistPage,
   ChartAlbum,
   ChartArtist,
@@ -62,6 +63,9 @@ export interface TuneboxApi {
     recordPlay(event: PlayEvent): Promise<void>
     history(limit?: number): Promise<HistoryEntry[]>
     topPlayed(days: number, limit: number): Promise<PlayCount[]>
+    /** Albums liked with ♥ on an album page, newest first. */
+    likedAlbums(): Promise<AlbumSummary[]>
+    setAlbumLiked(album: AlbumSummary, liked: boolean): Promise<void>
   }
   radio: {
     stations(): Promise<Station[]>
@@ -74,6 +78,7 @@ export interface TuneboxApi {
     removeArtist(stationId: number, name: string): Promise<Station>
   }
   importer: {
+    /** YouTube, YouTube Music, Spotify, Apple Music or Deezer playlist link. */
     playlist(url: string): Promise<ImportResult>
   }
   discover: {
@@ -151,7 +156,9 @@ export const API_METHODS = {
     'setLiked',
     'recordPlay',
     'history',
-    'topPlayed'
+    'topPlayed',
+    'likedAlbums',
+    'setAlbumLiked'
   ],
   radio: ['stations', 'create', 'remove', 'next', 'feedback', 'addArtist', 'removeArtist'],
   importer: ['playlist'],

@@ -14,8 +14,6 @@ type View = 'songs' | 'albums' | 'artists'
 type Filter = { kind: 'album' | 'artist'; value: string } | null
 
 const PAGE = 300
-/** The folder picker opens by itself only once per session. */
-let autoPrompted = false
 
 const primary = (artist: string) => artist.split(',')[0].trim()
 
@@ -50,21 +48,12 @@ export function Local() {
   const choose = () => run(() => api.local.chooseFolder())
   const rescan = () => run(() => api.local.scan())
 
-  // First visit with no folder: ask right away.
-  useEffect(() => {
-    if (settings.data && !settings.data.musicFolder && !autoPrompted) {
-      autoPrompted = true
-      void choose()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.data])
-
   if (settings.isPending) return <div className="page"><Loading /></div>
 
   if (!folder) {
     return (
       <div className="page">
-        <h1 className="page-title">Local files</h1>
+        <h1 className="page-title">Local Player</h1>
         <section className="tile tile-primary" style={{ maxWidth: 640 }} aria-labelledby="pick-title">
           <FolderIcon size={36} />
           <h2 id="pick-title" className="section-title" style={{ margin: 'var(--space-3) 0 var(--space-1)' }}>
@@ -87,7 +76,7 @@ export function Local() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Local files</h1>
+      <h1 className="page-title">Local Player</h1>
       <section className="tile" aria-label="Music folder" style={{ marginBottom: 'var(--space-5)' }}>
         <div className="section-head" style={{ marginBottom: 0, flexWrap: 'wrap' }}>
           <div className="min-w-0">

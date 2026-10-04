@@ -1,5 +1,5 @@
 import { isLocalId } from '@shared/api'
-import type { LocalPlaylist, StationSeed, Track } from '@shared/types'
+import type { AlbumSummary, LocalPlaylist, StationSeed, Track } from '@shared/types'
 import { player } from '../store/player'
 import { toast } from '../store/toast'
 import { api, errorMessage, invalidateLikes, invalidatePlaylists, keys, queryClient } from './queries'
@@ -41,6 +41,17 @@ export async function setLiked(track: Track, liked: boolean): Promise<void> {
   try {
     await api.library.setLiked(t, liked)
     invalidateLikes()
+  } catch (err) {
+    toast.error(errorMessage(err))
+  }
+}
+
+/** ♥ on an album: liked albums sit at the top of the Liked tab. */
+export async function setAlbumLiked(album: AlbumSummary, liked: boolean): Promise<void> {
+  try {
+    await api.library.setAlbumLiked(album, liked)
+    void queryClient.invalidateQueries({ queryKey: keys.likedAlbums })
+    toast.success(liked ? `Added “${album.title}” to Liked` : `Removed “${album.title}” from Liked`)
   } catch (err) {
     toast.error(errorMessage(err))
   }

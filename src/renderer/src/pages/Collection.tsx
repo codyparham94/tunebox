@@ -2,13 +2,13 @@ import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { Track } from '@shared/types'
 import { Art } from '../components/Art'
-import { DownloadIcon, PlayIcon, RadioIcon, ShuffleIcon, TrashIcon } from '../components/Icons'
+import { DownloadIcon, HeartFilledIcon, HeartIcon, PlayIcon, RadioIcon, ShuffleIcon, TrashIcon } from '../components/Icons'
 import { HoldButton } from '../components/HoldButton'
 import { Empty, QueryView } from '../components/States'
 import { TrackList } from '../components/TrackList'
-import { saveAsPlaylist, startPlaylistRadio, startTrackRadio } from '../lib/actions'
+import { saveAsPlaylist, setAlbumLiked, startPlaylistRadio, startTrackRadio } from '../lib/actions'
 import { plural, totalDuration } from '../lib/format'
-import { api, errorMessage, invalidatePlaylists, useAlbum, useLiked, usePlaylist, useRemotePlaylist } from '../lib/queries'
+import { api, errorMessage, invalidatePlaylists, useAlbum, useLikedAlbums, usePlaylist, useRemotePlaylist } from '../lib/queries'
 import { player } from '../store/player'
 import { toast } from '../store/toast'
 
@@ -55,6 +55,8 @@ function Header({
 export function Album() {
   const { id = '' } = useParams()
   const q = useAlbum(id)
+  const likedAlbums = useLikedAlbums()
+  const liked = !!likedAlbums.data?.some((a) => a.id === id)
   return (
     <div className="page">
       <QueryView query={q}>
@@ -68,8 +70,20 @@ export function Album() {
               tracks={a.tracks}
               actions={
                 <>
+                  <button
+                    className="btn"
+                    aria-pressed={liked}
+                    onClick={() =>
+                      void setAlbumLiked(
+                        { id, title: a.title, artist: a.artist ?? '', year: a.subtitle?.match(/\b(19|20)\d{2}\b/)?.[0], artUrl: a.artUrl },
+                        !liked
+                      )
+                    }
+                  >
+                    {liked ? <HeartFilledIcon size={16} /> : <HeartIcon size={16} />} {liked ? 'Liked' : 'Like'}
+                  </button>
                   <button className="btn" onClick={() => void saveAsPlaylist(a.title, a.tracks)}>
-                    <DownloadIcon size={16} /> Save to library
+                    <DownloadIcon size={16} /> Save as playlist
                   </button>
                   {a.tracks[0] && (
                     <button className="btn" onClick={() => void startTrackRadio(a.tracks[0])}>
@@ -105,7 +119,7 @@ export function RemotePlaylist() {
               tracks={p.tracks}
               actions={
                 <button className="btn" onClick={() => void saveAsPlaylist(p.title, p.tracks)}>
-                  <DownloadIcon size={16} /> Save to library
+                  <DownloadIcon size={16} /> Save to Playlists
                 </button>
               }
             />
@@ -175,7 +189,7 @@ export function Playlist() {
                     label={`Delete ${p.name}`}
                     onConfirm={async () => {
                       await mutate(() => api.library.deletePlaylist(id))
-                      navigate('/library')
+                      navigate('/playlists')
                     }}
                   >
                     <TrashIcon size={16} /> Hold to delete
@@ -198,28 +212,6 @@ export function Playlist() {
                     onRemove={(i) => void mutate(() => api.library.removeTrack(id, i))}
                   />
                 </>
-              )}
-            </section>
-          </>
-        )}
-      </QueryView>
-    </div>
-  )
-}
-
-export function Liked() {
-  const q = useLiked()
-  return (
-    <div className="page">
-      <QueryView query={q}>
-        {(tracks) => (
-          <>
-            <Header kind="Library" title={<h1 className="hero-title m-0">Liked songs</h1>} tracks={tracks} />
-            <section className="section">
-              {tracks.length === 0 ? (
-                <Empty>Tap the ♥ on any song (or 👍 in the player) and it lands here.</Empty>
-              ) : (
-                <TrackList label="Liked songs" tracks={tracks} />
               )}
             </section>
           </>

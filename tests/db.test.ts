@@ -21,6 +21,7 @@ import { HALF_LIFE_MS } from '../src/main/radio/affinity'
 import { MIGRATIONS } from '../src/main/db/schema'
 import { clearLocal, listLocal, localIndex, removeLocal, upsertLocal, type LocalTrackInput } from '../src/main/db/localTracks'
 import { audioUrl, isLocalId } from '../src/shared/api'
+import { likedAlbums, setAlbumLiked } from '../src/main/db/albums'
 
 const t = (id: string, artist = 'Artist', title = `Song ${id}`): Track => ({ id, title, artist, duration: 200 })
 
@@ -167,5 +168,25 @@ describe('local tracks', () => {
 
   it('keeps YouTube ids on the track protocol', () => {
     expect(audioUrl('dQw4w9WgXcQ')).toBe('tunebox-audio://track/dQw4w9WgXcQ')
+  })
+})
+
+describe('liked albums', () => {
+  const album = { id: 'MPREb_abc', title: 'Rumours', artist: 'Fleetwood Mac', year: '1977', artUrl: 'https://example.com/a.jpg' }
+
+  it('likes, lists newest first, and unlikes', () => {
+    setAlbumLiked(db, album, true)
+    setAlbumLiked(db, { id: 'MPREb_def', title: 'Blonde', artist: 'Frank Ocean' }, true)
+    expect(likedAlbums(db).map((a) => a.id)).toEqual(['MPREb_def', 'MPREb_abc'])
+    expect(likedAlbums(db)[1]).toEqual(album)
+    setAlbumLiked(db, album, false)
+    expect(likedAlbums(db).map((a) => a.id)).toEqual(['MPREb_def'])
+  })
+
+  it('re-liking keeps one row', () => {
+    setAlbumLiked(db, album, true)
+    setAlbumLiked(db, { ...album, title: 'Rumours (Remastered)' }, true)
+    expect(likedAlbums(db)).toHaveLength(1)
+    expect(likedAlbums(db)[0].title).toBe('Rumours (Remastered)')
   })
 })

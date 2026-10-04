@@ -188,9 +188,14 @@ export interface ResolverHealth {
   error?: string
 }
 
+export type PlaylistSource = 'youtube' | 'spotify' | 'apple' | 'deezer'
+
 export interface ImportProgress {
   title?: string
+  /** songs read so far (YouTube), or matched so far (other services) */
   fetched: number
+  /** other services: how many songs are being matched to YouTube */
+  total?: number
   done: boolean
 }
 
@@ -198,6 +203,11 @@ export interface ImportResult {
   playlistId: number
   name: string
   count: number
+  source: PlaylistSource
+  /** songs that couldn't be found on YouTube and were left out */
+  skipped: number
+  /** Spotify only shares the first 100 songs of a playlist without signing in */
+  truncated?: boolean
 }
 
 export type OsCommand = 'playPause' | 'next' | 'prev' | 'thumbUp' | 'thumbDown' | 'show'

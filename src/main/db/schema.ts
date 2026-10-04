@@ -131,5 +131,16 @@ export const MIGRATIONS: string[] = [
   `
   -- Extra artists the user added to a station to widen it (JSON array of names).
   ALTER TABLE stations ADD COLUMN artists_json TEXT;
+  `,
+  `
+  -- Albums the user liked (♥ on an album page). id is the YouTube Music album browse id.
+  CREATE TABLE liked_albums (
+    id       TEXT PRIMARY KEY,
+    title    TEXT NOT NULL,
+    artist   TEXT NOT NULL,
+    year     TEXT,
+    art_url  TEXT,
+    liked_at INTEGER NOT NULL
+  );
   `
 ]
