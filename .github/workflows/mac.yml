@@ -1,13 +1,11 @@
 # Builds the macOS .dmg on GitHub's Mac runners (it can't be built on Windows).
 # - When a release is published: attaches Tunebox-<version>-mac.dmg to that release.
-# - Pushes to the `mac` branch (and manual runs): uploads the .dmg as a workflow artifact to try out.
+# - Manual runs (Actions → macOS build → Run workflow): uploads the .dmg as an artifact to try out.
 name: macOS build
 
 on:
   release:
     types: [published]
-  push:
-    branches: [mac]
   workflow_dispatch:
 
 permissions:
