@@ -17,7 +17,10 @@ let send: (cmd: OsCommand) => void = () => {}
 function trayImage(): Electron.NativeImage {
   const img = nativeImage.createEmpty()
   for (const [scaleFactor, file] of [[1, tray16], [1.25, tray20], [1.5, tray24], [2, tray32]] as const) {
-    img.addRepresentation({ scaleFactor, buffer: nativeImage.createFromPath(file).toPNG() })
+    const rep = nativeImage.createFromPath(file)
+    // A missing file would leave a blank slot in the tray, so skip it and say so.
+    if (rep.isEmpty()) console.warn(`[tray] missing icon ${file}`)
+    else img.addRepresentation({ scaleFactor, buffer: rep.toPNG() })
   }
   return img
 }

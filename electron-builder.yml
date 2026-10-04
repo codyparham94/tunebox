@@ -6,6 +6,8 @@ directories:
 files:
   - out/**
   - package.json
+  # Window and tray icons, loaded at runtime from ../../resources relative to out/main.
+  - resources/*.png
   - '!**/*.map'
 extraResources:
   - from: resources/bin

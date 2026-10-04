@@ -12,6 +12,7 @@ import { getSettings } from './db/settings'
 import { checkResolvers, runSmoke } from './health'
 import { registerIpc } from './ipc'
 import { setGlobalMediaKeys } from './os/mediaKeys'
+import { createThumbar } from './os/thumbar'
 import { createTray, showWindow } from './os/tray'
 import { startUpdater } from './os/updater'
 import { loadWindowState, trackWindowState } from './os/windowState'
@@ -162,6 +163,7 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     registerIpc({ getHealth: () => health, runHealthCheck, onSettingsChanged, openEqWindow }, () => win?.webContents)
     win = createWindow()
     createTray(() => win, send)
+    createThumbar(win, send)
     onSettingsChanged(getSettings(db))
     win.webContents.once('did-finish-load', () => void runHealthCheck())
     startUpdater((status) => win?.webContents.send(EVENT.update, status))

@@ -169,6 +169,8 @@ export interface Settings {
   theme: ThemeSetting
   closeToTray: boolean
   globalMediaKeys: boolean
+  /** when the queue ends, keep playing with Discover picks */
+  autoplay: boolean
   volume: number
   /** local music folder; empty until the user picks one */
   musicFolder: string

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { audioUrl } from '@shared/api'
-import type { RadioTrack, Station, Track } from '@shared/types'
+import type { DiscoverFeed, RadioTrack, Settings, Station, Track } from '@shared/types'
 import { api, errorMessage, invalidateLikes, keys, queryClient } from '../lib/queries'
 import { connectEq } from '../lib/eqEngine'
 import { toast } from './toast'
@@ -123,6 +123,7 @@ function afterStart(): void {
   const upcoming = s.queue[s.index + 1]
   if (upcoming?.id) void api.system.prefetch(upcoming.id)
   void refillStation()
+  void refillAutoplay()
   reportNowPlaying()
 }
 
@@ -134,16 +135,8 @@ async function refillStation(): Promise<void> {
   try {
     const tracks = await api.radio.next(stationId, 5)
     if (get().station?.id !== stationId) return
-    const start = get().queue.length
-    set({ queue: [...get().queue, ...tracks.map(withQid)] })
     if (tracks.length === 0) toast.info('This station ran out of new songs for now.')
-    if (advanceAfterRefill && tracks.length) {
-      advanceAfterRefill = false
-      void startAt(start, 'replace')
-    } else {
-      const nextUp = get().queue[get().index + 1]
-      if (nextUp?.id) void api.system.prefetch(nextUp.id)
-    }
+    appendRefill(tracks)
   } catch (err) {
     advanceAfterRefill = false
     set({ loading: false })
@@ -151,6 +144,80 @@ async function refillStation(): Promise<void> {
   } finally {
     set({ refilling: false })
   }
+}
+
+/** Adds refill picks to the end of the queue, starting them if playback was waiting on them. */
+function appendRefill(tracks: RadioTrack[]): void {
+  const start = get().queue.length
+  set({ queue: [...get().queue, ...tracks.map(withQid)] })
+  if (advanceAfterRefill) {
+    advanceAfterRefill = false
+    if (tracks.length) return void startAt(start, 'replace')
+    set({ loading: false })
+  }
+  const nextUp = get().queue[get().index + 1]
+  if (nextUp?.id) void api.system.prefetch(nextUp.id)
+}
+
+/* ---------- autoplay: keep going with Discover picks when the queue runs out ---------- */
+
+const AUTOPLAY_BATCH = 10
+
+const autoplayOn = (): boolean => queryClient.getQueryData<Settings>(keys.settings)?.autoplay ?? true
+const songKey = (t: Track): string => `${t.title.toLowerCase()}|${primaryArtist(t.artist)}`
+
+/** Only outside stations, with repeat off, once the last queued song is playing. */
+function autoplayDue(s: PlayerState = get()): boolean {
+  return !s.station && s.repeat === 'off' && autoplayOn() && s.queue.length > 0 && s.index >= s.queue.length - 1
+}
+
+async function refillAutoplay(): Promise<void> {
+  const s = get()
+  if (s.refilling || !autoplayDue(s)) return
+  const anchor = currentTrack(s)?.qid ?? s.queue[s.queue.length - 1].qid
+  set({ refilling: true })
+  try {
+    const tracks = await autoplayPicks(s.queue)
+    // The user started something else meanwhile.
+    if (get().station || !get().queue.some((q) => q.qid === anchor)) return
+    if (tracks.length === 0) toast.info('Autoplay couldn’t find more songs right now.')
+    appendRefill(tracks)
+  } catch (err) {
+    advanceAfterRefill = false
+    set({ loading: false })
+    toast.error(errorMessage(err))
+  } finally {
+    set({ refilling: false })
+  }
+}
+
+/** Discover's mix and shelves, skipping anything already in the queue; today's charts as a last resort. */
+async function autoplayPicks(queue: QueueItem[]): Promise<RadioTrack[]> {
+  const seen = new Set(queue.flatMap((q) => (q.id ? [q.id, songKey(q)] : [songKey(q)])))
+  const fresh = <T extends Track>(ts: T[]): T[] => ts.filter((t) => !(t.id && seen.has(t.id)) && !seen.has(songKey(t)))
+  const fromFeed = (feed: DiscoverFeed): RadioTrack[] => [
+    ...shuffled(fresh(feed.mix)),
+    ...shuffled(fresh(feed.shelves.flatMap((sh) => sh.tracks)))
+  ]
+
+  let feed = await api.discover.feed(false)
+  let picks = fromFeed(feed)
+  const total = Object.values(feed.signals).reduce((a, b) => a + b, 0)
+  if (picks.length < AUTOPLAY_BATCH && total > 0) {
+    // Used up the cached picks: build a fresh set.
+    feed = await api.discover.feed(true)
+    queryClient.setQueryData(['discover', 'feed'], feed)
+    picks = fromFeed(feed)
+  }
+  if (picks.length === 0) {
+    const charts = await api.catalog.charts(undefined, 50).catch(() => [] as Track[])
+    picks = shuffled(fresh(charts)).map((t) => ({ ...t, reason: 'Popular right now' }))
+  }
+  const unique = new Set<string>()
+  return picks
+    .filter((t) => !unique.has(songKey(t)) && !!unique.add(songKey(t)))
+    .slice(0, AUTOPLAY_BATCH)
+    .map((t) => ({ ...t, reason: t.reason ? `Autoplay · ${t.reason}` : 'Autoplay' }))
 }
 
 audio.addEventListener('play', () => {
@@ -263,7 +330,15 @@ function next(kind: EndKind = 'skip'): void {
       return
     }
     if (s.repeat === 'all' && s.queue.length > 0) i = 0
-    else {
+    else if (autoplayDue(s)) {
+      finalize(kind)
+      advanceAfterRefill = true
+      audio.pause()
+      set({ loading: true })
+      // Usually already queued while the last song played; this covers a failed or skipped-past refill.
+      void refillAutoplay()
+      return
+    } else {
       finalize(kind)
       audio.pause()
       audio.currentTime = 0

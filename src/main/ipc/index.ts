@@ -13,6 +13,7 @@ import { clearLocal, listLocal } from '../db/localTracks'
 import { discoverFeed, staleDiscover } from '../discover/feed'
 import { importPlaylist } from '../import/importer'
 import { scanFolder } from '../local/library'
+import { updateThumbar } from '../os/thumbar'
 import { updateTray } from '../os/tray'
 import { checkForUpdate, installUpdate, updateStatus } from '../os/updater'
 import { ensureTags, forgetStation, nextTracks, retuneStation, stationFeedback } from '../radio/station'
@@ -174,7 +175,10 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         void deps.runHealthCheck()
         return msg
       },
-      nowPlaying: async (s) => updateTray(s),
+      nowPlaying: async (s) => {
+        updateTray(s)
+        updateThumbar(s)
+      },
       appVersion: async () => app.getVersion(),
       checkUpdate: () => checkForUpdate(),
       updateStatus: async () => updateStatus(),

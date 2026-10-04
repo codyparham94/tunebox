@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   closeToTray: true,
   globalMediaKeys: false,
+  autoplay: true,
   volume: 0.8,
   musicFolder: ''
 }

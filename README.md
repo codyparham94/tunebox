@@ -14,14 +14,14 @@ A desktop music player for Windows. Search a big catalog, stream audio from YouT
 - **Local files:** pick a music folder and play your own MP3, M4A, FLAC, WAV, OGG and Opus files, browsable by song, album or artist, with embedded cover art. Rescans only re-read changed files.
 - **Discover:** a page of songs and artists you haven’t played yet, built from your likes, playlists, searches and listening. A 25-song mix (each with the reason it was picked), shelves like “Because you searched…”, related artists to try, and your top genres. Search history stays local and can be cleared.
 - **Charts:** Top 40 for any genre, top albums and artists (from Deezer), and your own most-played songs.
-- **Playback:** audio-only streams, seeking, queue with drag-reorder, shuffle and repeat. Shows up in the Windows media flyout and responds to hardware media keys.
+- **Playback:** audio-only streams, seeking, queue with drag-reorder, shuffle and repeat. Autoplay keeps going with Discover picks when the queue runs out (Settings → Playback). Shows up in the Windows media flyout and responds to hardware media keys.
 - **Library:** local playlists (create, rename, reorder, delete), liked songs, listening history. Everything is stored in a local SQLite file, with no account and no login.
 - **Radio:** seed a station from a song, artist, playlist or genre. Candidates come from Last.fm (similar tracks and artists, tag charts) and YouTube Music’s own radio, and a local scoring model ranks them. 👎 bans the track from that station and pushes the artist out; 👍 pulls in more like it. The player shows why each song was picked. Add up to 10 more artists to any station to widen its mix.
 - **Import:** paste a public YouTube or YouTube Music playlist URL.
 - **Updates:** checks GitHub Releases on startup and every few hours. When a new version is out it asks first, then downloads, installs and restarts. **Settings → Updates** checks by hand.
 - **Equalizer:** 10-band EQ with preamp and a live response curve, 26 presets, saved custom presets. Lives in Settings and pops out into its own window (also from the sliders button in the player).
 - **Themes:** 26 light and dark themes adapted from design skills and [awesome-design-md](https://github.com/VoltAgent/awesome-design-md), with a Light/Dark filter.
-- **System:** tray menu (play/pause, next, 👍/👎), close to tray, optional global media-key fallback, remembered window position.
+- **System:** tray menu (play/pause, next, 👍/👎), previous/play/next buttons on the taskbar thumbnail, close to tray, optional global media-key fallback, remembered window position.
 
 ## Development setup
 
@@ -70,7 +70,7 @@ Main process
   ├─ radio/     candidates.ts, scorer.ts, station.ts, affinity.ts
   ├─ discover/  feed.ts (builds the Discover page), rank.ts
   ├─ db/        node:sqlite schema, migrations, repositories
-  └─ os/        tray, media-key fallback, window state
+  └─ os/        tray, taskbar buttons, media-key fallback, window state
 ```
 
 - **Audio** plays through one `<audio>` element pointed at `tunebox-audio://track/<videoId>`. The main process resolves a stream URL and proxies it in small range chunks, because googlevideo rejects large range requests. Seeking works through HTTP Range.

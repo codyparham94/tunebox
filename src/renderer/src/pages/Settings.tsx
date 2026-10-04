@@ -53,6 +53,12 @@ export function Settings() {
               </label>
             ))}
           </fieldset>
+          <Toggle
+            label="Autoplay when the queue ends"
+            hint="Keeps the music going with picks from Discover. Doesn’t apply to stations or when repeat is on."
+            checked={s.autoplay}
+            onChange={(v) => void save({ autoplay: v })}
+          />
         </section>
 
         <section className="tile" aria-labelledby="lf2-title">
