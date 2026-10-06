@@ -88,18 +88,20 @@ export function scoreCandidates(candidates: Candidate[], ctx: ScoreContext): Sco
 export function pickTracks(scored: Scored[], n: number, recentArtists: string[], rng: () => number = Math.random): Scored[] {
   const remaining = [...scored]
   const artists = recentArtists.map(artistKey)
+  // Normalising a name is regex-heavy; do it once per candidate, not once per candidate per pick.
+  const keyOf = new Map(scored.map((s) => [s, artistKey(s.candidate.artist)]))
   const picks: Scored[] = []
   while (picks.length < n && remaining.length > 0) {
     const window = new Set(artists.slice(-ARTIST_REPEAT_WINDOW))
     const ranked = remaining
-      .map((s) => ({ s, score: s.base - (window.has(artistKey(s.candidate.artist)) ? ARTIST_REPEAT_PENALTY : 0) }))
+      .map((s) => ({ s, score: s.base - (window.has(keyOf.get(s)!) ? ARTIST_REPEAT_PENALTY : 0) }))
       .sort((a, b) => b.score - a.score)
     const explore = ranked.length > 1 && rng() < EXPLORATION
     const lower = ranked.slice(Math.ceil(ranked.length / 2))
     const choice = explore && lower.length > 0 ? lower[Math.floor(rng() * lower.length)] : ranked[0]
     picks.push({ ...choice.s, score: choice.score, explored: explore })
     remaining.splice(remaining.indexOf(choice.s), 1)
-    artists.push(artistKey(choice.s.candidate.artist))
+    artists.push(keyOf.get(choice.s)!)
   }
   return picks
 }

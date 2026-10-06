@@ -13,6 +13,7 @@ async function get(path: string): Promise<any> {
   const data = (await res.json()) as any
   if (data?.error) throw new Error(`Deezer ${path}: ${data.error.message}`)
   cache.set(path, { at: Date.now(), data })
+  if (cache.size > 200) cache.delete(cache.keys().next().value!)
   return data
 }
 

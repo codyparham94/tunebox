@@ -5,7 +5,7 @@ export type Db = DatabaseSync
 
 export function openDb(file: string): Db {
   const db = new DatabaseSync(file)
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;')
+  db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA foreign_keys = ON;')
   migrate(db)
   return db
 }

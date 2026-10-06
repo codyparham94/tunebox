@@ -52,9 +52,15 @@ export function showWindow(w: BrowserWindow | null): void {
   w.focus()
 }
 
+let shown = ''
+
 function render(): void {
   if (!tray) return
   const label = state.title ? `${state.title} — ${state.artist ?? ''}` : 'Nothing playing'
+  // Rebuilding the native menu is the expensive part; skip it when nothing in it changed.
+  const key = `${label}|${state.playing}`
+  if (key === shown) return
+  shown = key
   tray.setToolTip(state.title ? `Tunebox: ${label}`.slice(0, 127) : 'Tunebox')
   tray.setContextMenu(
     Menu.buildFromTemplate([

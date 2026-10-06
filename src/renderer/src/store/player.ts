@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 import { audioUrl } from '@shared/api'
 import type { DiscoverFeed, RadioTrack, Settings, Station, Track } from '@shared/types'
 import { api, errorMessage, invalidateLikes, keys, queryClient } from '../lib/queries'
@@ -45,10 +46,16 @@ export const usePlayer = create<PlayerState>(() => ({
   thumbs: {}
 }))
 
+/**
+ * Everything but `position`, which updates about 4 times a second during playback.
+ * Components that don't show the playback time use this so they don't re-render with it.
+ */
+export const usePlayerState = () => usePlayer(useShallow(({ position: _, ...rest }: PlayerState) => rest))
+
 const get = usePlayer.getState
 const set = usePlayer.setState
 
-export const currentTrack = (s: PlayerState = get()): QueueItem | undefined => s.queue[s.index]
+export const currentTrack = (s: Pick<PlayerState, 'queue' | 'index'> = get()): QueueItem | undefined => s.queue[s.index]
 
 /* ---------- audio engine ---------- */
 

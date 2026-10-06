@@ -1,4 +1,4 @@
-import { player, usePlayer } from '../store/player'
+import { player, usePlayerState } from '../store/player'
 import { useUi } from '../store/ui'
 import { CloseIcon } from './Icons'
 import { Empty } from './States'
@@ -6,7 +6,7 @@ import { TrackList } from './TrackList'
 
 /** Stays mounted briefly after closing so it can leave the way it came in. */
 export function QueuePanel({ open }: { open: boolean }) {
-  const { queue, index, station, refilling } = usePlayer()
+  const { queue, index, station, refilling } = usePlayerState()
   const toggleQueue = useUi((s) => s.toggleQueue)
   const upcoming = queue.length - index - 1
 

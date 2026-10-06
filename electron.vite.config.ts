@@ -20,6 +20,8 @@ export default defineConfig({
     resolve: {
       alias: { '@shared': resolve('src/shared'), '@': resolve('src/renderer/src') }
     },
-    plugins: [react(), tailwindcss()]
+    plugins: [react(), tailwindcss()],
+    // electron-vite turns minification off by default; the renderer is parsed on every launch.
+    build: { minify: true }
   }
 })

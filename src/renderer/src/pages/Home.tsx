@@ -7,7 +7,7 @@ import { plural, timeAgo } from '../lib/format'
 import { useSwapIn } from '../lib/motion'
 import { useTrackNav } from '../lib/nav'
 import { useHistory, useLikedAlbums, usePlaylists } from '../lib/queries'
-import { currentTrack, player, usePlayer } from '../store/player'
+import { currentTrack, player, usePlayer, usePlayerState } from '../store/player'
 
 export function Home() {
   return (
@@ -34,7 +34,7 @@ function greeting(): string {
 }
 
 function NowPlayingTile() {
-  const s = usePlayer()
+  const s = usePlayerState()
   const t = currentTrack(s)
   const history = useHistory(1)
   const resume = !t ? history.data?.[0] : undefined

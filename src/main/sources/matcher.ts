@@ -17,11 +17,10 @@ export interface MatchResult {
 }
 
 export const ACCEPT_CONFIDENCE = 0.6
-const VARIANT_WORDS = ['live', 'cover', 'remix', 'karaoke', 'instrumental', 'acoustic', 'sped up', 'slowed', 'nightcore', 'reverb', '8d']
-
-function hasWord(haystack: string, word: string): boolean {
-  return new RegExp(`(^|\\s)${word}(\\s|$)`).test(haystack)
-}
+/** Whole-word patterns, compiled once: they run for every candidate the matcher scores. */
+const VARIANT_WORDS = ['live', 'cover', 'remix', 'karaoke', 'instrumental', 'acoustic', 'sped up', 'slowed', 'nightcore', 'reverb', '8d'].map(
+  (word) => new RegExp(`(^|\\s)${word}(\\s|$)`)
+)
 
 function titleScore(a: string, b: string): number {
   const na = normalizeTitle(a)
@@ -57,7 +56,7 @@ export function scoreCandidate(source: MatchSource, c: MatchCandidate): number {
   const srcTitle = basicNormalize(source.title)
   const candTitle = basicNormalize(`${c.title} ${c.album ?? ''}`)
   let penalty = 0
-  for (const w of VARIANT_WORDS) if (hasWord(candTitle, w) && !hasWord(srcTitle, w)) penalty += 0.3
+  for (const w of VARIANT_WORDS) if (w.test(candTitle) && !w.test(srcTitle)) penalty += 0.3
   score -= Math.min(penalty, 0.45)
 
   return Math.max(0, Math.min(1, score))

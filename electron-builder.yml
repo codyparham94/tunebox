@@ -9,6 +9,8 @@ files:
   # Window and tray icons, loaded at runtime from ../../resources relative to out/main.
   - resources/*.png
   - '!**/*.map'
+  # Fontsource CSS lists .woff2 first; Chromium never fetches the .woff fallbacks.
+  - '!**/*.woff'
 win:
   target: nsis
   icon: resources/icon.png

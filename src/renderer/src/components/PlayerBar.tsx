@@ -4,7 +4,7 @@ import { useSwapIn } from '../lib/motion'
 import { modKey } from '../lib/platform'
 import { useTrackNav } from '../lib/nav'
 import { api, useLikedIds } from '../lib/queries'
-import { currentTrack, player, usePlayer } from '../store/player'
+import { currentTrack, player, usePlayer, usePlayerState } from '../store/player'
 import { useUi } from '../store/ui'
 import { Art } from './Art'
 import {
@@ -29,7 +29,7 @@ import {
 } from './Icons'
 
 export function PlayerBar() {
-  const s = usePlayer()
+  const s = usePlayerState()
   const t = currentTrack(s)
   const nav = useTrackNav()
   const liked = useLikedIds().data
@@ -144,22 +144,7 @@ export function PlayerBar() {
             <ThumbUpIcon size={18} />
           </button>
         </div>
-        <div className="player-seek">
-          <span className="mono text-right">{formatTime(s.position)}</span>
-          <input
-            type="range"
-            className="range"
-            min={0}
-            max={Math.max(1, duration)}
-            step={1}
-            value={Math.min(s.position, duration)}
-            onChange={(e) => player.seek(Number(e.target.value))}
-            aria-label="Seek"
-            aria-valuetext={`${formatTime(s.position)} of ${formatTime(duration)}`}
-            disabled={!t}
-          />
-          <span className="mono">{formatTime(duration)}</span>
-        </div>
+        <Seek duration={duration} disabled={!t} />
       </div>
 
       <div className="player-right">
@@ -196,5 +181,28 @@ export function PlayerBar() {
         </button>
       </div>
     </footer>
+  )
+}
+
+/** The only part of the bar that follows the playback position, so only it re-renders with it. */
+function Seek({ duration, disabled }: { duration: number; disabled: boolean }) {
+  const position = usePlayer((s) => s.position)
+  return (
+    <div className="player-seek">
+      <span className="mono text-right">{formatTime(position)}</span>
+      <input
+        type="range"
+        className="range"
+        min={0}
+        max={Math.max(1, duration)}
+        step={1}
+        value={Math.min(position, duration)}
+        onChange={(e) => player.seek(Number(e.target.value))}
+        aria-label="Seek"
+        aria-valuetext={`${formatTime(position)} of ${formatTime(duration)}`}
+        disabled={disabled}
+      />
+      <span className="mono">{formatTime(duration)}</span>
+    </div>
   )
 }

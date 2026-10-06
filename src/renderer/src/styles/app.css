@@ -566,6 +566,9 @@ img {
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
+  /* Long lists: skip layout and paint for rows off-screen. Row menus are portalled, so nothing is clipped. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 60px;
 }
 
 .track.compact {

@@ -28,6 +28,7 @@ async function call(method: string, params: Record<string, string | number>): Pr
   const data = (await res.json()) as any
   if (data?.error) throw new Error(`Last.fm ${method}: ${data.message}`)
   cache.set(url, { at: Date.now(), data })
+  if (cache.size > 500) cache.delete(cache.keys().next().value!)
   return data
 }
 
