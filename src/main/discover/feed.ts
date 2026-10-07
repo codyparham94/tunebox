@@ -1,7 +1,7 @@
 import { isLocalId } from '@shared/api'
 import type { ArtistSummary, DiscoverFeed, DiscoverSignals, RadioTrack, Track } from '@shared/types'
 import { db } from '../context'
-import { dislikedIds, knownTracks, playlistSample, recentSearches, signalCounts } from '../db/discover'
+import { dislikedIds, establishedArtists, knownTracks, playlistSample, recentSearches, signalCounts } from '../db/discover'
 import { likedTracks, readAffinity, recentPlays, topPlayed } from '../db/feedback'
 import { getState, setState } from '../db/settings'
 import { attachTags, cand, first, similarArtistsTop } from '../radio/candidates'
@@ -17,6 +17,8 @@ const MAX_AGE = 6 * 60 * 60 * 1000
 const MIX_SIZE = 25
 const SHELF_SIZE = 12
 const MIN_CONFIDENCE = 0.45
+/** Listens before an artist (or a song) shapes Discover; a single play is just a play. */
+const MIN_PLAYS = 3
 
 interface Seed {
   id: string
@@ -87,7 +89,7 @@ function pickSeeds(): Seed[] {
     })
   }
   if (seeds.length < 3) {
-    for (const { track: t } of topPlayed(d, 90, 3).filter((x) => !isLocalId(x.track.id))) {
+    for (const { track: t } of topPlayed(d, 90, 3).filter((x) => x.plays >= MIN_PLAYS && !isLocalId(x.track.id))) {
       seeds.push({
         id: `played-${t.id}`,
         title: `Because you played “${t.title}”`,
@@ -135,7 +137,8 @@ function favouriteArtists(artistAffinity: Map<string, number>): { name: string; 
   return out.slice(0, 6)
 }
 
-async function relatedArtists(artistAffinity: Map<string, number>, ex: Exclusions): Promise<ArtistSummary[]> {
+/** `heard`: every artist with any positive signal, so even a one-off play isn't suggested as new. */
+async function relatedArtists(artistAffinity: Map<string, number>, heard: Map<string, number>, ex: Exclusions): Promise<ArtistSummary[]> {
   const favourites = favouriteArtists(artistAffinity)
   const groups = await mapLimit(favourites, 3, async (a) => {
     const id = a.id ?? (await ytm.findArtistId(a.name))
@@ -144,7 +147,7 @@ async function relatedArtists(artistAffinity: Map<string, number>, ex: Exclusion
   const known = new Set([
     ...ex.artists,
     ...favourites.map((a) => artistKey(a.name)),
-    ...[...artistAffinity].filter(([, v]) => v > 0.05).map(([k]) => k)
+    ...[...heard].filter(([, v]) => v > 0.05).map(([k]) => k)
   ])
   return rankArtists(
     groups.filter((g) => !!g),
@@ -175,7 +178,10 @@ async function build(signals: DiscoverSignals): Promise<DiscoverFeed> {
 
   const d = db()
   const known = knownTracks(d)
-  const artistAffinity = readAffinity(d, 'artist_affinity', null)
+  // Dislikes always count; a liking only once the artist has been played enough (or liked).
+  const established = establishedArtists(d, MIN_PLAYS)
+  const heard = readAffinity(d, 'artist_affinity', null)
+  const artistAffinity = new Map([...heard].filter(([k, v]) => v < 0 || established.has(k)))
   const tagAffinity = readAffinity(d, 'tag_affinity', null)
   const ex: Exclusions = {
     ids: new Set([...known.ids, ...dislikedIds(d)]),
@@ -201,7 +207,7 @@ async function build(signals: DiscoverSignals): Promise<DiscoverFeed> {
   const [seedResults, extraResults, artists] = await Promise.all([
     mapLimit(seeds, 3, seedCandidates),
     mapLimit(extra, 3, (fn) => fn()),
-    relatedArtists(artistAffinity, ex).catch(() => [] as ArtistSummary[])
+    relatedArtists(artistAffinity, heard, ex).catch(() => [] as ArtistSummary[])
   ])
 
   const pool = mergeCandidates([...seedResults, ...extraResults].flatMap((r) => r ?? [])).filter((c) => isFresh(c, ex))

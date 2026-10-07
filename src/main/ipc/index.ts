@@ -1,7 +1,7 @@
 import { BrowserWindow, app, dialog, ipcMain, webContents, type WebContents } from 'electron'
 import { API_METHODS, EVENT, isLocalId, type TuneboxApi } from '@shared/api'
 import { DEFAULT_EQ, type EqState } from '@shared/eq'
-import type { ResolverHealth, Settings } from '@shared/types'
+import type { NowPlaying, OsCommand, ResolverHealth, Settings } from '@shared/types'
 import { db } from '../context'
 import { clearSearches, recentSearches, recordSearch } from '../db/discover'
 import * as albums from '../db/albums'
@@ -35,9 +35,13 @@ export interface IpcDeps {
   runHealthCheck(): Promise<ResolverHealth>
   onSettingsChanged(s: Settings): void
   openEqWindow(): void
+  setWidget(on: boolean): void
+  command(cmd: OsCommand): void
+  nowPlaying(s: NowPlaying): void
 }
 
 let eqSaveTimer: NodeJS.Timeout | undefined
+let lastNowPlaying: NowPlaying = { playing: false, inStation: false }
 
 type Handlers = { [G in keyof TuneboxApi]: TuneboxApi[G] }
 
@@ -54,6 +58,8 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         }
         return results
       },
+      searchArtists: (q) => ytm.searchArtists(q),
+      searchPlaylists: (q, source) => (source === 'deezer' ? deezer.playlists(q) : ytm.searchPlaylists(q)),
       artist: (id) => ytm.artist(id),
       album: (id) => ytm.album(id),
       remotePlaylist: (id) => ytm.playlist(id, { max: 300 }),
@@ -111,6 +117,9 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         const st = stations.removeStationArtist(db(), id, name)
         retuneStation(id)
         return st
+      },
+      rename: async (id, name) => {
+        return stations.renameStation(db(), id, name)
       }
     },
     importer: {
@@ -181,11 +190,16 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
       nowPlaying: async (s) => {
         updateTray(s)
         updateThumbar(s)
+        lastNowPlaying = s
+        deps.nowPlaying(s)
       },
+      currentNowPlaying: async () => lastNowPlaying,
       appVersion: async () => app.getVersion(),
       checkUpdate: () => checkForUpdate(),
       updateStatus: async () => updateStatus(),
-      installUpdate: () => installUpdate()
+      installUpdate: () => installUpdate(),
+      widget: async (on) => deps.setWidget(on),
+      command: async (cmd) => deps.command(cmd)
     }
   }
 }

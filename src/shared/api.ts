@@ -1,6 +1,7 @@
 import type {
   AlbumSummary,
   ArtistPage,
+  ArtistSummary,
   ChartAlbum,
   ChartArtist,
   Collection,
@@ -17,6 +18,8 @@ import type {
   OsCommand,
   PlayCount,
   PlayEvent,
+  PlaylistSearchSource,
+  RemotePlaylistSummary,
   RadioTrack,
   ResolverHealth,
   SearchEntry,
@@ -33,6 +36,10 @@ import type { EqState } from './eq'
 export interface TuneboxApi {
   catalog: {
     search(query: string): Promise<SearchResults>
+    /** Artist matches for type-ahead boxes. Not recorded as a search. */
+    searchArtists(query: string): Promise<ArtistSummary[]>
+    /** Public playlists on YouTube Music or Deezer. An empty Deezer query lists its popular playlists. */
+    searchPlaylists(query: string, source: PlaylistSearchSource): Promise<RemotePlaylistSummary[]>
     artist(id: string): Promise<ArtistPage>
     album(id: string): Promise<Collection>
     remotePlaylist(id: string): Promise<Collection>
@@ -76,6 +83,7 @@ export interface TuneboxApi {
     /** Widen a station with another artist's songs and their similar artists. */
     addArtist(stationId: number, name: string): Promise<Station>
     removeArtist(stationId: number, name: string): Promise<Station>
+    rename(stationId: number, name: string): Promise<Station>
   }
   importer: {
     /** YouTube, YouTube Music, Spotify, Apple Music or Deezer playlist link. */
@@ -109,12 +117,18 @@ export interface TuneboxApi {
     health(): Promise<ResolverHealth | null>
     updateYtdlp(): Promise<string>
     nowPlaying(state: NowPlaying): Promise<void>
+    /** The last state the player reported, for a window that opens mid-song (the widget). */
+    currentNowPlaying(): Promise<NowPlaying>
     appVersion(): Promise<string>
     /** Asks GitHub for a newer release. */
     checkUpdate(): Promise<UpdateStatus>
     updateStatus(): Promise<UpdateStatus>
     /** Downloads the update, installs it and restarts. Only after the user agrees. */
     installUpdate(): Promise<void>
+    /** Swaps the main window for the small always-on-top now-playing widget, or back. */
+    widget(on: boolean): Promise<void>
+    /** Player controls from the widget, forwarded to the main window. */
+    command(cmd: OsCommand): Promise<void>
   }
 }
 
@@ -126,6 +140,7 @@ export interface TuneboxEvents {
   onLocalScan(cb: (p: LocalScanProgress) => void): () => void
   onEq(cb: (msg: { state: EqState; clientId: string }) => void): () => void
   onUpdate(cb: (status: UpdateStatus) => void): () => void
+  onNowPlaying(cb: (state: NowPlaying) => void): () => void
 }
 
 export type WindowApi = TuneboxApi & TuneboxEvents
@@ -136,12 +151,13 @@ export const EVENT = {
   health: 'event:health',
   localScan: 'event:localScan',
   eq: 'event:eq',
-  update: 'event:update'
+  update: 'event:update',
+  nowPlaying: 'event:nowPlaying'
 } as const
 
 /** Every invokable method, grouped. The preload builds the bridge from this list. */
 export const API_METHODS = {
-  catalog: ['search', 'artist', 'album', 'remotePlaylist', 'match', 'locate', 'charts', 'chartAlbums', 'chartArtists', 'findArtist', 'findAlbum', 'genres', 'tags'],
+  catalog: ['search', 'searchArtists', 'searchPlaylists', 'artist', 'album', 'remotePlaylist', 'match', 'locate', 'charts', 'chartAlbums', 'chartArtists', 'findArtist', 'findAlbum', 'genres', 'tags'],
   library: [
     'playlists',
     'playlist',
@@ -160,13 +176,13 @@ export const API_METHODS = {
     'likedAlbums',
     'setAlbumLiked'
   ],
-  radio: ['stations', 'create', 'remove', 'next', 'feedback', 'addArtist', 'removeArtist'],
+  radio: ['stations', 'create', 'remove', 'next', 'feedback', 'addArtist', 'removeArtist', 'rename'],
   importer: ['playlist'],
   discover: ['feed', 'searches', 'clearSearches'],
   local: ['chooseFolder', 'scan', 'tracks'],
   eq: ['get', 'set', 'popout'],
   settings: ['get', 'set'],
-  system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying', 'appVersion', 'checkUpdate', 'updateStatus', 'installUpdate']
+  system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying', 'currentNowPlaying', 'appVersion', 'checkUpdate', 'updateStatus', 'installUpdate', 'widget', 'command']
 } as const satisfies { [G in keyof TuneboxApi]: readonly (keyof TuneboxApi[G])[] }
 
 export const AUDIO_SCHEME = 'tunebox-audio'

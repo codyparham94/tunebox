@@ -9,13 +9,14 @@ import {
   playlistSample,
   recentSearches,
   recordSearch,
+  establishedArtists,
   signalCounts
 } from '../src/main/db/discover'
 import { recordFeedback, recordPlay, setLiked } from '../src/main/db/feedback'
 import { createPlaylist } from '../src/main/db/playlists'
 import { capPerArtist, isFresh, rankArtists, shelfTracks, topKeys, type Exclusions } from '../src/main/discover/rank'
 import type { Candidate } from '../src/main/radio/scorer'
-import { trackKey } from '../src/main/util/text'
+import { artistKey, trackKey } from '../src/main/util/text'
 
 const t = (id: string, artist = 'Artist', title = `Song ${id}`): Track => ({ id, title, artist, duration: 200 })
 const c = (id: string, artist: string, title = `Song ${id}`): Candidate => ({
@@ -34,6 +35,27 @@ beforeEach(() => {
   db = new DatabaseSync(':memory:')
   db.exec('PRAGMA foreign_keys = ON')
   migrate(db)
+})
+
+describe('established artists', () => {
+  const play = (id: string, artist: string, listenedMs = 200_000) =>
+    recordPlay(db, { track: t(id, artist), listenedMs, completed: listenedMs >= 200_000, skipped: false, stationId: null })
+
+  it('needs several real listens, or a like, before an artist counts', () => {
+    play('a1', 'Once')
+    play('b1', 'Often')
+    play('b2', 'Often')
+    play('b1', 'often') // same artist, different case
+    play('c1', 'Skipped', 5_000)
+    play('c1', 'Skipped', 5_000)
+    play('c1', 'Skipped', 5_000)
+    setLiked(db, t('d1', 'Liked Once'), true)
+    const got = establishedArtists(db, 3)
+    expect(got.has(artistKey('Often'))).toBe(true)
+    expect(got.has(artistKey('Liked Once'))).toBe(true)
+    expect(got.has(artistKey('Once'))).toBe(false)
+    expect(got.has(artistKey('Skipped'))).toBe(false)
+  })
 })
 
 describe('search history', () => {

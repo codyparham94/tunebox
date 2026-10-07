@@ -300,7 +300,7 @@ function reportNowPlaying(): void {
   const s = get()
   const t = currentTrack(s)
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s.playing ? 'playing' : 'paused'
-  void api.system.nowPlaying({ title: t?.title, artist: t?.artist, playing: s.playing, inStation: !!s.station })
+  void api.system.nowPlaying({ title: t?.title, artist: t?.artist, artUrl: t?.artUrl, playing: s.playing, inStation: !!s.station })
 }
 
 if ('mediaSession' in navigator) {

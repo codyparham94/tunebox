@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react'
 import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
 import { AddToPlaylistDialog } from './components/AddToPlaylistDialog'
 import { NavRail } from './components/NavRail'
@@ -7,7 +7,7 @@ import { QueuePanel } from './components/QueuePanel'
 import { Toasts } from './components/Toasts'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { keys, queryClient, useSettings } from './lib/queries'
-import { useMotion } from './lib/motion'
+import { motionReduced, useMotion } from './lib/motion'
 import { hasMod, isMac } from './lib/platform'
 import { useTheme } from './lib/themes'
 import { eq } from './store/eq'
@@ -46,6 +46,7 @@ function Shell() {
   useMotion(settings?.motion ?? 'system')
   useKeyboard()
   useOsEvents()
+  useWindowSize()
 
   useEffect(() => {
     void eq.load()
@@ -101,6 +102,33 @@ function Shell() {
       <Toasts />
     </div>
   )
+}
+
+/** Widths where the layout changes; the matching rules live in app.css under :root[data-size~='ltN']. */
+const BREAKPOINTS = [1180, 1100, 900, 640]
+const sizeTokens = (w: number) => BREAKPOINTS.filter((b) => w < b).map((b) => `lt${b}`).join(' ')
+
+/**
+ * Sets <html data-size>. Crossing a breakpoint swaps it inside a view transition, so the nav,
+ * page, player and queue glide to their new places instead of snapping.
+ */
+function useWindowSize() {
+  // layout effect: the first paint already has the right layout
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    root.dataset.size = sizeTokens(window.innerWidth)
+    const onResize = () => {
+      const next = sizeTokens(window.innerWidth)
+      if (next === root.dataset.size) return
+      const apply = () => {
+        root.dataset.size = next
+      }
+      if (document.startViewTransition && !motionReduced()) document.startViewTransition(apply)
+      else apply()
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 }
 
 /** True while open, and for `exitMs` after closing so an exit transition can play. */

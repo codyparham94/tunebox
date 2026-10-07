@@ -1,14 +1,14 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BrowserWindow, app, nativeTheme, shell } from 'electron'
+import { BrowserWindow, app, nativeTheme, screen, shell } from 'electron'
 import { EVENT } from '@shared/api'
 import { DARK_THEME_IDS } from '@shared/themes'
-import type { OsCommand, ResolverHealth, Settings } from '@shared/types'
+import type { NowPlaying, OsCommand, ResolverHealth, Settings } from '@shared/types'
 import icon from '../../resources/icon.png?asset'
 import { db as currentDb, initContext } from './context'
 import { openDb } from './db'
-import { getSettings } from './db/settings'
+import { getSettings, getState, setState } from './db/settings'
 import { checkResolvers, runSmoke } from './health'
 import { registerIpc } from './ipc'
 import { setGlobalMediaKeys } from './os/mediaKeys'
@@ -78,8 +78,8 @@ function createWindow(): BrowserWindow {
   const saved = loadWindowState()
   const w = new BrowserWindow({
     ...(saved.centered ? { width: saved.bounds.width, height: saved.bounds.height } : saved.bounds),
-    minWidth: 900,
-    minHeight: 600,
+    minWidth: 520,
+    minHeight: 480,
     show: false,
     title: 'Tunebox',
     icon,
@@ -139,6 +139,64 @@ function openEqWindow(): void {
   loadRenderer(eqWindow, '/eq-window')
 }
 
+let widget: BrowserWindow | null = null
+const WIDGET = { width: 400, height: 84 }
+
+/** Where the widget sits: where the user left it, else the bottom-right corner of the main screen. */
+function widgetPosition(): { x: number; y: number } {
+  const saved = getState<{ x: number; y: number }>(currentDb(), 'widget')
+  const onScreen = (p: { x: number; y: number }) =>
+    screen.getAllDisplays().some(({ workArea: a }) => p.x >= a.x && p.y >= a.y && p.x + WIDGET.width <= a.x + a.width && p.y + WIDGET.height <= a.y + a.height)
+  if (saved && onScreen(saved)) return saved
+  const a = screen.getPrimaryDisplay().workArea
+  return { x: a.x + a.width - WIDGET.width - 16, y: a.y + a.height - WIDGET.height - 16 }
+}
+
+/**
+ * The now-playing widget: a small always-on-top window that replaces the main one.
+ * Audio keeps playing in the (hidden) main window; the widget only sends commands.
+ */
+function setWidget(on: boolean): void {
+  if (!on) {
+    widget?.close()
+    return
+  }
+  if (widget && !widget.isDestroyed()) return showWindow(widget)
+  const w = new BrowserWindow({
+    ...WIDGET,
+    ...widgetPosition(),
+    frame: false,
+    transparent: true,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    show: false,
+    title: 'Tunebox',
+    icon,
+    webPreferences: WEB_PREFERENCES
+  })
+  widget = w
+  w.once('ready-to-show', () => {
+    w.show()
+    win?.hide()
+  })
+  w.on('moved', () => {
+    const [x, y] = w.getPosition()
+    setState(currentDb(), 'widget', { x, y })
+  })
+  w.on('closed', () => {
+    widget = null
+    if (!quitting) showWindow(win)
+  })
+  loadRenderer(w, '/widget')
+}
+
+function onNowPlaying(s: NowPlaying): void {
+  if (widget && !widget.isDestroyed()) widget.webContents.send(EVENT.nowPlaying, s)
+}
+
 if (!smoke && !app.requestSingleInstanceLock()) {
   app.quit()
 } else {
@@ -164,7 +222,10 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     }
 
     handleAudioProtocol()
-    registerIpc({ getHealth: () => health, runHealthCheck, onSettingsChanged, openEqWindow }, () => win?.webContents)
+    registerIpc(
+      { getHealth: () => health, runHealthCheck, onSettingsChanged, openEqWindow, setWidget, command: send, nowPlaying: onNowPlaying },
+      () => win?.webContents
+    )
     win = createWindow()
     createTray(() => win, send)
     createThumbar(win, send)

@@ -4,6 +4,7 @@ import type { Station } from '@shared/types'
 import { api, errorMessage, keys, queryClient } from '../lib/queries'
 import { player } from '../store/player'
 import { toast } from '../store/toast'
+import { ArtistInput } from './ArtistInput'
 import { CloseIcon, PlusIcon } from './Icons'
 
 const MAX_ARTISTS = 10
@@ -83,14 +84,14 @@ export function StationArtistsDialog({ station, onClose }: { station: Station | 
         <label className="sr-only" htmlFor="sa-name">
           Artist name
         </label>
-        <input
+        <ArtistInput
           id="sa-name"
-          className="input"
-          placeholder={full ? `Up to ${MAX_ARTISTS} artists` : 'e.g. Tame Impala'}
+          placeholder={full ? `Up to ${MAX_ARTISTS} artists` : 'Search for an artist, e.g. Tame Impala'}
           value={name}
-          disabled={full}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="off"
+          disabled={full || busy}
+          onChange={setName}
+          onPick={(a) => add(a.name)}
+          exclude={[...(seedArtist ? [station!.seedRef] : []), ...artists]}
         />
         <button className="btn btn-primary" disabled={!name.trim() || busy || full}>
           <PlusIcon size={16} /> Add

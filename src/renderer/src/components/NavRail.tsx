@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { NavLink, useLocation, useNavigate, useNavigationType } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useNavigationType } from 'react-router'
 import {
   ChartIcon,
   ChevronLeftIcon,
@@ -15,7 +15,7 @@ import {
 } from './Icons'
 
 const LINKS = [
-  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  { to: '/', label: 'Home', icon: HomeIcon },
   { to: '/search', label: 'Search', icon: SearchIcon },
   { to: '/discover', label: 'Discover', icon: CompassIcon },
   { to: '/charts', label: 'Charts', icon: ChartIcon },
@@ -25,22 +25,73 @@ const LINKS = [
   { to: '/local', label: 'Local Player', icon: FolderIcon }
 ]
 
+const ROOTS = [...LINKS.map((l) => l.to), '/settings']
+
+/**
+ * Each tab remembers where you were in it, like a phone's tab bar: leaving Playlists from inside a
+ * playlist and coming back returns to that playlist, scrolled where you left it. Clicking the tab
+ * you're already on goes back to its top page. Pages opened from a tab (an album, an artist)
+ * belong to that tab.
+ */
+function useTabMemory() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [tab, setTab] = useState(() => (ROOTS.includes(location.pathname) ? location.pathname : '/'))
+  const last = useRef(new Map<string, { path: string; scroll: number }>())
+  const tabOfEntry = useRef(new Map<string, string>())
+  const here = useRef<{ tab: string; path: string }>({ tab, path: '' })
+  /** the tab just clicked, for the page it restores (which isn't a tab root itself) */
+  const clicked = useRef<string | null>(null)
+
+  useEffect(() => {
+    // Back/forward lands on an entry we've seen: it keeps the tab it was opened under.
+    const t = ROOTS.includes(location.pathname)
+      ? location.pathname
+      : (clicked.current ?? tabOfEntry.current.get(location.key) ?? here.current.tab)
+    clicked.current = null
+    tabOfEntry.current.set(location.key, t)
+    here.current = { tab: t, path: location.pathname + location.search }
+    setTab(t)
+  }, [location])
+
+  const go = (to: string) => (e: React.MouseEvent) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+    e.preventDefault()
+    const main = document.getElementById('main')
+    const { tab: from, path } = here.current
+    last.current.set(from, { path, scroll: main?.scrollTop ?? 0 })
+    if (to === from) return navigate(to)
+    const saved = last.current.get(to)
+    clicked.current = to
+    navigate(saved?.path ?? to)
+    // after the page renders from cache, put the scroll back where it was
+    if (saved?.scroll) requestAnimationFrame(() => requestAnimationFrame(() => main?.scrollTo({ top: saved.scroll })))
+  }
+
+  return { tab, go }
+}
+
 export function NavRail() {
-  const cls = ({ isActive }: { isActive: boolean }) => `nav-link${isActive ? ' active' : ''}`
+  const { tab, go } = useTabMemory()
+  const link = (to: string, label: string, Icon: typeof SettingsIcon) => (
+    <Link
+      key={to}
+      to={to}
+      onClick={go(to)}
+      className={`nav-link${tab === to ? ' active' : ''}`}
+      aria-current={tab === to ? 'page' : undefined}
+      title={label}
+    >
+      <Icon size={22} />
+      <span className="nav-label">{label}</span>
+    </Link>
+  )
   return (
     <nav className="nav" aria-label="Main">
       <HistoryButtons />
-      {LINKS.map(({ to, label, icon: Icon, end }) => (
-        <NavLink key={to} to={to} end={end} className={cls}>
-          <Icon size={22} />
-          {label}
-        </NavLink>
-      ))}
+      {LINKS.map(({ to, label, icon }) => link(to, label, icon))}
       <div className="nav-spacer" />
-      <NavLink to="/settings" className={cls}>
-        <SettingsIcon size={22} />
-        Settings
-      </NavLink>
+      {link('/settings', 'Settings', SettingsIcon)}
     </nav>
   )
 }

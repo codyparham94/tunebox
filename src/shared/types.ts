@@ -36,7 +36,12 @@ export interface RemotePlaylistSummary {
   title: string
   author?: string
   artUrl?: string
+  /** Playlists from outside YouTube: the link to import them from. */
+  url?: string
+  trackCount?: number
 }
+
+export type PlaylistSearchSource = 'youtube' | 'deezer'
 
 export interface SearchResults {
   songs: Track[]
@@ -215,6 +220,7 @@ export type OsCommand = 'playPause' | 'next' | 'prev' | 'thumbUp' | 'thumbDown' 
 export interface NowPlaying {
   title?: string
   artist?: string
+  artUrl?: string
   playing: boolean
   inStation: boolean
 }

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { Track } from '@shared/types'
 import { Art } from '../components/Art'
@@ -14,6 +14,8 @@ import { toast } from '../store/toast'
 
 function Header({
   kind,
+  showKind = true,
+  name,
   title,
   sub,
   artUrl,
@@ -21,17 +23,48 @@ function Header({
   actions
 }: {
   kind: string
+  showKind?: boolean
+  /** plain-text title for the pinned bar */
+  name: string
   title: ReactNode
   sub?: ReactNode
   artUrl?: string
   tracks: Track[]
   actions?: ReactNode
 }) {
+  // Once the big header scrolls out of view, a compact copy stays pinned to the top.
+  const hero = useRef<HTMLElement>(null)
+  const [pinned, setPinned] = useState(false)
+  useEffect(() => {
+    const el = hero.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => setPinned(!e.isIntersecting && e.boundingClientRect.top < 0), {
+      root: document.getElementById('main'),
+      // pin a little before the play buttons leave, so there's never a moment without them
+      rootMargin: '-120px 0px 0px 0px'
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   return (
-    <section className="tile hero" aria-label={kind}>
+    <>
+    <div className="hero-bar-wrap">
+      <div className="hero-bar" data-shown={pinned ? '' : undefined} inert={!pinned} aria-hidden={!pinned}>
+        <Art src={artUrl} size={40} />
+        <span className="hero-bar-title truncate">{name}</span>
+        <button className="btn btn-primary btn-sm" onClick={() => player.playList(tracks, 0, { shuffle: false })} disabled={!tracks.length}>
+          <PlayIcon size={14} /> Play
+        </button>
+        <button className="btn btn-sm" onClick={() => player.playList(tracks, 0, { shuffle: true })} disabled={!tracks.length}>
+          <ShuffleIcon size={14} /> Shuffle
+        </button>
+      </div>
+    </div>
+    <section ref={hero} className="tile hero" aria-label={kind}>
       <Art src={artUrl} size={220} />
       <div className="min-w-0">
-        <span className="eyebrow muted">{kind}</span>
+        {showKind && <span className="eyebrow muted">{kind}</span>}
         <div className="hero-title">{title}</div>
         <p className="tile-sub">
           {sub}
@@ -49,6 +82,7 @@ function Header({
         </div>
       </div>
     </section>
+    </>
   )
 }
 
@@ -64,6 +98,7 @@ export function Album() {
           <>
             <Header
               kind={a.subtitle ?? 'Album'}
+              name={a.title}
               title={<h1 className="hero-title m-0">{a.title}</h1>}
               sub={a.artistId ? <Link to={`/artist/${a.artistId}`}>{a.artist}</Link> : a.artist}
               artUrl={a.artUrl}
@@ -113,6 +148,7 @@ export function RemotePlaylist() {
           <>
             <Header
               kind="Playlist"
+              name={p.title}
               title={<h1 className="hero-title m-0">{p.title}</h1>}
               sub={p.subtitle ?? p.artist}
               artUrl={p.artUrl}
@@ -160,7 +196,9 @@ export function Playlist() {
         {(p) => (
           <>
             <Header
-              kind="Your playlist"
+              kind="Playlist"
+              showKind={false}
+              name={name ?? p.name}
               title={
                 <>
                   <label htmlFor="pl-name" className="sr-only">

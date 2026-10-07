@@ -224,7 +224,7 @@ img {
   gap: var(--space-4);
 }
 
-@media (max-width: 1180px) {
+:root[data-size~='lt1180'] {
   .bento {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1251,7 +1251,7 @@ img {
   grid-column: span 3;
 }
 
-@media (max-width: 1180px) {
+:root[data-size~='lt1180'] {
   .span-3x1 {
     grid-column: span 2;
   }
@@ -1276,7 +1276,7 @@ img {
   align-items: start;
 }
 
-@media (max-width: 1100px) {
+:root[data-size~='lt1100'] {
   .charts-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1957,7 +1957,7 @@ img {
 }
 
 /* Narrow windows: one column, with what's playing first. */
-@media (max-width: 1100px) {
+:root[data-size~='lt1100'] {
   .home-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1984,4 +1984,619 @@ img {
   .up-next {
     display: none;
   }
+}
+
+/* ---------- window size ----------
+ * App.tsx sets <html data-size="lt1180 lt1100 lt900 lt640"> (each width the window is under) and
+ * swaps it inside a view transition, so crossing a breakpoint morphs the layout instead of jumping.
+ */
+.nav {
+  view-transition-name: nav;
+}
+.main {
+  view-transition-name: main;
+}
+.player {
+  view-transition-name: player;
+}
+.queue {
+  view-transition-name: queue;
+}
+
+::view-transition-group(*) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  /* keep each region's snapshot at its own aspect instead of stretching text */
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
+}
+
+/* Page layouts follow the room the page actually has, which the queue takes a share of. */
+.main {
+  container-type: inline-size;
+}
+
+@container (max-width: 860px) {
+  .charts-layout,
+  .home-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .home-main {
+    order: -1;
+  }
+}
+
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:root[data-size~='lt900'] {
+  --nav-width: 64px;
+  --player-height: 80px;
+
+  .nav-link {
+    width: 48px;
+  }
+  .nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .nav-history {
+    flex-direction: column;
+  }
+
+  .page {
+    padding: var(--space-5) var(--space-4);
+  }
+  .page-title {
+    font-size: var(--text-xl);
+  }
+  .hero {
+    grid-template-columns: 140px minmax(0, 1fr);
+  }
+  .hero > .art {
+    width: 140px !important;
+    height: 140px !important;
+  }
+  .hero-title {
+    font-size: 28px;
+  }
+
+  /* the queue floats over the page instead of taking a column from it */
+  .shell {
+    position: relative;
+  }
+  .queue {
+    /* its grid cell already stops at the player */
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    width: min(var(--queue-width), calc(100vw - var(--nav-width) - 24px));
+    box-shadow: var(--shadow-pop);
+  }
+
+  .player {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 1.3fr) auto;
+    gap: var(--space-3);
+    padding: 0 var(--space-3);
+  }
+  .player-extra,
+  .station-badge {
+    display: none;
+  }
+}
+
+:root[data-size~='lt640'] {
+  .bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .span-2x2,
+  .span-2x1,
+  .span-3x1 {
+    grid-column: auto;
+  }
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  }
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .player {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .player-center {
+    min-width: 180px;
+  }
+  .player-track > .art {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .player [data-optional],
+  .player .reason,
+  .player-seek > .mono {
+    display: none;
+  }
+  .player-seek {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- pinned album / playlist header ---------- */
+
+/* Zero-height so it takes no room; the bar inside floats over the list once the big header scrolls away. */
+.hero-bar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: 0;
+}
+
+.hero-bar {
+  position: absolute;
+  top: var(--space-2);
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  /* thicker than the player's material: song titles scroll right under it */
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform var(--spring-duration) var(--spring);
+}
+
+.hero-bar[data-shown] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.hero-bar-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 650;
+  letter-spacing: -0.006em;
+}
+
+/* ---------- playlists ---------- */
+
+.pl-card {
+  position: relative;
+  display: grid;
+}
+
+.pl-card-delete {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.pl-card:hover .pl-card-delete,
+.pl-card:focus-within .pl-card-delete,
+.pl-card-delete[data-holding] {
+  opacity: 1;
+}
+
+/* ---------- radio ---------- */
+
+.create-station {
+  /* the artist search drops down below the tile */
+  overflow: visible;
+  z-index: 2;
+}
+
+.station-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--space-4);
+}
+
+.station-card {
+  gap: var(--space-4);
+  padding: var(--space-4);
+  container-type: inline-size;
+}
+
+.station-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.station-name {
+  margin: var(--space-1) 0;
+  font-size: var(--text-md);
+  font-weight: 650;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: text;
+}
+
+.station-rename {
+  min-height: 32px;
+  margin: 2px 0;
+  font-weight: 600;
+}
+
+.station-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.station-tools {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.tile-primary .station-tools .icon-btn {
+  color: var(--on-primary);
+}
+
+@container (max-width: 280px) {
+  .station-head > .art {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  .station-actions .btn {
+    flex: 1;
+    padding: 0 var(--space-3);
+  }
+}
+
+/* ---------- type-ahead ---------- */
+
+.combo {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.combo-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: 320px;
+  margin: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-pop);
+  transform-origin: top center;
+  transition:
+    transform 220ms var(--spring),
+    opacity 120ms ease;
+}
+
+@starting-style {
+  .combo-list {
+    transform: translateY(-4px) scale(0.98);
+    opacity: 0;
+  }
+}
+
+.combo-list .menu-item {
+  min-height: 44px;
+  color: var(--text);
+}
+
+.combo-list .menu-item[aria-selected='true'] {
+  background: var(--surface-sunken);
+}
+
+.dialog:has(.combo) {
+  overflow: visible;
+}
+
+/* ---------- queue resize ---------- */
+
+.queue {
+  position: relative;
+  width: min(var(--queue-width), 50vw);
+}
+
+.queue-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  z-index: 2;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.queue-resize::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: var(--focus);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.queue-resize:hover::after,
+.queue-resize:focus-visible::after,
+:root[data-resizing] .queue-resize::after {
+  opacity: 1;
+}
+
+.queue-resize:focus-visible {
+  outline: none;
+}
+
+:root[data-resizing] {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* ---------- charts ---------- */
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.page-head .page-title {
+  margin: 0;
+}
+
+.genre-select {
+  width: auto;
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.chart-artist {
+  position: relative;
+  display: grid;
+}
+
+.chart-artist .card {
+  height: 100%;
+  align-items: center;
+}
+
+.chart-artist .card-title {
+  max-width: 100%;
+}
+
+.chart-artist-radio {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+}
+
+/* ---------- settings ---------- */
+
+.settings-page {
+  max-width: 880px;
+}
+
+/* The section switcher stays put while a long section scrolls under it. */
+.settings-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-4);
+  padding: var(--space-6) var(--space-6) var(--space-3);
+  background: var(--material);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+}
+
+.settings-head .page-title {
+  margin-bottom: var(--space-4);
+}
+
+.segmented {
+  max-width: 100%;
+  margin-bottom: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.segmented .tab {
+  white-space: nowrap;
+  transition:
+    background-color 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
+}
+
+.settings-panel {
+  display: grid;
+  gap: var(--space-4);
+  animation: rise-in 260ms var(--ease-out);
+}
+
+/* A label on the left, its control on the right, rows split by hairlines: a grouped list. */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.tile-title + .setting-row {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.setting-row.eq-switch {
+  display: flex;
+  font-weight: 400;
+}
+
+.setting-row .eq-switch-track {
+  flex: none;
+}
+
+.eq-switch-track,
+.eq-switch-track::after {
+  transition-duration: 240ms;
+  transition-timing-function: var(--ease-out);
+}
+
+.choice-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.choice-row:hover {
+  background: color-mix(in srgb, var(--surface-sunken) 60%, transparent);
+}
+
+.choice-row:has(input:checked) {
+  background: var(--surface-sunken);
+}
+
+.choice-row input {
+  margin-top: 4px;
+}
+
+:root[data-size~='lt900'] .settings-head {
+  margin: calc(var(--space-5) * -1) calc(var(--space-4) * -1) var(--space-4);
+  padding: var(--space-5) var(--space-4) var(--space-3);
+}
+
+/* ---------- widget window ---------- */
+
+:root[data-widget],
+:root[data-widget] body {
+  background: transparent;
+}
+
+/* One row: art, song, controls, expand. Fills the window with no empty corners. */
+.widget {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100vh;
+  padding: var(--space-3);
+  padding-right: var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  background: var(--surface-raised);
+  overflow: hidden;
+  /* the whole card drags the window; its buttons stay clickable */
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.widget button {
+  -webkit-app-region: no-drag;
+}
+
+/* concentric with the card: card radius minus the padding */
+.widget-art {
+  flex: none;
+  border-radius: 6px;
+}
+
+.widget-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.widget-title {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: -0.006em;
+}
+
+.widget-artist {
+  font-size: var(--text-xs);
+}
+
+.widget-controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.widget .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+
+.widget .play-btn {
+  width: 36px;
+  height: 36px;
+  margin: 0 2px;
+}
+
+/* station thumbs: a step smaller than the transport buttons, so the title keeps its room */
+.widget .widget-thumb {
+  width: 26px;
+}
+
+/* secondary to the playback controls, so it sits apart and quieter */
+.widget .widget-expand {
+  align-self: flex-start;
+  width: 26px;
+  height: 26px;
+  margin: -4px 0 0 -2px;
 }

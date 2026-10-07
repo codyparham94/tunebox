@@ -1,4 +1,4 @@
-import type { ChartAlbum, ChartArtist, Genre, Track } from '@shared/types'
+import type { ChartAlbum, ChartArtist, Genre, RemotePlaylistSummary, Track } from '@shared/types'
 
 const BASE = 'https://api.deezer.com'
 const TTL = 30 * 60 * 1000
@@ -44,6 +44,22 @@ export async function chartAlbums(genreId = 0, limit = 20): Promise<ChartAlbum[]
   return (d?.data ?? []).map(
     (a: any): ChartAlbum => ({ title: a.title, artist: a.artist?.name ?? '', artUrl: a.cover_xl ?? a.cover_big })
   )
+}
+
+const toPlaylist = (p: any): RemotePlaylistSummary => ({
+  id: String(p.id),
+  title: p.title,
+  author: p.user?.name,
+  artUrl: p.picture_xl ?? p.picture_big,
+  url: p.link ?? `https://www.deezer.com/playlist/${p.id}`,
+  trackCount: Number(p.nb_tracks) || undefined
+})
+
+/** Deezer playlists matching `query`, or its chart playlists when the query is empty. */
+export async function playlists(query: string, limit = 24): Promise<RemotePlaylistSummary[]> {
+  const q = query.trim()
+  const d = await get(q ? `/search/playlist?q=${encodeURIComponent(q)}&limit=${limit}` : `/chart/0/playlists?limit=${limit}`)
+  return (d?.data ?? []).map(toPlaylist)
 }
 
 export async function chartArtists(genreId = 0, limit = 20): Promise<ChartArtist[]> {

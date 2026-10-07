@@ -14,6 +14,7 @@ import {
   InfoIcon,
   MuteIcon,
   NextIcon,
+  PopOutIcon,
   PauseIcon,
   PlayIcon,
   PrevIcon,
@@ -100,6 +101,7 @@ export function PlayerBar() {
           <button
             className="icon-btn"
             aria-label="Shuffle"
+            data-optional=""
             aria-pressed={s.shuffle}
             disabled={!!s.station}
             onClick={player.toggleShuffle}
@@ -126,6 +128,7 @@ export function PlayerBar() {
           <button
             className="icon-btn"
             aria-label={repeatLabel}
+            data-optional=""
             title={repeatLabel}
             aria-pressed={s.repeat !== 'off'}
             disabled={!!s.station}
@@ -164,7 +167,7 @@ export function PlayerBar() {
         </button>
         <input
           type="range"
-          className="range volume"
+          className="range volume player-extra"
           min={0}
           max={1}
           step={0.01}
@@ -173,8 +176,11 @@ export function PlayerBar() {
           aria-label="Volume"
           aria-valuetext={`${Math.round((s.muted ? 0 : s.volume) * 100)}%`}
         />
-        <button className="icon-btn" aria-label="Equalizer" title="Equalizer" onClick={() => void api.eq.popout()}>
+        <button className="icon-btn player-extra" aria-label="Equalizer" title="Equalizer" onClick={() => void api.eq.popout()}>
           <SlidersIcon size={18} />
+        </button>
+        <button className="icon-btn" aria-label="Widget mode" title="Widget mode: a small now-playing box that stays on top" onClick={() => void api.system.widget(true)}>
+          <PopOutIcon size={18} />
         </button>
         <button className="icon-btn" aria-label="Queue" aria-pressed={queueOpen} onClick={toggleQueue}>
           <QueueIcon size={18} />

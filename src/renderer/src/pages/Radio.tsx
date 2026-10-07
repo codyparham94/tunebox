@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { SeedType, Station } from '@shared/types'
 import { Art } from '../components/Art'
-import { Equalizer, PlayIcon, PlusIcon, TrashIcon } from '../components/Icons'
+import { ArtistInput } from '../components/ArtistInput'
+import { Equalizer, PencilIcon, PlayIcon, PlusIcon, TrashIcon } from '../components/Icons'
 import { HoldButton } from '../components/HoldButton'
 import { StationArtistsDialog } from '../components/StationArtistsDialog'
 import { Empty, QueryView } from '../components/States'
@@ -15,20 +16,8 @@ const SEED_LABEL: Record<SeedType, string> = { track: 'Song', artist: 'Artist', 
 
 export function Radio() {
   const stations = useStations()
-  const active = usePlayer((s) => s.station?.id)
-  const playing = usePlayer((s) => s.playing)
   const [editingId, setEditingId] = useState<number | null>(null)
   const editing: Station | null = stations.data?.find((s) => s.id === editingId) ?? null
-
-  const remove = async (id: number) => {
-    try {
-      if (active === id) player.leaveStation()
-      await api.radio.remove(id)
-      void queryClient.invalidateQueries({ queryKey: keys.stations })
-    } catch (err) {
-      toast.error(errorMessage(err))
-    }
-  }
 
   return (
     <div className="page">
@@ -36,74 +25,142 @@ export function Radio() {
       <p className="tile-sub" style={{ marginTop: 'calc(var(--space-4) * -1)', marginBottom: 'var(--space-5)' }}>
         Stations keep playing similar music and learn from 👍, 👎, skips and full listens.
       </p>
-      <div className="bento">
-        <CreateStation />
+      <CreateStation />
+      <section className="section" aria-labelledby="stations-title">
+        <h2 id="stations-title" className="section-title" style={{ marginBottom: 'var(--space-3)' }}>
+          Your stations
+        </h2>
         <QueryView query={stations}>
           {(list) =>
             list.length === 0 ? (
-              <div className="tile span-2x1">
+              <div className="tile">
                 <Empty>No stations yet. Create one, or pick “Start radio” from any song’s ⋯ menu.</Empty>
               </div>
             ) : (
-              <>
+              <div className="station-grid">
                 {list.map((st) => (
-                  <article key={st.id} className={`tile${st.id === active ? ' tile-primary' : ''}`} aria-label={st.name}>
-                    <div className="flex gap-3 items-start">
-                      <Art src={st.artUrl} size={72} round={st.seedType === 'artist'} />
-                      <div className="min-w-0 flex-1">
-                        <span className="eyebrow muted">{SEED_LABEL[st.seedType]} station</span>
-                        <h2 className="tile-title truncate" style={{ margin: 'var(--space-1) 0' }}>
-                          {st.name}
-                        </h2>
-                        <p className="tile-sub">
-                          {st.id === active ? (
-                            <>
-                              <Equalizer paused={!playing} /> Playing
-                            </>
-                          ) : st.lastPlayedAt ? (
-                            `Played ${timeAgo(st.lastPlayedAt)}`
-                          ) : (
-                            'New'
-                          )}
-                        </p>
-                        {st.artists.length > 0 && (
-                          <p className="tile-sub truncate" title={st.artists.join(', ')}>
-                            + {st.artists.join(', ')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="row mt-auto pt-4">
-                      <button
-                        className={`btn ${st.id === active ? 'btn-dark' : 'btn-primary'}`}
-                        onClick={() => player.playStation(st)}
-                        aria-label={`Play ${st.name}`}
-                      >
-                        <PlayIcon size={14} /> {st.id === active ? 'Restart' : 'Play'}
-                      </button>
-                      <button
-                        className={`btn${st.id === active ? ' btn-dark' : ''}`}
-                        onClick={() => setEditingId(st.id)}
-                        aria-label={`Add artists to ${st.name}`}
-                        title="Add more artists for a wider mix"
-                      >
-                        <PlusIcon size={14} /> Artists{st.artists.length ? ` (${st.artists.length})` : ''}
-                      </button>
-                      <span style={{ marginLeft: 'auto' }}>
-                        <HoldButton className="icon-btn" label={`Delete ${st.name} and what it learned`} onConfirm={() => void remove(st.id)}>
-                          <TrashIcon size={18} />
-                        </HoldButton>
-                      </span>
-                    </div>
-                  </article>
+                  <StationCard key={st.id} station={st} onEditArtists={() => setEditingId(st.id)} />
                 ))}
-              </>
+              </div>
             )
           }
         </QueryView>
-      </div>
+      </section>
       <StationArtistsDialog station={editing} onClose={() => setEditingId(null)} />
     </div>
+  )
+}
+
+function StationCard({ station: st, onEditArtists }: { station: Station; onEditArtists: () => void }) {
+  const isActive = usePlayer((s) => s.station?.id === st.id)
+  const playing = usePlayer((s) => s.playing)
+  const [renaming, setRenaming] = useState(false)
+
+  const remove = async () => {
+    try {
+      if (isActive) player.leaveStation()
+      await api.radio.remove(st.id)
+      void queryClient.invalidateQueries({ queryKey: keys.stations })
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  const rename = async (name: string) => {
+    setRenaming(false)
+    if (!name.trim() || name.trim() === st.name) return
+    try {
+      const updated = await api.radio.rename(st.id, name)
+      void queryClient.invalidateQueries({ queryKey: keys.stations })
+      // the player bar and queue show the playing station's name
+      if (usePlayer.getState().station?.id === st.id) usePlayer.setState({ station: { id: st.id, name: updated.name } })
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  return (
+    <article className={`tile station-card${isActive ? ' tile-primary' : ''}`} aria-label={st.name}>
+      <div className="station-head">
+        <Art src={st.artUrl} size={64} round={st.seedType === 'artist'} />
+        <div className="min-w-0 flex-1">
+          <span className="eyebrow muted">{SEED_LABEL[st.seedType]} station</span>
+          {renaming ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                e.currentTarget.querySelector('input')?.blur()
+              }}
+            >
+              <label className="sr-only" htmlFor={`rename-${st.id}`}>
+                Station name
+              </label>
+              <input
+                id={`rename-${st.id}`}
+                className="input station-rename"
+                defaultValue={st.name}
+                maxLength={80}
+                autoFocus
+                onFocus={(e) => e.currentTarget.select()}
+                onBlur={(e) => void rename(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.preventDefault()
+                    e.currentTarget.value = st.name
+                    e.currentTarget.blur()
+                  }
+                }}
+              />
+            </form>
+          ) : (
+            <h3 className="station-name" title={`${st.name} (double-click to rename)`} onDoubleClick={() => setRenaming(true)}>
+              {st.name}
+            </h3>
+          )}
+          <p className="tile-sub truncate">
+            {isActive ? (
+              <>
+                <Equalizer paused={!playing} /> Playing
+              </>
+            ) : st.lastPlayedAt ? (
+              `Played ${timeAgo(st.lastPlayedAt)}`
+            ) : (
+              'New'
+            )}
+          </p>
+          {st.artists.length > 0 && (
+            <p className="tile-sub clamp-2" title={st.artists.join(', ')}>
+              + {st.artists.join(', ')}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="station-actions">
+        <button
+          className={`btn ${isActive ? 'btn-dark' : 'btn-primary'}`}
+          onClick={() => player.playStation(st)}
+          aria-label={`${isActive ? 'Restart' : 'Play'} ${st.name}`}
+        >
+          <PlayIcon size={14} /> {isActive ? 'Restart' : 'Play'}
+        </button>
+        <button
+          className={`btn${isActive ? ' btn-dark' : ''}`}
+          onClick={onEditArtists}
+          aria-label={`Add artists to ${st.name}`}
+          title="Add more artists for a wider mix"
+        >
+          <PlusIcon size={14} /> Artists{st.artists.length ? ` (${st.artists.length})` : ''}
+        </button>
+        <span className="station-tools">
+          <button className="icon-btn" aria-label={`Rename ${st.name}`} title="Rename" onClick={() => setRenaming(true)}>
+            <PencilIcon size={16} />
+          </button>
+          <HoldButton className="icon-btn" label={`Delete ${st.name} and what it learned`} onConfirm={() => void remove()}>
+            <TrashIcon size={18} />
+          </HoldButton>
+        </span>
+      </div>
+    </article>
   )
 }
 
@@ -113,8 +170,14 @@ function CreateStation() {
   const tags = useTags()
   const playlists = usePlaylists()
 
+  const start = (name: string, artUrl?: string) => {
+    if (!name.trim()) return
+    void startArtistRadio(name, artUrl)
+    setArtist('')
+  }
+
   return (
-    <section className="tile tile-secondary span-2x2" aria-labelledby="create-title">
+    <section className="tile tile-secondary create-station" aria-labelledby="create-title">
       <h2 id="create-title" className="tile-title">
         Create a station
       </h2>
@@ -132,14 +195,19 @@ function CreateStation() {
             style={{ flexWrap: 'nowrap' }}
             onSubmit={(e) => {
               e.preventDefault()
-              if (artist.trim()) void startArtistRadio(artist)
-              setArtist('')
+              start(artist)
             }}
           >
             <label htmlFor="cs-artist" className="sr-only">
               Artist name
             </label>
-            <input id="cs-artist" className="input" placeholder="e.g. Khruangbin" value={artist} onChange={(e) => setArtist(e.target.value)} />
+            <ArtistInput
+              id="cs-artist"
+              placeholder="Search for an artist, e.g. Khruangbin"
+              value={artist}
+              onChange={setArtist}
+              onPick={(a) => start(a.name, a.artUrl)}
+            />
             <button className="btn btn-dark" disabled={!artist.trim()}>
               Start
             </button>
@@ -161,11 +229,11 @@ function CreateStation() {
         {mode === 'playlist' && (
           <QueryView query={playlists} isEmpty={(d) => d.length === 0} empty="You don’t have any playlists yet.">
             {(list) => (
-              <div className="grid gap-1">
+              <div className="playlist-strip">
                 {list.map((pl) => (
                   <button key={pl.id} className="menu-item" style={{ minHeight: 44 }} onClick={() => void startPlaylistRadio(pl)}>
                     <Art src={pl.artUrl} size={32} />
-                    {pl.name}
+                    <span className="truncate">{pl.name}</span>
                   </button>
                 ))}
               </div>

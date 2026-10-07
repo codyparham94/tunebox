@@ -1,8 +1,11 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import type { ImportResult } from '@shared/types'
+import type { ImportResult, LocalPlaylist, PlaylistSearchSource, RemotePlaylistSummary } from '@shared/types'
 import { Art } from '../components/Art'
-import { DownloadIcon, PlusIcon } from '../components/Icons'
+import { RemotePlaylistCard } from '../components/Cards'
+import { HoldButton } from '../components/HoldButton'
+import { DownloadIcon, PlusIcon, SearchIcon, TrashIcon } from '../components/Icons'
 import { QueryView } from '../components/States'
 import { plural } from '../lib/format'
 import { api, errorMessage, invalidatePlaylists, usePlaylists } from '../lib/queries'
@@ -44,20 +47,137 @@ export function Playlists() {
             {(list) => (
               <div className="card-grid">
                 {list.map((pl) => (
-                  <Link key={pl.id} to={`/playlist/${pl.id}`} className="card">
-                    <Art src={pl.artUrl} className="w-full" />
-                    <span className="card-title truncate" title={pl.name}>
-                      {pl.name}
-                    </span>
-                    <span className="card-sub">{plural(pl.trackCount, 'song')}</span>
-                  </Link>
+                  <PlaylistCard key={pl.id} playlist={pl} />
                 ))}
               </div>
             )}
           </QueryView>
         </section>
+
+        <FindPlaylists />
       </div>
     </div>
+  )
+}
+
+function PlaylistCard({ playlist: pl }: { playlist: LocalPlaylist }) {
+  const remove = async () => {
+    try {
+      await api.library.deletePlaylist(pl.id)
+      toast.success(`Deleted “${pl.name}”`)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+    invalidatePlaylists()
+  }
+  return (
+    <div className="pl-card">
+      <Link to={`/playlist/${pl.id}`} className="card">
+        <Art src={pl.artUrl} className="w-full" />
+        <span className="card-title truncate" title={pl.name}>
+          {pl.name}
+        </span>
+        <span className="card-sub">{plural(pl.trackCount, 'song')}</span>
+      </Link>
+      <HoldButton className="icon-btn pl-card-delete" label={`Hold to delete ${pl.name}`} onConfirm={() => void remove()}>
+        <TrashIcon size={16} />
+      </HoldButton>
+    </div>
+  )
+}
+
+const SOURCES: { id: PlaylistSearchSource; label: string }[] = [
+  { id: 'youtube', label: 'YouTube Music' },
+  { id: 'deezer', label: 'Deezer' }
+]
+
+/** Search public playlists. YouTube ones open in the app; others are imported (matched to YouTube) on click. */
+function FindPlaylists() {
+  const [source, setSource] = useState<PlaylistSearchSource>('youtube')
+  const [input, setInput] = useState('')
+  const [q, setQ] = useState('')
+  const importer = useImporter()
+
+  useEffect(() => {
+    const t = setTimeout(() => setQ(input.trim()), 350)
+    return () => clearTimeout(t)
+  }, [input])
+
+  const results = useQuery({
+    queryKey: ['playlistSearch', source, q],
+    queryFn: () => api.catalog.searchPlaylists(q, source),
+    // Deezer lists its popular playlists before anything is typed
+    enabled: q.length >= 2 || source === 'deezer',
+    staleTime: 30 * 60 * 1000
+  })
+
+  return (
+    <section className="tile" aria-labelledby="find-title">
+      <div className="section-head">
+        <h2 id="find-title" className="tile-title" style={{ margin: 0 }}>
+          Find playlists
+        </h2>
+        <div className="tabs" role="tablist" aria-label="Playlist source" style={{ margin: 0 }}>
+          {SOURCES.map((s) => (
+            <button key={s.id} role="tab" className="tab" aria-selected={source === s.id} onClick={() => setSource(s.id)}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <form role="search" className="relative" style={{ marginBottom: 'var(--space-4)' }} onSubmit={(e) => e.preventDefault()}>
+        <label htmlFor="find-pl" className="sr-only">
+          Search playlists
+        </label>
+        <span className="absolute muted" style={{ left: 12, top: 10 }}>
+          <SearchIcon size={20} />
+        </span>
+        <input
+          id="find-pl"
+          type="search"
+          className="input"
+          style={{ paddingLeft: 40 }}
+          placeholder={source === 'deezer' ? 'Search Deezer playlists, or browse popular ones below' : 'Search YouTube Music playlists, e.g. lofi beats'}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          autoComplete="off"
+        />
+      </form>
+      {source === 'youtube' && q.length < 2 ? (
+        <p className="tile-sub">Type a mood, genre or artist to find playlists.</p>
+      ) : (
+        <QueryView query={results} rows={2} isEmpty={(d) => d.length === 0} empty={`No playlists found for “${q}”.`}>
+          {(list) => (
+            <div className="card-grid">
+              {list.map((p) =>
+                p.url ? (
+                  <ImportCard key={p.id} playlist={p} busy={importer.busy} onImport={() => void importer.run(p.url!)} />
+                ) : (
+                  <RemotePlaylistCard key={p.id} playlist={p} />
+                )
+              )}
+            </div>
+          )}
+        </QueryView>
+      )}
+    </section>
+  )
+}
+
+function ImportCard({ playlist: p, busy, onImport }: { playlist: RemotePlaylistSummary; busy: boolean; onImport: () => void }) {
+  return (
+    <button className="card" disabled={busy} onClick={onImport} title={`Import “${p.title}” to your playlists`}>
+      <div className="relative">
+        <Art src={p.artUrl} className="w-full" />
+        <span className="rank-badge" style={{ left: 'auto', right: 'var(--space-2)' }}>
+          <DownloadIcon size={12} /> Import
+        </span>
+      </div>
+      <span className="card-title truncate">{p.title}</span>
+      <span className="card-sub truncate">
+        {[p.author, p.trackCount ? plural(p.trackCount, 'song') : ''].filter(Boolean).join(' · ')}
+      </span>
+    </button>
   )
 }
 
@@ -71,8 +191,8 @@ function resultMessage(r: ImportResult): string {
   return parts.join('. ')
 }
 
-function ImportTile() {
-  const [url, setUrl] = useState('')
+/** Imports a playlist link with progress toasts, then opens it. */
+function useImporter() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -89,8 +209,7 @@ function ImportTile() {
     [show]
   )
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const run = async (url: string): Promise<boolean> => {
     setBusy(true)
     setError(null)
     show({ id: IMPORT_TOAST, kind: 'info', sticky: true, message: 'Reading playlist…' })
@@ -98,15 +217,28 @@ function ImportTile() {
       const r = await api.importer.playlist(url)
       show({ id: IMPORT_TOAST, kind: 'success', message: resultMessage(r) })
       invalidatePlaylists()
-      setUrl('')
       navigate(`/playlist/${r.playlistId}`)
+      return true
     } catch (err) {
       const msg = errorMessage(err)
       setError(msg)
       show({ id: IMPORT_TOAST, kind: 'error', message: msg })
+      return false
     } finally {
       setBusy(false)
     }
+  }
+
+  return { busy, error, run }
+}
+
+function ImportTile() {
+  const [url, setUrl] = useState('')
+  const { busy, error, run } = useImporter()
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (await run(url)) setUrl('')
   }
 
   return (

@@ -26,14 +26,18 @@ export function Charts() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Charts</h1>
-
-      <div className="chips" role="group" aria-label="Genre" style={{ marginBottom: 'var(--space-5)' }}>
-        {[{ id: 0, name: 'All genres' }, ...(genres.data ?? [])].map((g) => (
-          <button key={g.id} className={`chip${g.id === genre ? ' chip-active' : ''}`} aria-pressed={g.id === genre} onClick={() => setGenre(g.id)}>
-            {g.name}
-          </button>
-        ))}
+      <div className="page-head">
+        <h1 className="page-title">Charts</h1>
+        <label>
+          <span className="sr-only">Genre</span>
+          <select className="input genre-select" value={genre} onChange={(e) => setGenre(Number(e.target.value))}>
+            {[{ id: 0, name: 'All genres' }, ...(genres.data ?? [])].map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="charts-layout">
@@ -60,21 +64,6 @@ export function Charts() {
         </section>
 
         <div className="grid gap-4 content-start">
-          <section className="tile" aria-labelledby="top-artists">
-            <h2 id="top-artists" className="section-title" style={{ marginBottom: 'var(--space-3)' }}>
-              Top artists
-            </h2>
-            <QueryView query={artists} rows={5} isEmpty={(d) => d.length === 0} empty="No artists to show.">
-              {(list) => (
-                <ol className="list-none m-0 p-0 grid gap-1">
-                  {list.slice(0, 12).map((a, i) => (
-                    <ArtistRow key={a.name} artist={a} rank={i + 1} />
-                  ))}
-                </ol>
-              )}
-            </QueryView>
-          </section>
-
           <section className="tile" aria-labelledby="mine">
             <h2 id="mine" className="section-title">
               Your most played
@@ -99,6 +88,21 @@ export function Charts() {
           </section>
         </div>
       </div>
+
+      <section className="section" aria-labelledby="top-artists">
+        <h2 id="top-artists" className="section-title" style={{ marginBottom: 'var(--space-3)' }}>
+          Top artists
+        </h2>
+        <QueryView query={artists} rows={2} isEmpty={(d) => d.length === 0} empty="No artists to show.">
+          {(list) => (
+            <ol className="card-grid shelf-row list-none m-0 p-0">
+              {list.slice(0, 12).map((a, i) => (
+                <ArtistCardFromChart key={a.name} artist={a} rank={i + 1} />
+              ))}
+            </ol>
+          )}
+        </QueryView>
+      </section>
 
       <section className="section" aria-labelledby="top-albums">
         <h2 id="top-albums" className="section-title" style={{ marginBottom: 'var(--space-3)' }}>
@@ -137,27 +141,34 @@ function useOpen() {
   return { busy, open }
 }
 
-function ArtistRow({ artist, rank }: { artist: ChartArtist; rank: number }) {
+/** Round art with the rank on it; the radio button sits on the art so the name gets the full width. */
+function ArtistCardFromChart({ artist, rank }: { artist: ChartArtist; rank: number }) {
   const { busy, open } = useOpen()
   return (
-    <li className="flex items-center gap-2">
-      <span className="track-num mono" style={{ width: 20 }}>
-        {rank}
-      </span>
+    <li className="chart-artist">
       <button
-        className="menu-item flex-1 min-w-0"
-        style={{ minHeight: 52 }}
+        className="card"
         onClick={() => open(artist.name, () => api.catalog.findArtist(artist.name), (id) => `/artist/${id}`, artist.name)}
         aria-busy={busy === artist.name}
       >
-        <Art src={artist.artUrl} size={40} round />
-        <span className="truncate" style={{ fontWeight: 600 }}>
-          {artist.name}
-        </span>
-        {busy === artist.name && <span className="spinner" style={{ marginLeft: 'auto' }} />}
+        <div className="relative">
+          <Art src={artist.artUrl} className="w-full" round />
+          <span className="rank-badge mono">{rank}</span>
+          {busy === artist.name && (
+            <span className="absolute inset-0 grid place-items-center rounded-full" style={{ background: 'var(--overlay)' }}>
+              <span className="spinner" />
+            </span>
+          )}
+        </div>
+        <span className="card-title truncate text-center">{artist.name}</span>
       </button>
-      <button className="icon-btn" aria-label={`Start ${artist.name} radio`} title="Start artist radio" onClick={() => void startArtistRadio(artist.name, artist.artUrl)}>
-        <RadioIcon size={18} />
+      <button
+        className="icon-btn chart-artist-radio"
+        aria-label={`Start ${artist.name} radio`}
+        title="Start artist radio"
+        onClick={() => void startArtistRadio(artist.name, artist.artUrl)}
+      >
+        <RadioIcon size={16} />
       </button>
     </li>
   )

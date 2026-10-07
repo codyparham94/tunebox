@@ -1,5 +1,5 @@
 import type { DiscoverSignals, SearchEntry, Track } from '@shared/types'
-import { trackKey } from '../util/text'
+import { artistKey, trackKey } from '../util/text'
 import type { Db } from './index'
 import { TRACK_COLUMNS, rowToTrack, type TrackRow } from './tracks'
 
@@ -87,6 +87,33 @@ export function playlistSample(db: Db, limit = 3): { track: Track; playlist: str
     )
     .all(limit) as unknown as (TrackRow & { playlist: string })[]
   return rows.map((r) => ({ track: rowToTrack(r), playlist: r.playlist }))
+}
+
+/** Plays that count as listening: finished, or at least 30 seconds. */
+const LISTENED = '(h.completed = 1 OR h.listened_ms >= 30000)'
+
+/**
+ * Artists the user has really shown interest in: liked one of their songs, or listened
+ * to them at least `minPlays` times. One play alone doesn't make an artist a favourite.
+ */
+export function establishedArtists(db: Db, minPlays = 3): Set<string> {
+  const plays = db
+    .prepare(`SELECT t.artist, COUNT(*) AS n FROM history h JOIN tracks t ON t.id = h.track_id WHERE ${LISTENED} GROUP BY t.artist`)
+    .all() as { artist: string; n: number }[]
+  const counts = new Map<string, number>()
+  for (const r of plays) {
+    const k = artistKey(r.artist)
+    counts.set(k, (counts.get(k) ?? 0) + r.n)
+  }
+  const out = new Set([...counts].filter(([, n]) => n >= minPlays).map(([k]) => k))
+  const liked = db
+    .prepare(
+      `SELECT DISTINCT t.artist FROM feedback f JOIN tracks t ON t.id = f.track_id
+       WHERE f.station_id IS NULL AND f.value > 0`
+    )
+    .all() as { artist: string }[]
+  for (const r of liked) out.add(artistKey(r.artist))
+  return out
 }
 
 export function signalCounts(db: Db): DiscoverSignals {

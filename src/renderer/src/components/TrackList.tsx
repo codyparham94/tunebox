@@ -23,6 +23,8 @@ interface TrackListProps {
   removeLabel?: string
   /** song title opens its album (off on the album page itself) */
   linkTitles?: boolean
+  /** show why a radio pick was chosen (off in the queue, where it's just noise) */
+  reasons?: boolean
   label: string
 }
 
@@ -37,6 +39,7 @@ export function TrackList({
   onRemove,
   removeLabel = 'Remove from playlist',
   linkTitles = true,
+  reasons = true,
   label
 }: TrackListProps) {
   const current = usePlayer((s) => currentTrack(s))
@@ -64,6 +67,7 @@ export function TrackList({
           onRemove={onRemove && (() => onRemove(i))}
           removeLabel={removeLabel}
           linkTitle={linkTitles}
+          showReason={reasons}
           onMove={onMove && ((to) => to >= 0 && to < tracks.length && onMove(i, to))}
           drag={
             onMove && {
@@ -97,6 +101,7 @@ interface RowProps {
   onRemove?: () => void
   removeLabel: string
   linkTitle: boolean
+  showReason: boolean
   onMove?: (to: number) => void
   drag?: { dragging: boolean; target: boolean; start(): void; over(): void; end(): void }
 }
@@ -105,7 +110,7 @@ function TrackRow(p: RowProps) {
   const { track: t } = p
   const nav = useTrackNav()
   const openAdd = useUi((s) => s.openAddToPlaylist)
-  const reason = 'reason' in t ? t.reason : undefined
+  const reason = p.showReason && 'reason' in t ? t.reason : undefined
 
   const items: MenuItem[] = [
     { label: 'Play next', onSelect: () => player.playNext([t]) },

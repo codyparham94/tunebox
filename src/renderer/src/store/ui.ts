@@ -11,7 +11,8 @@ interface UiState {
 }
 
 export const useUi = create<UiState>((set) => ({
-  queueOpen: false,
+  // open at launch (it's where a station shows what's coming), unless it would cover a small window
+  queueOpen: window.innerWidth >= 900,
   addTarget: null,
   toggleQueue: () => set((s) => ({ queueOpen: !s.queueOpen })),
   openAddToPlaylist: (tracks) => set({ addTarget: tracks }),

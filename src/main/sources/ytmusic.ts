@@ -143,6 +143,27 @@ export async function search(query: string): Promise<SearchResults> {
   }
 }
 
+/** Artists for a type-ahead. A half-typed name ("portishe") finds nothing, so it's completed first. */
+export async function searchArtists(query: string, limit = 6): Promise<ArtistSummary[]> {
+  const yt = await innertube()
+  const find = async (q: string) =>
+    compact(((await yt.music.search(q, { type: 'artist' })).artists?.contents ?? []).slice(0, limit).map(toArtist))
+  const found = await find(query)
+  if (found.length) return found
+  const sections: Node[] = await yt.music.getSearchSuggestions(query).catch(() => [])
+  const completed = sections
+    .flatMap((s) => s.contents ?? [])
+    .map((c: Node) => text(c.suggestion))
+    .find((s: string) => s && s.toLowerCase() !== query.trim().toLowerCase())
+  return completed ? find(completed) : []
+}
+
+export async function searchPlaylists(query: string): Promise<RemotePlaylistSummary[]> {
+  const yt = await innertube()
+  const res = await yt.music.search(query, { type: 'playlist' })
+  return compact((res.playlists?.contents ?? []).map(toRemotePlaylist))
+}
+
 export async function artist(id: string): Promise<ArtistPage> {
   const yt = await innertube()
   const page = await yt.music.getArtist(id)

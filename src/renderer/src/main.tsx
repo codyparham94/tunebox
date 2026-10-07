@@ -15,5 +15,6 @@ const mount = (node: ReactNode) =>
   )
 
 // The pop-out equalizer loads only what it needs (no player, no media session).
-if (location.hash.startsWith('#/eq-window')) void import('./EqWindow').then(({ EqWindow }) => mount(<EqWindow />))
+if (location.hash.startsWith('#/widget')) void import('./Widget').then(({ Widget }) => mount(<Widget />))
+else if (location.hash.startsWith('#/eq-window')) void import('./EqWindow').then(({ EqWindow }) => mount(<EqWindow />))
 else void import('./App').then(({ App }) => mount(<App />))
