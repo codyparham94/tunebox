@@ -118,6 +118,7 @@ export function QueuePanel({ open }: { open: boolean }) {
             onRemove={(i) => (i === index ? undefined : player.removeAt(i))}
             removeLabel="Remove from queue"
             reasons={false}
+            addCurrent
           />
         )}
       </div>

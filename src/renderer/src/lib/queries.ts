@@ -16,6 +16,8 @@ export function errorMessage(err: unknown): string {
 
 export const keys = {
   playlists: ['playlists'] as const,
+  /** under `playlists`, so every playlist change refreshes it too */
+  playlistTrackIds: ['playlists', 'trackIds'] as const,
   playlist: (id: number) => ['playlist', id] as const,
   liked: ['liked'] as const,
   likedIds: ['likedIds'] as const,
@@ -40,6 +42,8 @@ export const useGenres = () =>
 export const useTags = () => useQuery({ queryKey: ['tags'], queryFn: () => api.catalog.tags(), staleTime: Infinity })
 
 export const usePlaylists = () => useQuery({ queryKey: keys.playlists, queryFn: () => api.library.playlists(), ...local })
+export const usePlaylistTrackIds = () =>
+  useQuery({ queryKey: keys.playlistTrackIds, queryFn: async () => new Set(await api.library.playlistTrackIds()), ...local })
 export const usePlaylist = (id: number) =>
   useQuery({ queryKey: keys.playlist(id), queryFn: () => api.library.playlist(id), ...local })
 export const useLiked = () => useQuery({ queryKey: keys.liked, queryFn: () => api.library.liked(), ...local })

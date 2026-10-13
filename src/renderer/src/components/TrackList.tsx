@@ -6,6 +6,7 @@ import { useTrackNav } from '../lib/nav'
 import { useLikedIds } from '../lib/queries'
 import { currentTrack, player, usePlayer } from '../store/player'
 import { useUi } from '../store/ui'
+import { AddToPlaylistButton } from './AddToPlaylistDialog'
 import { Art } from './Art'
 import { Equalizer, GripIcon, HeartFilledIcon, HeartIcon, PlayIcon } from './Icons'
 import { Menu, type MenuItem } from './Menu'
@@ -25,6 +26,8 @@ interface TrackListProps {
   linkTitles?: boolean
   /** show why a radio pick was chosen (off in the queue, where it's just noise) */
   reasons?: boolean
+  /** a quick add-to-playlist button on the current song (the queue) */
+  addCurrent?: boolean
   label: string
 }
 
@@ -40,6 +43,7 @@ export function TrackList({
   removeLabel = 'Remove from playlist',
   linkTitles = true,
   reasons = true,
+  addCurrent,
   label
 }: TrackListProps) {
   const current = usePlayer((s) => currentTrack(s))
@@ -68,6 +72,7 @@ export function TrackList({
           removeLabel={removeLabel}
           linkTitle={linkTitles}
           showReason={reasons}
+          addButton={!!addCurrent && matches(t, i)}
           onMove={onMove && ((to) => to >= 0 && to < tracks.length && onMove(i, to))}
           drag={
             onMove && {
@@ -102,6 +107,7 @@ interface RowProps {
   removeLabel: string
   linkTitle: boolean
   showReason: boolean
+  addButton?: boolean
   onMove?: (to: number) => void
   drag?: { dragging: boolean; target: boolean; start(): void; over(): void; end(): void }
 }
@@ -208,6 +214,7 @@ function TrackRow(p: RowProps) {
       )}
       {!p.compact && <span className="mono muted text-right" style={{ fontSize: 'var(--text-xs)' }}>{t.duration ? formatTime(t.duration) : ''}</span>}
       <div className="track-actions">
+        {p.addButton && <AddToPlaylistButton track={t} />}
         {!p.compact && (
         <button
           className="icon-btn"

@@ -215,7 +215,7 @@ export interface ImportResult {
   truncated?: boolean
 }
 
-export type OsCommand = 'playPause' | 'next' | 'prev' | 'thumbUp' | 'thumbDown' | 'show'
+export type OsCommand = 'playPause' | 'next' | 'prev' | 'thumbUp' | 'thumbDown' | 'toggleMute' | 'show'
 
 export interface NowPlaying {
   title?: string
@@ -223,6 +223,10 @@ export interface NowPlaying {
   artUrl?: string
   playing: boolean
   inStation: boolean
+  volume?: number
+  muted?: boolean
+  /** this session's thumb on the current song */
+  thumb?: 1 | -1
 }
 
 export interface ChartAlbum {

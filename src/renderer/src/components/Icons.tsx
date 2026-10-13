@@ -144,6 +144,12 @@ export const PlusIcon = make(
     <path d="M5 12h14" />
   </>
 )
+export const PlusCheckedIcon = make(
+  <>
+    <circle cx="12" cy="12" r="9.5" />
+    <path d="m8 12.5 2.7 2.7L16.2 9.5" />
+  </>
+)
 export const MoreIcon = make(
   <>
     <circle cx="5" cy="12" r="1.6" />

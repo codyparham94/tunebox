@@ -21,6 +21,7 @@ function listen<T>(channel: string) {
 }
 
 api.onCommand = listen(EVENT.command)
+api.onVolume = listen(EVENT.volume)
 api.onImportProgress = listen(EVENT.importProgress)
 api.onHealth = listen(EVENT.health)
 api.onLocalScan = listen(EVENT.localScan)

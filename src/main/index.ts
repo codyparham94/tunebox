@@ -140,7 +140,7 @@ function openEqWindow(): void {
 }
 
 let widget: BrowserWindow | null = null
-const WIDGET = { width: 400, height: 84 }
+const WIDGET = { width: 400, height: 96 }
 
 /** Where the widget sits: where the user left it, else the bottom-right corner of the main screen. */
 function widgetPosition(): { x: number; y: number } {
@@ -223,7 +223,7 @@ if (!smoke && !app.requestSingleInstanceLock()) {
 
     handleAudioProtocol()
     registerIpc(
-      { getHealth: () => health, runHealthCheck, onSettingsChanged, openEqWindow, setWidget, command: send, nowPlaying: onNowPlaying },
+      { getHealth: () => health, runHealthCheck, onSettingsChanged, openEqWindow, setWidget, command: send, volume: (v) => win?.webContents.send(EVENT.volume, v), nowPlaying: onNowPlaying },
       () => win?.webContents
     )
     win = createWindow()

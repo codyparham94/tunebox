@@ -37,6 +37,7 @@ export interface IpcDeps {
   openEqWindow(): void
   setWidget(on: boolean): void
   command(cmd: OsCommand): void
+  volume(v: number): void
   nowPlaying(s: NowPlaying): void
 }
 
@@ -76,6 +77,7 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
     library: {
       playlists: async () => playlists.listPlaylists(db()),
       playlist: async (id) => playlists.getPlaylist(db(), id),
+      playlistTrackIds: async () => playlists.playlistTrackIds(db()),
       createPlaylist: async (name, tracks) => playlists.createPlaylist(db(), name, tracks),
       renamePlaylist: async (id, name) => playlists.renamePlaylist(db(), id, name),
       deletePlaylist: async (id) => playlists.deletePlaylist(db(), id),
@@ -199,7 +201,8 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
       updateStatus: async () => updateStatus(),
       installUpdate: () => installUpdate(),
       widget: async (on) => deps.setWidget(on),
-      command: async (cmd) => deps.command(cmd)
+      command: async (cmd) => deps.command(cmd),
+      volume: async (v) => deps.volume(v)
     }
   }
 }

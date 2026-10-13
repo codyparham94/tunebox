@@ -58,6 +58,8 @@ export interface TuneboxApi {
   library: {
     playlists(): Promise<LocalPlaylist[]>
     playlist(id: number): Promise<LocalPlaylistDetail>
+    /** ids of songs in any playlist */
+    playlistTrackIds(): Promise<string[]>
     createPlaylist(name: string, tracks?: Track[]): Promise<LocalPlaylist>
     renamePlaylist(id: number, name: string): Promise<void>
     deletePlaylist(id: number): Promise<void>
@@ -129,12 +131,15 @@ export interface TuneboxApi {
     widget(on: boolean): Promise<void>
     /** Player controls from the widget, forwarded to the main window. */
     command(cmd: OsCommand): Promise<void>
+    /** Volume (0–1) from the widget, forwarded to the main window. */
+    volume(v: number): Promise<void>
   }
 }
 
 /** Main → renderer events. */
 export interface TuneboxEvents {
   onCommand(cb: (cmd: OsCommand) => void): () => void
+  onVolume(cb: (v: number) => void): () => void
   onImportProgress(cb: (p: ImportProgress) => void): () => void
   onHealth(cb: (h: ResolverHealth) => void): () => void
   onLocalScan(cb: (p: LocalScanProgress) => void): () => void
@@ -147,6 +152,7 @@ export type WindowApi = TuneboxApi & TuneboxEvents
 
 export const EVENT = {
   command: 'event:command',
+  volume: 'event:volume',
   importProgress: 'event:importProgress',
   health: 'event:health',
   localScan: 'event:localScan',
@@ -161,6 +167,7 @@ export const API_METHODS = {
   library: [
     'playlists',
     'playlist',
+    'playlistTrackIds',
     'createPlaylist',
     'renamePlaylist',
     'deletePlaylist',
@@ -182,7 +189,7 @@ export const API_METHODS = {
   local: ['chooseFolder', 'scan', 'tracks'],
   eq: ['get', 'set', 'popout'],
   settings: ['get', 'set'],
-  system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying', 'currentNowPlaying', 'appVersion', 'checkUpdate', 'updateStatus', 'installUpdate', 'widget', 'command']
+  system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying', 'currentNowPlaying', 'appVersion', 'checkUpdate', 'updateStatus', 'installUpdate', 'widget', 'command', 'volume']
 } as const satisfies { [G in keyof TuneboxApi]: readonly (keyof TuneboxApi[G])[] }
 
 export const AUDIO_SCHEME = 'tunebox-audio'

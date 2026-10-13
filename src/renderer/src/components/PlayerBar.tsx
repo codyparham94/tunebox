@@ -6,6 +6,7 @@ import { useTrackNav } from '../lib/nav'
 import { api, useLikedIds } from '../lib/queries'
 import { currentTrack, player, usePlayer, usePlayerState } from '../store/player'
 import { useUi } from '../store/ui'
+import { AddToPlaylistButton } from './AddToPlaylistDialog'
 import { Art } from './Art'
 import {
   CloseIcon,
@@ -84,6 +85,7 @@ export function PlayerBar() {
             {isLiked ? <HeartFilledIcon size={18} /> : <HeartIcon size={18} />}
           </button>
         )}
+        {t && <AddToPlaylistButton track={t} />}
       </div>
 
       <div className="player-center">
@@ -152,39 +154,41 @@ export function PlayerBar() {
 
       <div className="player-right">
         {s.station && (
-          <span className="station-badge" title={`Playing ${s.station.name}`}>
-            <RadioIcon size={14} />
-            <span className="truncate" style={{ maxWidth: 120 }}>
-              {s.station.name}
+          <div className="player-station">
+            <span className="station-badge" title={`Playing ${s.station.name}`}>
+              <RadioIcon size={14} style={{ flex: 'none' }} />
+              <span className="truncate">{s.station.name}</span>
+              <button className="icon-btn" style={{ flex: 'none', width: 20, height: 20, color: 'inherit' }} aria-label="Leave station" onClick={player.leaveStation}>
+                <CloseIcon size={12} />
+              </button>
             </span>
-            <button className="icon-btn" style={{ width: 20, height: 20, color: 'inherit' }} aria-label="Leave station" onClick={player.leaveStation}>
-              <CloseIcon size={12} />
-            </button>
-          </span>
+          </div>
         )}
-        <button className="icon-btn" aria-label={s.muted ? 'Unmute' : 'Mute'} onClick={player.toggleMute}>
-          {s.muted || s.volume === 0 ? <MuteIcon size={18} /> : <VolumeIcon size={18} />}
-        </button>
-        <input
-          type="range"
-          className="range volume player-extra"
-          min={0}
-          max={1}
-          step={0.01}
-          value={s.muted ? 0 : s.volume}
-          onChange={(e) => player.setVolume(Number(e.target.value))}
-          aria-label="Volume"
-          aria-valuetext={`${Math.round((s.muted ? 0 : s.volume) * 100)}%`}
-        />
-        <button className="icon-btn player-extra" aria-label="Equalizer" title="Equalizer" onClick={() => void api.eq.popout()}>
-          <SlidersIcon size={18} />
-        </button>
-        <button className="icon-btn" aria-label="Widget mode" title="Widget mode: a small now-playing box that stays on top" onClick={() => void api.system.widget(true)}>
-          <PopOutIcon size={18} />
-        </button>
-        <button className="icon-btn" aria-label="Queue" aria-pressed={queueOpen} onClick={toggleQueue}>
-          <QueueIcon size={18} />
-        </button>
+        <div className="player-right-controls">
+          <button className="icon-btn" aria-label={s.muted ? 'Unmute' : 'Mute'} onClick={player.toggleMute}>
+            {s.muted || s.volume === 0 ? <MuteIcon size={18} /> : <VolumeIcon size={18} />}
+          </button>
+          <input
+            type="range"
+            className="range volume player-extra"
+            min={0}
+            max={1}
+            step={0.01}
+            value={s.muted ? 0 : s.volume}
+            onChange={(e) => player.setVolume(Number(e.target.value))}
+            aria-label="Volume"
+            aria-valuetext={`${Math.round((s.muted ? 0 : s.volume) * 100)}%`}
+          />
+          <button className="icon-btn player-extra" aria-label="Equalizer" title="Equalizer" onClick={() => void api.eq.popout()}>
+            <SlidersIcon size={18} />
+          </button>
+          <button className="icon-btn" aria-label="Widget mode" title="Widget mode: a small now-playing box that stays on top" onClick={() => void api.system.widget(true)}>
+            <PopOutIcon size={18} />
+          </button>
+          <button className="icon-btn" aria-label="Queue" aria-pressed={queueOpen} onClick={toggleQueue}>
+            <QueueIcon size={18} />
+          </button>
+        </div>
       </div>
     </footer>
   )

@@ -201,7 +201,9 @@ function useOsEvents() {
       else if (cmd === 'prev') player.prev()
       else if (cmd === 'thumbUp') player.thumb(1)
       else if (cmd === 'thumbDown') player.thumb(-1)
+      else if (cmd === 'toggleMute') player.toggleMute()
     })
+    const offVolume = window.api.onVolume((v) => player.setVolume(v))
     let warned = false
     const offHealth = window.api.onHealth((h) => {
       queryClient.setQueryData(keys.health, h)
@@ -212,6 +214,7 @@ function useOsEvents() {
     })
     return () => {
       offCommand()
+      offVolume()
       offHealth()
     }
   }, [])

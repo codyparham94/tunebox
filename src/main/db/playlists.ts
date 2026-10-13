@@ -31,6 +31,11 @@ export function listPlaylists(db: Db): LocalPlaylist[] {
   )
 }
 
+/** Every song that's in at least one playlist. */
+export function playlistTrackIds(db: Db): string[] {
+  return (db.prepare('SELECT DISTINCT track_id FROM playlist_tracks').all() as { track_id: string }[]).map((r) => r.track_id)
+}
+
 export function getPlaylist(db: Db, id: number): LocalPlaylistDetail {
   const row = db.prepare(`${SUMMARY_SQL} WHERE p.id = ?`).get(id) as PlaylistRow | undefined
   if (!row) throw new Error(`Playlist ${id} not found`)

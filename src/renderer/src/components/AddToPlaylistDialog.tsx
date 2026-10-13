@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import type { Track } from '@shared/types'
 import { addToPlaylist, saveAsPlaylist } from '../lib/actions'
 import { plural } from '../lib/format'
-import { usePlaylists } from '../lib/queries'
+import { usePlaylists, usePlaylistTrackIds } from '../lib/queries'
 import { useUi } from '../store/ui'
 import { Art } from './Art'
-import { PlusIcon } from './Icons'
+import { PlusCheckedIcon, PlusIcon } from './Icons'
 import { Loading } from './States'
 
 export function AddToPlaylistDialog() {
@@ -80,5 +81,17 @@ export function AddToPlaylistDialog() {
         </button>
       </div>
     </dialog>
+  )
+}
+
+/** Quick “+” for one song; shows a check once the song is in any playlist (and still adds to another). */
+export function AddToPlaylistButton({ track, size = 18 }: { track: Track; size?: number }) {
+  const openAdd = useUi((s) => s.openAddToPlaylist)
+  const inPlaylist = !!track.id && !!usePlaylistTrackIds().data?.has(track.id)
+  const label = inPlaylist ? 'In a playlist: add to another' : 'Add to playlist'
+  return (
+    <button className="icon-btn" aria-pressed={inPlaylist} aria-label={label} title={label} onClick={() => openAdd([track])}>
+      {inPlaylist ? <PlusCheckedIcon size={size} /> : <PlusIcon size={size} />}
+    </button>
   )
 }

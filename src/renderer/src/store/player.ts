@@ -300,7 +300,16 @@ function reportNowPlaying(): void {
   const s = get()
   const t = currentTrack(s)
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s.playing ? 'playing' : 'paused'
-  void api.system.nowPlaying({ title: t?.title, artist: t?.artist, artUrl: t?.artUrl, playing: s.playing, inStation: !!s.station })
+  void api.system.nowPlaying({
+    title: t?.title,
+    artist: t?.artist,
+    artUrl: t?.artUrl,
+    playing: s.playing,
+    inStation: !!s.station,
+    volume: s.volume,
+    muted: s.muted,
+    thumb: t?.id ? s.thumbs[t.id] : undefined
+  })
 }
 
 if ('mediaSession' in navigator) {
@@ -495,12 +504,14 @@ export const player = {
     audio.volume = volume
     audio.muted = false
     set({ volume, muted: false })
+    reportNowPlaying()
     if (persist) persistVolume(volume)
   },
 
   toggleMute(): void {
     audio.muted = !audio.muted
     set({ muted: audio.muted })
+    reportNowPlaying()
   },
 
   toggleShuffle(): void {
@@ -531,6 +542,7 @@ export const player = {
     if (!t?.id) return
     const station = get().station
     set({ thumbs: { ...get().thumbs, [t.id]: value } })
+    reportNowPlaying()
     void api.radio
       .feedback(station?.id ?? null, plain(t), value)
       .then(invalidateLikes)
