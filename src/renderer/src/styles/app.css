@@ -551,6 +551,17 @@ img {
   color: var(--text-muted);
 }
 
+/* "Read review" under a card, aligned with the card's text */
+.card-review {
+  display: block;
+  padding: var(--space-1) var(--space-3) 0;
+}
+
+.card-review:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 /* ---------- track list ---------- */
 
 .tracklist {

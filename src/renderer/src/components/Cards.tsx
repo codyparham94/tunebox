@@ -89,7 +89,7 @@ export function LookupAlbumCard(props: { title: string; artist: string; artUrl?:
         {meta && <span className="card-sub truncate">{meta}</span>}
       </button>
       {reviewUrl && (
-        <a href={reviewUrl} target="_blank" rel="noreferrer" className="card-sub">
+        <a href={reviewUrl} target="_blank" rel="noreferrer" className="card-sub card-review">
           Read review
         </a>
       )}

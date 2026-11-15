@@ -268,3 +268,5 @@ export const CompassIcon = make(
     <path d="m15.5 8.5-2 5-5 2 2-5 5-2Z" />
   </>
 )
+
+export const CriticsIcon = make(<path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5l-5.4 3 1.2-6L3.3 9.3l6.1-.7L12 3Z" />)

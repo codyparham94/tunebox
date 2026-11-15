@@ -14,6 +14,7 @@ import { useTheme } from './lib/themes'
 import { eq } from './store/eq'
 import { Artist } from './pages/Artist'
 import { Charts } from './pages/Charts'
+import { Critics } from './pages/Critics'
 import { Album, Playlist, RemotePlaylist } from './pages/Collection'
 import { Discover } from './pages/Discover'
 import { Home } from './pages/Home'
@@ -76,6 +77,7 @@ function Shell() {
             <Route path="/search" element={<Search />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/charts" element={<Charts />} />
+            <Route path="/critics" element={<Critics />} />
             <Route path="/artist/:id" element={<Artist />} />
             <Route path="/album/:id" element={<Album />} />
             <Route path="/remote-playlist/:id" element={<RemotePlaylist />} />
@@ -217,7 +219,9 @@ function useOsEvents() {
         toast.error('Playback engine check failed. Open Settings → Playback engine and update yt-dlp.')
       }
     })
+    const offCritics = window.api.onCritics((f) => queryClient.setQueryData(['critics', 'feed'], f))
     return () => {
+      offCritics()
       offCommand()
       offVolume()
       offHealth()

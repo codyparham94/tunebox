@@ -14,6 +14,7 @@ A desktop music player for Windows and macOS. Search a big catalog, stream audio
 - **Local Player:** pick a music folder and play your own MP3, M4A, FLAC, WAV, OGG and Opus files, browsable by song, album or artist, with embedded cover art. Rescans only re-read changed files.
 - **Discover:** a page of songs and artists you haven’t played yet, built from your likes, playlists, searches and listening. A 25-song mix (each with the reason it was picked), shelves like “Because you searched…”, related artists to try, and your top genres. Search history stays local and can be cleared.
 - **Charts:** Top 40 for any genre, top albums and artists (from Deezer), and your own most-played songs.
+- **Critics' Picks:** newly acclaimed albums from Pitchfork, The Needle Drop, Bandcamp and Stereogum, plus their best-of lists.
 - **Playback:** audio-only streams, seeking, queue with drag-reorder, shuffle and repeat. Autoplay keeps going with Discover picks when the queue runs out (Settings → Playback). Shows up in the Windows media flyout and macOS Now Playing, and responds to hardware media keys.
 - **Home:** what’s playing (with what’s up next) and everything you played recently, each across the full page. Back and forward buttons (and the mouse’s side buttons, Alt+←/→, ⌘[ / ⌘]) move through pages like a browser.
 - **Liked:** albums you ♥ on their album page, then liked songs. **Playlists:** local playlists (create, rename, reorder, delete). Everything is stored in a local SQLite file, with no account and no login.
