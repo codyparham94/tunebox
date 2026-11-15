@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { decodeEntities, requireSome } from '../src/main/sources/critics/http'
+import { parseReview, parseReviewIndex, parseTop50 } from '../src/main/sources/critics/needledrop'
 import { parseBestNew, parseList, parseListIndex, parseReviewDates } from '../src/main/sources/critics/pitchfork'
 
 const fx = (f: string) => readFileSync(new URL(`./fixtures/critics/${f}`, import.meta.url), 'utf8')
@@ -57,5 +58,34 @@ describe('pitchfork', () => {
     expect(albums.map((a) => a.rank).sort((a, b) => a! - b!)).toEqual(Array.from({ length: 50 }, (_, i) => i + 1))
     expect(albums).toContainEqual(expect.objectContaining({ artist: 'Sharp Pins', title: 'Radio DDR', rank: 50 }))
     expect(albums.find((a) => a.artist === 'Sharp Pins')?.artUrl).toMatch(/^https:\/\//)
+  })
+})
+
+describe('needledrop', () => {
+  it('parseReviewIndex returns absolute review urls', () => {
+    const urls = parseReviewIndex(fx('needledrop-reviews.html'))
+    expect(urls.length).toBeGreaterThan(5)
+    for (const u of urls) expect(u).toMatch(/^https:\/\/(www\.)?theneedledrop\.com\/album-reviews\/.+-album-review-/)
+    expect(new Set(urls).size).toBe(urls.length)
+  })
+  it('parseReview reads artist, album, score and date', () => {
+    const url = 'https://www.theneedledrop.com/album-reviews/brakence-marrow-album-review-ihaqnk-d6ny/'
+    const r = parseReview(fx('needledrop-review.html'), url)!
+    expect(r.album.artist).toBe('brakence')
+    expect(r.album.title).toBe('marroW')
+    expect(r.score).toBe(2)
+    expect(r.album.verdict).toBe('2/10')
+    expect(r.album.date).toBe(Date.parse('2026-11-06T13:04:04.000Z'))
+  })
+  it('parseReview returns null without a score', () => {
+    expect(parseReview('<title>Nothing</title>', 'https://x/')).toBeNull()
+  })
+  it('parseTop50 reads name + youtube link pairs only', () => {
+    const albums = parseTop50(fx('needledrop-top50-2025.txt'), 2025)
+    expect(albums.length).toBeGreaterThanOrEqual(40)
+    expect(albums.length).toBeLessThanOrEqual(60)
+    expect(albums[0]).toMatchObject({ artist: 'Aesop Rock', title: 'Black Hole Superette', verdict: 'Top 50 of 2025' })
+    expect(albums.some((a) => a.rank !== undefined)).toBe(false)
+    expect(parseTop50('X - Album - Deluxe\nhttps://www.youtube.com/watch?v=abc', 2025)[0].title).toBe('Album - Deluxe')
   })
 })

@@ -307,3 +307,19 @@ export async function findAlbum(title: string, artist: string): Promise<{ albumI
   const albumId = pickAlbum(albums, title, artist)
   return albumId ? { albumId } : { artistId: await findArtistId(artist, true) }
 }
+
+/** First YouTube video from `channelId` whose title matches, with its description. */
+export async function channelVideo(
+  channelId: string,
+  query: string,
+  title: RegExp
+): Promise<{ id: string; title: string; description: string } | undefined> {
+  const yt = await innertube()
+  const res = await yt.search(query, { type: 'video' })
+  const hit = (res.results ?? []).find(
+    (v: Node) => v?.type === 'Video' && v.author?.id === channelId && title.test(text(v.title))
+  ) as Node
+  if (!hit) return undefined
+  const info = await yt.getBasicInfo(hit.video_id ?? hit.id)
+  return { id: hit.video_id ?? hit.id, title: text(hit.title), description: info.basic_info.short_description ?? '' }
+}
