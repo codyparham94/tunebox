@@ -270,3 +270,21 @@ export interface UpdateStatus {
   /** unsigned macOS builds can't install themselves: "install" opens the download page instead */
   manual?: boolean
 }
+
+export type CriticSource = 'pitchfork' | 'needledrop' | 'bandcamp' | 'stereogum'
+export interface CriticAlbum {
+  title: string
+  artist: string
+  artUrl?: string
+  source: CriticSource
+  /** what the publication said: "Best New Music", "9/10", "Album of the Day" */
+  verdict: string
+  reviewUrl: string
+  /** ms epoch of the review, when known */
+  date?: number
+  /** position in a ranked best-of list */
+  rank?: number
+}
+export interface CriticFeed { albums: CriticAlbum[]; failed: CriticSource[]; builtAt: number }
+export interface CriticListSummary { id: string; source: CriticSource; title: string; year: number; ranked: boolean }
+export interface CriticList extends CriticListSummary { albums: CriticAlbum[] }
