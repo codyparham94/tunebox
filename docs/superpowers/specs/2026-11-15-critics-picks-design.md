@@ -14,7 +14,7 @@ The user wants new, varied, currently talked-about music beyond the mainstream D
   - **Best of:** the publications' ranked or curated best-of lists, chosen from a picker.
 - Every album shows its cover, title, artist, which publication picked it, and that publication's verdict (score or badge). Each album also links to the original review.
 - Clicking an album opens its YouTube Music album page, the same way Charts' "Top albums" does today.
-- Results show instantly from cache. A source that fails to update keeps its last good results and shows a small "couldn't update" note.
+- Results show instantly from the last scan. Sites are scanned once when the app opens and again when the user clicks Refresh, nothing more. A source that fails to update keeps its last good results and shows a small "couldn't update" note.
 
 ## Non-goals
 
@@ -97,20 +97,24 @@ export interface CriticList extends CriticListSummary { albums: CriticAlbum[] }
 ```
 
 - **IPC:** a new group `critics` with:
-  - `feed(refresh?: boolean): CriticFeed`
+  - `feed(): CriticFeed` returns the stored scan, waiting for the scan in progress if there's nothing stored yet.
+  - `scan(): CriticFeed` runs a new scan (the page's Refresh button), or joins the one already running.
   - `lists(): CriticListSummary[]`
   - `list(id: string): CriticList`
 
   Wire it through `API_METHODS`, the handler map in `src/main/ipc/index.ts`, and the preload/`TuneboxApi` types, like the existing groups.
-- **Caching:** use the existing `getState`/`setState` from `src/main/db/settings.ts` for storage, the way the Discover feed does. Unlike Discover, the tab never waits on a rebuild when it already has a cache (show what's cached, then refresh behind it):
-  - The feed is stored under key `critics`.
-  - Cache younger than 6 hours: return it.
-  - Cache older than that: return it **immediately** and start a rebuild in the background. When the rebuild finishes, push a new event `EVENT.critics` (`'event:critics'`, added beside the existing events in `src/shared/api.ts`) carrying the new `CriticFeed`. The renderer writes it into the query cache with `queryClient.setQueryData`, the same pattern `App.tsx` uses for `EVENT.health`.
-  - No cache at all (first open): wait for the build and show skeletons meanwhile. Nothing is fetched at startup or in the background before the user first opens the tab, so there's no network traffic for a tab they never use.
-  - `refresh: true` (a "Refresh" button on the page) waits for a full rebuild and returns it.
-  - Readers run in parallel. A failed reader keeps its previous albums and is listed in `failed`.
-  - List index: 1 day. Each list's contents: 7 days, with the same "return stale, refresh behind it" rule.
-  - Fix audit item #15 at the same time: `getSettings` reads every `state:*` row on every audio request, and a large critics blob would make that worse. Change it to `WHERE key NOT LIKE 'state:%'`.
+- **When to fetch (user's decision: limit the requests):** the sites are scanned **once when the app opens** and **again only when the user clicks Refresh**. There's no timer and no refetch on age.
+  - **Startup scan:** start it 10 s after the main window's `did-finish-load`, so it doesn't compete with startup work. It runs whether or not the tab is opened.
+  - **What a scan covers:** the four Newly acclaimed readers, plus the Best-of list index (Pitchfork's lists page and the Needle Drop "Top 50 Albums of <year>" lookups).
+  - **Best-of list contents:** fetched the first time a list is opened, then kept. The Refresh button on the Best of view re-fetches the open list and the index.
+  - **Needle Drop:** cache parsed reviews by URL permanently, so a scan fetches only the index page plus reviews it hasn't seen.
+  - **One scan at a time:** a click on Refresh while a scan is running joins it instead of starting a second one.
+- **Storage:** use the existing `getState`/`setState` from `src/main/db/settings.ts`.
+  - The feed is stored under `critics:feed`, Needle Drop reviews under `critics:needledrop`, the list index under `critics:lists`, and each list under `critics:list:<id>`.
+  - The stored feed survives restarts, so the tab shows the last scan instantly while the startup scan runs.
+- **Telling the page:** when a scan finishes, push a new event `EVENT.critics` (`'event:critics'`, added beside the existing events in `src/shared/api.ts`) carrying the new `CriticFeed`. The renderer writes it into the query cache with `queryClient.setQueryData`, the same pattern `App.tsx` uses for `EVENT.health`. While a scan runs, the Refresh button shows a spinner.
+- **Failures:** readers run in parallel. A failed reader keeps its previous albums and is listed in `failed`.
+- **Audit item #15:** fix it at the same time. `getSettings` reads every `state:*` row on every audio request, and the critics blobs would make that worse. Change it to `WHERE key NOT LIKE 'state:%'`.
 - **Feed order (All):** interleave the sources in turn: the newest from each source, then the second-newest from each, and so on. Within a source, newest first.
   - Strict newest-first across sources would let Bandcamp (daily) swamp Stereogum (weekly), which works against the variety goal.
   - Each source chip shows that source alone, newest first.
@@ -137,7 +141,7 @@ export interface CriticList extends CriticListSummary { albums: CriticAlbum[] }
   - **When nothing matches**, show the existing "Couldn't find … on YouTube Music" toast.
   - To do this, `findAlbum` returns `{ albumId?: string; artistId?: string }` instead of a bare id.
   - Charts' "Top albums" shares this lookup, so it gets the same stricter, more honest behavior. That's intended.
-- **Data loading:** TanStack Query with keys `['critics','feed']`, `['critics','lists']` and `['critics','list',id]`, and `staleTime` matched to the cache times above.
+- **Data loading:** TanStack Query with keys `['critics','feed']`, `['critics','lists']` and `['critics','list',id]`, all with `staleTime: Infinity`. Fresh data arrives only through the `EVENT.critics` push and the Refresh button, never through a refetch.
 
 ### Testing
 
@@ -150,7 +154,7 @@ export interface CriticList extends CriticListSummary { albums: CriticAlbum[] }
 - The Needle Drop counts at 8/10 and up.
 - Variety comes from the four sources plus Pitchfork's genre lists.
 - "All" interleaves the sources instead of going strictly newest-first.
-- Stale results show instantly while fresh ones load behind them, and nothing is fetched before the tab is first opened.
+- The startup scan waits 10 s, and Best-of list contents load the first time a list is opened, then stay cached until Refresh. (The scan schedule itself, once at app open and again on Refresh, is the user's decision.)
 - Stereogum gets dropped if its title split is unreliable.
 - The album lookup needs both artist and title, with a fallback to the artist page. Charts gets this too.
 - Audit item #15 is fixed alongside. The app-wide timeouts (audit item #7) are left for their own change.
