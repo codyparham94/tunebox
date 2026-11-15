@@ -14,7 +14,7 @@ export const DEFAULT_SETTINGS: Settings = {
 }
 
 export function getSettings(db: Db): Settings {
-  const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[]
+  const rows = db.prepare("SELECT key, value FROM settings WHERE key NOT LIKE 'state:%'").all() as { key: string; value: string }[]
   const out: Record<string, unknown> = { ...DEFAULT_SETTINGS }
   for (const r of rows) if (r.key in DEFAULT_SETTINGS) out[r.key] = JSON.parse(r.value)
   return out as unknown as Settings

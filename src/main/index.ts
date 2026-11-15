@@ -9,6 +9,7 @@ import icon from '../../resources/icon.png?asset'
 import { db as currentDb, initContext } from './context'
 import { openDb } from './db'
 import { getSettings, getState, setState } from './db/settings'
+import { onCriticsScanned, scanCriticsOnce } from './sources/critics'
 import { checkResolvers, runSmoke } from './health'
 import { registerIpc } from './ipc'
 import { setGlobalMediaKeys } from './os/mediaKeys'
@@ -230,7 +231,14 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     createTray(() => win, send)
     createThumbar(win, send)
     onSettingsChanged(getSettings(db))
-    win.webContents.once('did-finish-load', () => void runHealthCheck())
+    onCriticsScanned((f) => win?.webContents.send(EVENT.critics, f))
+    win.webContents.once('did-finish-load', () => {
+      void runHealthCheck()
+      setTimeout(() => {
+        const t = Date.now()
+        void scanCriticsOnce().then(() => console.info('[critics] scan', Date.now() - t))
+      }, 10_000)
+    })
     startUpdater((status) => win?.webContents.send(EVENT.update, status))
   })
 

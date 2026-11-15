@@ -11,6 +11,7 @@ import { getSettings, getState, setSettings, setState } from '../db/settings'
 import * as stations from '../db/stations'
 import { upsertTrack } from '../db/tracks'
 import { clearLocal, listLocal } from '../db/localTracks'
+import { criticList, criticLists, criticsFeed, scanCritics } from '../sources/critics'
 import { discoverFeed, staleDiscover } from '../discover/feed'
 import { importPlaylist } from '../import/importer'
 import { scanFolder } from '../local/library'
@@ -173,6 +174,12 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
         eqSaveTimer = setTimeout(() => setState(db(), 'eq', state), 300)
       },
       popout: async () => deps.openEqWindow()
+    },
+    critics: {
+      feed: () => criticsFeed(),
+      scan: () => scanCritics(),
+      lists: (refresh) => criticLists(refresh),
+      list: (id, refresh) => criticList(id, refresh)
     },
     settings: {
       get: async () => getSettings(db()),

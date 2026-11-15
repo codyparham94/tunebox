@@ -21,6 +21,9 @@ import type {
   PlaylistSearchSource,
   RemotePlaylistSummary,
   RadioTrack,
+  CriticFeed,
+  CriticList,
+  CriticListSummary,
   ResolverHealth,
   SearchEntry,
   SearchResults,
@@ -103,6 +106,13 @@ export interface TuneboxApi {
     scan(): Promise<LocalScanResult>
     tracks(): Promise<Track[]>
   }
+  critics: {
+    feed(): Promise<CriticFeed>
+    scan(): Promise<CriticFeed>
+    /** The stored index; `refresh` re-fetches it (a failure keeps the stored one and throws). */
+    lists(refresh?: boolean): Promise<CriticListSummary[]>
+    list(id: string, refresh?: boolean): Promise<CriticList>
+  }
   eq: {
     get(): Promise<EqState>
     /** Saves and broadcasts to every window; `clientId` lets the sender ignore its own echo. */
@@ -141,6 +151,7 @@ export interface TuneboxEvents {
   onCommand(cb: (cmd: OsCommand) => void): () => void
   onVolume(cb: (v: number) => void): () => void
   onImportProgress(cb: (p: ImportProgress) => void): () => void
+  onCritics(cb: (feed: CriticFeed) => void): () => void
   onHealth(cb: (h: ResolverHealth) => void): () => void
   onLocalScan(cb: (p: LocalScanProgress) => void): () => void
   onEq(cb: (msg: { state: EqState; clientId: string }) => void): () => void
@@ -155,6 +166,7 @@ export const EVENT = {
   volume: 'event:volume',
   importProgress: 'event:importProgress',
   health: 'event:health',
+  critics: 'event:critics',
   localScan: 'event:localScan',
   eq: 'event:eq',
   update: 'event:update',
@@ -187,6 +199,7 @@ export const API_METHODS = {
   importer: ['playlist'],
   discover: ['feed', 'searches', 'clearSearches'],
   local: ['chooseFolder', 'scan', 'tracks'],
+  critics: ['feed', 'scan', 'lists', 'list'],
   eq: ['get', 'set', 'popout'],
   settings: ['get', 'set'],
   system: ['prefetch', 'health', 'updateYtdlp', 'nowPlaying', 'currentNowPlaying', 'appVersion', 'checkUpdate', 'updateStatus', 'installUpdate', 'widget', 'command', 'volume']
