@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { CriticAlbum, CriticFeed, CriticList, CriticListSummary, CriticSource } from '../src/shared/types'
-import { createCritics, interleave, type CriticsStore } from '../src/main/sources/critics'
+import { createCritics, interleave, mergeIndex, type CriticsStore } from '../src/main/sources/critics'
 import { requireSome } from '../src/main/sources/critics/http'
 
 const album = (source: CriticSource, n: string, artist = `Artist ${source} ${n}`): CriticAlbum => ({ source, title: `Album ${n}`, artist, verdict: 'v', reviewUrl: `https://x/${source}/${n}` })
@@ -122,5 +122,24 @@ describe('lists', () => {
     readListIndex.mockRejectedValue(new Error('down'))
     await expect(critics.lists(true)).rejects.toThrow('down')
     expect(store.get('critics:lists')).toHaveLength(1)
+  })
+})
+
+describe('mergeIndex', () => {
+  const sum = (id: string, year: number): CriticListSummary => ({ id, source: id.startsWith('pitchfork') ? 'pitchfork' : 'needledrop', title: id, year, ranked: true })
+  const ok = (v: CriticListSummary[]): PromiseSettledResult<CriticListSummary[]> => ({ status: 'fulfilled', value: v })
+  const bad: PromiseSettledResult<CriticListSummary[]> = { status: 'rejected', reason: new Error('down') }
+
+  it('keeps stored Needle Drop lists when its read fails', () => {
+    const stored = [sum('pitchfork:old', 2024), sum('needledrop:top50-2025', 2025)]
+    const out = mergeIndex(stored, ok([sum('pitchfork:new', 2025)]), bad)
+    expect(out.map((l) => l.id)).toEqual(['pitchfork:new', 'needledrop:top50-2025'])
+  })
+  it('keeps stored Pitchfork lists when its read fails', () => {
+    const stored = [sum('pitchfork:old', 2024)]
+    expect(mergeIndex(stored, bad, ok([sum('needledrop:top50-2025', 2025)])).map((l) => l.id)).toEqual(['needledrop:top50-2025', 'pitchfork:old'])
+  })
+  it('fails only when both fail', () => {
+    expect(() => mergeIndex([], bad, bad)).toThrow('down')
   })
 })

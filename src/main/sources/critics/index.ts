@@ -39,6 +39,16 @@ export function interleave(bySource: CriticAlbum[][]): CriticAlbum[] {
   return out
 }
 
+type Settled = PromiseSettledResult<CriticListSummary[]>
+
+/** A source that fails keeps its stored entries; the merge fails only when both do. */
+export function mergeIndex(stored: CriticListSummary[], pf: Settled, nd: Settled): CriticListSummary[] {
+  if (pf.status === 'rejected' && nd.status === 'rejected') throw pf.reason
+  const part = (r: Settled, prefix: string) => (r.status === 'fulfilled' ? r.value : stored.filter((l) => l.id.startsWith(prefix)))
+  // stable sort: within a year Pitchfork stays ahead of The Needle Drop
+  return [...part(pf, 'pitchfork:'), ...part(nd, 'needledrop:')].sort((a, b) => b.year - a.year)
+}
+
 export function createCritics(deps: CriticsDeps) {
   const { store } = deps
   const listeners: ((f: CriticFeed) => void)[] = []
@@ -119,12 +129,18 @@ const critics = createCritics({
   },
   async readListIndex() {
     const year = new Date().getFullYear()
-    const [pf, nd] = await Promise.all([pitchfork.readListIndex(), readTop50Lists([year, year - 1])])
-    const summaries = nd.map(({ albums, ...summary }) => {
-      store.set(`critics:list:${summary.id}`, { ...summary, albums })
-      return summary
-    })
-    return [...pf, ...summaries].sort((a, b) => b.year - a.year)
+    const [pf, top50] = await Promise.allSettled([pitchfork.readListIndex(), readTop50Lists([year, year - 1])])
+    const nd: Settled =
+      top50.status === 'rejected'
+        ? top50
+        : {
+            status: 'fulfilled',
+            value: top50.value.map(({ albums, ...summary }) => {
+              store.set(`critics:list:${summary.id}`, { ...summary, albums })
+              return summary
+            })
+          }
+    return mergeIndex(store.get<CriticListSummary[]>(LISTS) ?? [], pf, nd)
   },
   async readList(id) {
     if (id.startsWith('pitchfork:')) return pitchfork.readList(id)
