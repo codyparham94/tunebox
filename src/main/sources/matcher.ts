@@ -17,6 +17,8 @@ export interface MatchResult {
 }
 
 export const ACCEPT_CONFIDENCE = 0.6
+/** Below this a match is likely a different song (cover, karaoke): don't play it. */
+export const PLAY_CONFIDENCE = 0.45
 /** Whole-word patterns, compiled once: they run for every candidate the matcher scores. */
 const VARIANT_WORDS = ['live', 'cover', 'remix', 'karaoke', 'instrumental', 'acoustic', 'sped up', 'slowed', 'nightcore', 'reverb', '8d'].map(
   (word) => new RegExp(`(^|\\s)${word}(\\s|$)`)

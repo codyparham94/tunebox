@@ -19,6 +19,7 @@ import { updateTray } from '../os/tray'
 import { checkForUpdate, installUpdate, updateStatus } from '../os/updater'
 import { ensureTags, forgetStation, nextTracks, retuneStation, stationFeedback } from '../radio/station'
 import { resolveMatch } from '../sources/catalog'
+import { PLAY_CONFIDENCE } from '../sources/matcher'
 import * as deezer from '../sources/deezer'
 import * as lastfm from '../sources/lastfm'
 import * as ytm from '../sources/ytmusic'
@@ -64,7 +65,10 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
       artist: (id) => ytm.artist(id),
       album: (id) => ytm.album(id),
       remotePlaylist: (id) => ytm.playlist(id, { max: 300 }),
-      match: async (t) => (await resolveMatch(t))?.track ?? null,
+      match: async (t) => {
+        const r = await resolveMatch(t)
+        return r && r.confidence >= PLAY_CONFIDENCE ? r.track : null
+      },
       locate: (t) => ytm.locate(t),
       charts: (genreId, limit) => deezer.chart(genreId ?? 0, limit ?? 30),
       chartAlbums: (genreId) => deezer.chartAlbums(genreId ?? 0),

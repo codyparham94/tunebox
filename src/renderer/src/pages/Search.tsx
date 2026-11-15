@@ -22,6 +22,9 @@ export function Search() {
   const inputRef = useRef<HTMLInputElement>(null)
   const results = useSearch(q)
 
+  // The URL changed from outside (Search tab, "/"): show it, or the debounce below writes the old text back.
+  useEffect(() => setInput((cur) => (cur.trim() === q ? cur : q)), [q])
+
   useEffect(() => {
     const id = setTimeout(() => {
       if (input.trim() !== q) setParams((p) => (input.trim() ? (p.set('q', input.trim()), p) : (p.delete('q'), p)), { replace: true })

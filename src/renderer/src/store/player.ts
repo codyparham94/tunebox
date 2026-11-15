@@ -67,10 +67,14 @@ audio.crossOrigin = 'anonymous'
 type EndKind = 'ended' | 'skip' | 'replace' | 'dislike'
 
 let qidSeq = 1
-let session: { qid: number; track: QueueItem; listenedMs: number; last: number } | null = null
+/** The play being listened to. `stationId` is captured at start: the station may change before it's reported. */
+let session: { qid: number; track: QueueItem; listenedMs: number; last: number; stationId: number | null } | null = null
 let errorStreak = 0
 let advanceAfterRefill = false
 let unshuffled: QueueItem[] | null = null
+let skipTimer: ReturnType<typeof setTimeout> | undefined
+
+const newSession = (track: QueueItem) => ({ qid: track.qid, track, listenedMs: 0, last: 0, stationId: get().station?.id ?? null })
 
 const withQid = (t: Track | RadioTrack): QueueItem => ({ ...t, qid: qidSeq++ })
 const primaryArtist = (artist: string) => artist.split(',')[0].trim().toLowerCase()
@@ -90,7 +94,7 @@ function finalize(kind: EndKind): void {
   const skipped = kind === 'skip' && !completed
   if (!completed && !skipped && s.listenedMs < 5000) return
   void api.library
-    .recordPlay({ track: plain(s.track), listenedMs: s.listenedMs, completed, skipped, stationId: get().station?.id ?? null })
+    .recordPlay({ track: plain(s.track), listenedMs: s.listenedMs, completed, skipped, stationId: s.stationId })
     .then(() => queryClient.invalidateQueries({ queryKey: keys.history }))
     .catch(() => undefined)
 }
@@ -98,14 +102,20 @@ function finalize(kind: EndKind): void {
 async function startAt(i: number, kind: EndKind = 'replace'): Promise<void> {
   const item = get().queue[i]
   if (!item) return
+  // Whatever was pending (a refill to auto-start, an error skip) is superseded by this start.
+  advanceAfterRefill = false
+  clearTimeout(skipTimer)
   finalize(kind)
   set({ index: i, position: 0, duration: item.duration || 0, loading: true })
 
   let track = item
   if (!track.id) {
+    audio.pause() // don't keep playing (and auto-advancing from) the old song while this one is matched
     const match = await api.catalog.match(plain(item)).catch(() => null)
     if (currentTrack()?.qid !== item.qid) return // user moved on
     if (!match) {
+      set({ loading: false })
+      if (++errorStreak >= 3) return void toast.error('Couldn’t find several songs in a row. Check your connection.')
       toast.error(`Couldn’t find “${item.title}” on YouTube. Skipping.`)
       return next('replace')
     }
@@ -113,7 +123,7 @@ async function startAt(i: number, kind: EndKind = 'replace'): Promise<void> {
     set({ queue: get().queue.map((q) => (q.qid === item.qid ? track : q)) })
   }
 
-  session = { qid: track.qid, track, listenedMs: 0, last: 0 }
+  session = newSession(track)
   audio.src = audioUrl(track.id)
   connectEq(audio)
   updateMediaSession(track)
@@ -149,8 +159,19 @@ async function refillStation(): Promise<void> {
     set({ loading: false })
     toast.error(errorMessage(err))
   } finally {
-    set({ refilling: false })
+    refillDone()
   }
+}
+
+/**
+ * Station and autoplay refills share `refilling`. One dropped because the user switched between them
+ * leaves playback waiting, so start the refill that applies now.
+ */
+function refillDone(): void {
+  set({ refilling: false })
+  if (!advanceAfterRefill) return
+  void refillStation()
+  void refillAutoplay()
 }
 
 /** Adds refill picks to the end of the queue, starting them if playback was waiting on them. */
@@ -194,7 +215,7 @@ async function refillAutoplay(): Promise<void> {
     set({ loading: false })
     toast.error(errorMessage(err))
   } finally {
-    set({ refilling: false })
+    refillDone()
   }
 }
 
@@ -267,7 +288,7 @@ audio.addEventListener('error', () => {
     return
   }
   toast.error(`Couldn’t play “${t?.title ?? 'this track'}”. Skipping.`)
-  setTimeout(() => next('replace'), 600)
+  skipTimer = setTimeout(() => next('replace'), 600)
 })
 window.addEventListener('beforeunload', () => finalize('replace'))
 
@@ -330,7 +351,7 @@ function next(kind: EndKind = 'skip'): void {
   if (kind === 'ended' && s.repeat === 'one') {
     finalize('ended')
     const t = currentTrack()
-    if (t) session = { qid: t.qid, track: t, listenedMs: 0, last: 0 }
+    if (t) session = newSession(t)
     audio.currentTime = 0
     void audio.play()
     return
@@ -397,7 +418,8 @@ export const player = {
   /** Tune into a station. A seed track plays first while the station fills up. */
   playStation(station: Station, seed?: Track): void {
     unshuffled = null
-    set({ queue: seed ? [withQid(seed)] : [], index: -1, station: { id: station.id, name: station.name }, shuffle: false })
+    // repeat is disabled in stations, so a leftover "repeat one" would loop the first song for good
+    set({ queue: seed ? [withQid(seed)] : [], index: -1, station: { id: station.id, name: station.name }, shuffle: false, repeat: 'off' })
     if (seed) void startAt(0, 'replace')
     else {
       finalize('replace')
@@ -419,6 +441,7 @@ export const player = {
   },
 
   leaveStation(): void {
+    if (advanceAfterRefill) set({ loading: false }) // was tuning in; nothing is coming now
     advanceAfterRefill = false
     set({ station: null })
     reportNowPlaying()
@@ -471,7 +494,8 @@ export const player = {
       if (s.queue.length) void startAt(Math.max(0, s.index), 'replace')
       return
     }
-    if (!audio.src || audio.error) void startAt(s.index, 'replace')
+    // no live session for this song (never loaded, failed, unmatched, or the queue ended): start it properly
+    if (!audio.src || audio.error || session?.qid !== currentTrack(s)?.qid) void startAt(s.index, 'replace')
     else if (audio.paused) void audio.play()
     else audio.pause()
   },
@@ -522,8 +546,9 @@ export const player = {
       set({ shuffle: true, queue: [...head, ...shuffled(queue.slice(index + 1))] })
       return
     }
-    const present = new Set(queue.map((q) => q.qid))
-    const original = (unshuffled ?? queue).filter((q) => present.has(q.qid))
+    // Take the queue's current objects: chart songs get their YouTube match swapped in after shuffling.
+    const byQid = new Map(queue.map((q) => [q.qid, q]))
+    const original = (unshuffled ?? queue).flatMap((q) => byQid.get(q.qid) ?? [])
     const known = new Set(original.map((q) => q.qid))
     const restored = [...original, ...queue.filter((q) => !known.has(q.qid))]
     const currentQid = queue[index]?.qid

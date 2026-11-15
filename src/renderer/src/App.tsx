@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react'
-import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
+import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { AddToPlaylistDialog } from './components/AddToPlaylistDialog'
+import { ErrorBoundary } from './components/States'
 import { NavRail } from './components/NavRail'
 import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
@@ -41,6 +42,7 @@ export function App() {
 function Shell() {
   const queueOpen = useUi((s) => s.queueOpen)
   const queueMounted = usePresence(queueOpen, 320)
+  const { pathname } = useLocation()
   const settings = useSettings().data
   useTheme(settings?.theme ?? 'system')
   useMotion(settings?.motion ?? 'system')
@@ -67,33 +69,36 @@ function Shell() {
       </a>
       <NavRail />
       <main id="main" className="main" tabIndex={-1}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/discover" element={<Discover />} />
-          <Route path="/charts" element={<Charts />} />
-          <Route path="/artist/:id" element={<Artist />} />
-          <Route path="/album/:id" element={<Album />} />
-          <Route path="/remote-playlist/:id" element={<RemotePlaylist />} />
-          <Route path="/playlist/:id" element={<Playlist />} />
-          <Route path="/liked" element={<Liked />} />
-          <Route path="/radio" element={<Radio />} />
-          <Route path="/playlists" element={<Playlists />} />
-          {/* the old Library tab split into Liked and Playlists */}
-          <Route path="/library" element={<Navigate to="/liked" replace />} />
-          <Route path="/local" element={<Local />} />
-          <Route path="/settings" element={<Settings />} />
-          {DataLab && (
-            <Route
-              path="/lab"
-              element={
-                <Suspense>
-                  <DataLab />
-                </Suspense>
-              }
-            />
-          )}
-        </Routes>
+        {/* keyed by route: a crashed page recovers when you navigate away */}
+        <ErrorBoundary key={pathname}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/charts" element={<Charts />} />
+            <Route path="/artist/:id" element={<Artist />} />
+            <Route path="/album/:id" element={<Album />} />
+            <Route path="/remote-playlist/:id" element={<RemotePlaylist />} />
+            <Route path="/playlist/:id" element={<Playlist />} />
+            <Route path="/liked" element={<Liked />} />
+            <Route path="/radio" element={<Radio />} />
+            <Route path="/playlists" element={<Playlists />} />
+            {/* the old Library tab split into Liked and Playlists */}
+            <Route path="/library" element={<Navigate to="/liked" replace />} />
+            <Route path="/local" element={<Local />} />
+            <Route path="/settings" element={<Settings />} />
+            {DataLab && (
+              <Route
+                path="/lab"
+                element={
+                  <Suspense>
+                    <DataLab />
+                  </Suspense>
+                }
+              />
+            )}
+          </Routes>
+        </ErrorBoundary>
       </main>
       {queueMounted && <QueuePanel open={queueOpen} />}
       <PlayerBar />

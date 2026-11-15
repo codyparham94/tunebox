@@ -164,7 +164,25 @@ export async function searchPlaylists(query: string): Promise<RemotePlaylistSumm
   return compact((res.playlists?.contents ?? []).map(toRemotePlaylist))
 }
 
-export async function artist(id: string): Promise<ArtistPage> {
+/**
+ * Artist page carousels stop at 10 items; the shelf's "More" link opens the full grid.
+ * ponytail: first page of the grid only; follow its continuation if a huge discography gets cut off.
+ */
+async function fullShelf(yt: Innertube, shelf: Node): Promise<Node[]> {
+  const preview: Node[] = shelf?.contents ?? []
+  const more = shelf?.header?.more_content?.endpoint
+  if (!more) return preview
+  try {
+    const res: Node = await more.call(yt.actions, { client: 'YTMUSIC', parse: true })
+    const items: Node[] | undefined = res.contents_memo?.get('Grid')?.[0]?.items
+    return items?.length ? items : preview
+  } catch {
+    return preview
+  }
+}
+
+/** `full: false` skips fetching the complete album/single lists (callers that only want `related`). */
+export async function artist(id: string, full = true): Promise<ArtistPage> {
   const yt = await innertube()
   const page = await yt.music.getArtist(id)
   const name = text(page.header?.title)
@@ -174,14 +192,17 @@ export async function artist(id: string): Promise<ArtistPage> {
   const albums = section(/^albums/i)
   const singles = section(/singles|eps/i)
   const related = section(/fans might also like|similar|related/i)
+  const [albumItems, singleItems] = full
+    ? await Promise.all([fullShelf(yt, albums), fullShelf(yt, singles)])
+    : [albums?.contents ?? [], singles?.contents ?? []]
   return {
     id,
     name,
     description: text((page.header as Node)?.description) || undefined,
     artUrl: bestThumb(page.header),
     topSongs: compact((songs?.contents ?? []).map((i: Node) => toTrack(i, { artist: name, artistId: id }))),
-    albums: compact((albums?.contents ?? []).map((i: Node) => toAlbum(i, name))),
-    singles: compact((singles?.contents ?? []).map((i: Node) => toAlbum(i, name))),
+    albums: compact(albumItems.map((i: Node) => toAlbum(i, name))),
+    singles: compact(singleItems.map((i: Node) => toAlbum(i, name))),
     related: compact((related?.contents ?? []).map(toArtist))
   }
 }

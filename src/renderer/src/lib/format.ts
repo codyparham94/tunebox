@@ -9,8 +9,9 @@ export function formatTime(seconds: number): string {
 
 export function totalDuration(tracks: { duration: number }[]): string {
   const total = tracks.reduce((n, t) => n + (t.duration || 0), 0)
-  const h = Math.floor(total / 3600)
-  const m = Math.round((total % 3600) / 60)
+  const mins = Math.round(total / 60) // round first, so 1:59:40 is "2 hr 0 min", not "1 hr 60 min"
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
   return h ? `${h} hr ${m} min` : `${m} min`
 }
 

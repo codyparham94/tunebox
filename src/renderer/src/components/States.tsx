@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { Component, type ReactNode } from 'react'
 import { errorMessage } from '../lib/queries'
 
 export function Loading({ label = 'Loading…', rows = 0 }: { label?: string; rows?: number }) {
@@ -39,6 +39,18 @@ export function ErrorState({ error, retry }: { error: unknown; retry?: () => voi
       )}
     </div>
   )
+}
+
+/** A render error shows here instead of blanking the whole window. Audio lives outside React, so it keeps playing. */
+export class ErrorBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
+  state = { error: null as unknown }
+  static getDerivedStateFromError(error: unknown) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) return <ErrorState error={this.state.error} retry={() => this.setState({ error: null })} />
+    return this.props.children
+  }
 }
 
 /** Renders loading / error / empty / content for a query. */

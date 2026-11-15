@@ -87,7 +87,8 @@ export function AddToPlaylistDialog() {
 /** Quick “+” for one song; shows a check once the song is in any playlist (and still adds to another). */
 export function AddToPlaylistButton({ track, size = 18 }: { track: Track; size?: number }) {
   const openAdd = useUi((s) => s.openAddToPlaylist)
-  const inPlaylist = !!track.id && !!usePlaylistTrackIds().data?.has(track.id)
+  const inPlaylistIds = usePlaylistTrackIds().data
+  const inPlaylist = !!track.id && !!inPlaylistIds?.has(track.id)
   const label = inPlaylist ? 'In a playlist: add to another' : 'Add to playlist'
   return (
     <button className="icon-btn" aria-pressed={inPlaylist} aria-label={label} title={label} onClick={() => openAdd([track])}>

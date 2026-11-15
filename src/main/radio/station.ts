@@ -11,6 +11,7 @@ import {
 import { getStation, touchStation } from '../db/stations'
 import { getTrack, setArtistTags, setTrackTags, upsertTrack } from '../db/tracks'
 import { resolveMatch } from '../sources/catalog'
+import { PLAY_CONFIDENCE } from '../sources/matcher'
 import * as lastfm from '../sources/lastfm'
 import { mapLimit, withTimeout } from '../util/async'
 import { trackKey } from '../util/text'
@@ -27,7 +28,6 @@ interface StationState {
 
 const REFRESH_BELOW = 20
 const MAX_POOL_AGE = 60 * 60 * 1000
-const MIN_CONFIDENCE = 0.45
 const states = new Map<number, StationState>()
 
 function state(id: number): StationState {
@@ -82,7 +82,7 @@ export async function nextTracks(stationId: number, count: number): Promise<Radi
       duration: c.duration ?? 0,
       artUrl: c.artUrl
     })
-    if (!match || match.confidence < MIN_CONFIDENCE) return null
+    if (!match || match.confidence < PLAY_CONFIDENCE) return null
     if (ctx.bannedIds.has(match.track.id) || ctx.recentPlays.has(match.track.id)) return null
     return { ...match.track, reason: p.reason } satisfies RadioTrack
   })

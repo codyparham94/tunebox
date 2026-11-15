@@ -84,7 +84,7 @@ export function addStationArtist(db: Db, id: number, name: string): Station {
 }
 
 export function renameStation(db: Db, id: number, name: string): Station {
-  const clean = name.trim().replace(/s+/g, ' ').slice(0, 80)
+  const clean = name.trim().replace(/\s+/g, ' ').slice(0, 80)
   if (!clean) throw new Error('Enter a station name.')
   db.prepare('UPDATE stations SET name = ? WHERE id = ?').run(clean, id)
   return getStation(db, id).station

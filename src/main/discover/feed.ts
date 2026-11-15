@@ -7,6 +7,7 @@ import { getState, setState } from '../db/settings'
 import { attachTags, cand, first, similarArtistsTop } from '../radio/candidates'
 import { mergeCandidates, pickTracks, scoreCandidates, type Candidate } from '../radio/scorer'
 import { resolveMatch } from '../sources/catalog'
+import { PLAY_CONFIDENCE } from '../sources/matcher'
 import * as lastfm from '../sources/lastfm'
 import * as ytm from '../sources/ytmusic'
 import { mapLimit } from '../util/async'
@@ -16,7 +17,6 @@ import { capPerArtist, isFresh, rankArtists, shelfTracks, topKeys, type Exclusio
 const MAX_AGE = 6 * 60 * 60 * 1000
 const MIX_SIZE = 25
 const SHELF_SIZE = 12
-const MIN_CONFIDENCE = 0.45
 /** Listens before an artist (or a song) shapes Discover; a single play is just a play. */
 const MIN_PLAYS = 3
 
@@ -142,7 +142,7 @@ async function relatedArtists(artistAffinity: Map<string, number>, heard: Map<st
   const favourites = favouriteArtists(artistAffinity)
   const groups = await mapLimit(favourites, 3, async (a) => {
     const id = a.id ?? (await ytm.findArtistId(a.name))
-    return { because: a.name, related: id ? (await ytm.artist(id)).related : [] }
+    return { because: a.name, related: id ? (await ytm.artist(id, false)).related : [] }
   })
   const known = new Set([
     ...ex.artists,
@@ -166,7 +166,7 @@ async function resolvePicks(picks: { c: Candidate; reason: string }[], ex: Exclu
       duration: c.duration ?? 0,
       artUrl: c.artUrl
     })
-    if (!m || m.confidence < MIN_CONFIDENCE || ex.ids.has(m.track.id)) return null
+    if (!m || m.confidence < PLAY_CONFIDENCE || ex.ids.has(m.track.id)) return null
     return { ...m.track, artUrl: m.track.artUrl ?? c.artUrl, reason }
   })
   const seen = new Set<string>()
