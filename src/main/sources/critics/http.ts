@@ -16,6 +16,11 @@ export function decodeEntities(s: string): string {
   })
 }
 
+/** the body of each <item>, with the channel header (its own <title>/<link>) left out */
+export function rssItems(xml: string): string[] {
+  return [...xml.matchAll(/<item>(.*?)<\/item>/gs)].map((m) => m[1])
+}
+
 export function requireSome<T>(items: T[], what: string): T[] {
   if (!items.length) throw new Error(`${what}: nothing found`)
   return items

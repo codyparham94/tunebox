@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { decodeEntities, requireSome } from '../src/main/sources/critics/http'
+import { decodeEntities, requireSome, rssItems } from '../src/main/sources/critics/http'
 import { parseReview, parseReviewIndex, parseTop50 } from '../src/main/sources/critics/needledrop'
 import { parseAlbumOfTheDay } from '../src/main/sources/critics/bandcamp'
 import { parseAlbumOfTheWeek } from '../src/main/sources/critics/stereogum'
@@ -14,6 +14,10 @@ describe('critics helpers', () => {
   })
   it('decodeEntities leaves out-of-range entities alone', () => {
     expect(decodeEntities('&#99999999;')).toBe('&#99999999;')
+  })
+  it('rssItems skips the channel header and separates items', () => {
+    const xml = '<channel><title>C</title><link>c</link><item><title>A</title></item><item><title>B</title></item></channel>'
+    expect(rssItems(xml)).toEqual(['<title>A</title>', '<title>B</title>'])
   })
   it('decodeEntities', () => {
     expect(decodeEntities('Snakes &amp; Ladders &#8217;&#x2019;')).toBe('Snakes & Ladders ’’')
@@ -103,6 +107,9 @@ describe('bandcamp', () => {
       expect(Number.isFinite(a.date)).toBe(true)
       expect(a.reviewUrl).toContain('/album-of-the-day/')
     }
+    // the first item after the channel header must not be dropped
+    expect(albums[0]).toMatchObject({ title: 'EXPERTISE' })
+    expect(albums.some((a) => a.artUrl?.startsWith('https://'))).toBe(true)
     expect(albums.length).toBe((xml.match(/<category>Album of the Day<\/category>/g) ?? []).length)
   })
 })

@@ -1,15 +1,12 @@
 import type { CriticAlbum } from '@shared/types'
-import { decodeEntities, fetchText, requireSome } from './http'
+import { decodeEntities, fetchText, requireSome, rssItems } from './http'
 
 const FEED = 'https://www.stereogum.com/category/reviews/album-of-the-week/feed/'
 const PREFIX = 'Album Of The Week: '
 
 export function parseAlbumOfTheWeek(xml: string): CriticAlbum[] {
   const out: CriticAlbum[] = []
-  for (const chunk of xml.split('</item>')) {
-    const start = chunk.indexOf('<item>') // the first chunk also holds the channel header
-    if (start < 0) continue
-    const item = chunk.slice(start)
+  for (const item of rssItems(xml)) {
     const raw = /<title>(.*?)<\/title>/s.exec(item)?.[1]
     const link = /<link>(.*?)<\/link>/s.exec(item)?.[1].trim()
     const pub = /<pubDate>(.*?)<\/pubDate>/s.exec(item)?.[1]

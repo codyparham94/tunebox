@@ -1,5 +1,5 @@
 import type { CriticAlbum, CriticList, CriticListSummary } from '@shared/types'
-import { decodeEntities, fetchText, requireSome } from './http'
+import { decodeEntities, fetchText, requireSome, rssItems } from './http'
 
 const ORIGIN = 'https://pitchfork.com'
 const strip = (s: string) => decodeEntities(s.replace(/<[^>]+>/g, '')).trim()
@@ -29,7 +29,7 @@ export function parseBestNew(html: string): CriticAlbum[] {
 
 export function parseReviewDates(xml: string): Map<string, number> {
   const dates = new Map<string, number>()
-  for (const item of xml.split('</item>')) {
+  for (const item of rssItems(xml)) {
     const link = /<link>(.*?)<\/link>/s.exec(item)
     const pub = /<pubDate>(.*?)<\/pubDate>/s.exec(item)
     const ms = pub ? Date.parse(pub[1]) : NaN

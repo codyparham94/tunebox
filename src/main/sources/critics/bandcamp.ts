@@ -1,11 +1,11 @@
 import type { CriticAlbum } from '@shared/types'
-import { decodeEntities, fetchText, requireSome } from './http'
+import { decodeEntities, fetchText, requireSome, rssItems } from './http'
 
 const FEED = 'https://daily.bandcamp.com/feed'
 
 export function parseAlbumOfTheDay(xml: string): CriticAlbum[] {
   const out: CriticAlbum[] = []
-  for (const item of xml.split('</item>')) {
+  for (const item of rssItems(xml)) {
     if (!/<category>\s*Album of the Day\s*<\/category>/i.test(item)) continue
     const raw = /<title>(.*?)<\/title>/s.exec(item)?.[1]
     const link = /<link>(.*?)<\/link>/s.exec(item)?.[1].trim()
