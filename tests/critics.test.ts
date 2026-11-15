@@ -82,6 +82,11 @@ describe('needledrop', () => {
     expect(r.score).toBe(2)
     expect(r.album.verdict).toBe('2/10')
     expect(r.album.date).toBe(Date.parse('2026-11-06T13:04:04.000Z'))
+    expect(r.album.artUrl).toMatch(/^https:\/\//)
+  })
+  it('parseReview falls back to the embedded video thumbnail', () => {
+    const html = fx('needledrop-review.html').replace(/<meta property="og:image"[^>]*>/, '')
+    expect(parseReview(html, 'https://x/')!.album.artUrl).toBe('https://i.ytimg.com/vi/IHAqnk-D6NY/hqdefault.jpg')
   })
   it('parseReview returns null without a score', () => {
     expect(parseReview('<title>Nothing</title>', 'https://x/')).toBeNull()
@@ -92,7 +97,17 @@ describe('needledrop', () => {
     expect(albums.length).toBeLessThanOrEqual(60)
     expect(albums[0]).toMatchObject({ artist: 'Aesop Rock', title: 'Black Hole Superette', verdict: 'Top 50 of 2025' })
     expect(albums.some((a) => a.rank !== undefined)).toBe(false)
+    expect(albums.every((a) => a.artUrl?.startsWith('https://i.ytimg.com/vi/'))).toBe(true)
     expect(parseTop50('X - Album - Deluxe\nhttps://www.youtube.com/watch?v=abc', 2025)[0].title).toBe('Album - Deluxe')
+  })
+})
+
+describe('rss links', () => {
+  it('skip an item whose link is not https', () => {
+    const item = (link: string) =>
+      `<item><title>Album Of The Week: A <em>B</em></title><link>${link}</link><category>Album of the Day</category></item>`
+    expect(parseAlbumOfTheWeek(`<rss>${item('http://x/')}</rss>`)).toEqual([])
+    expect(parseAlbumOfTheDay(`<rss><item><title>A, “B”</title><link>http://x/</link><category>Album of the Day</category></item></rss>`)).toEqual([])
   })
 })
 

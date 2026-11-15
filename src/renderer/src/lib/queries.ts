@@ -59,9 +59,10 @@ export const useHealth = () => useQuery({ queryKey: keys.health, queryFn: () => 
 /** Critics data changes only through a scan, a Refresh click or the push event, never on its own. */
 const never = { staleTime: Infinity }
 export const useCriticsFeed = () => useQuery({ queryKey: ['critics', 'feed'], queryFn: () => api.critics.feed(), ...never })
-export const useCriticLists = () => useQuery({ queryKey: ['critics', 'lists'], queryFn: () => api.critics.lists(), ...never })
-export const useCriticList = (id: string) =>
-  useQuery({ queryKey: ['critics', 'list', id], queryFn: () => api.critics.list(id), enabled: !!id, ...never })
+export const useCriticLists = (enabled = true) =>
+  useQuery({ queryKey: ['critics', 'lists'], queryFn: () => api.critics.lists(), enabled, ...never })
+export const useCriticList = (id: string, enabled = true) =>
+  useQuery({ queryKey: ['critics', 'list', id], queryFn: () => api.critics.list(id), enabled: enabled && !!id, ...never })
 
 export function invalidateLikes(): void {
   void queryClient.invalidateQueries({ queryKey: keys.liked })

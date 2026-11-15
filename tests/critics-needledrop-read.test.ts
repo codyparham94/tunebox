@@ -52,7 +52,7 @@ describe('readReviews', () => {
     mocked.mockImplementation(async (u) => {
       const m = /page\/(\d)\/$/.exec(u)
       if (u.endsWith('/album-reviews/') || m) return pageOf(m ? +m[1] : 1)
-      return '<title>Nothing</title>'
+      return review
     })
     await readReviews({})
     const indexFetches = mocked.mock.calls.filter(([u]) => /\/album-reviews\/(page\/\d\/)?$/.test(u))
@@ -94,6 +94,11 @@ describe('readReviews', () => {
     const out = await readReviews(seen)
     expect(mocked).toHaveBeenCalledTimes(2)
     expect(out.albums.map((x) => x.artist)).toEqual(['n', 'a', 'b', 'c'])
+  })
+
+  it('rejects, leaving the cache alone, when every fresh page lacks a score', async () => {
+    mocked.mockImplementation(async (u) => (u.endsWith('/album-reviews/') ? pageOf(1) : '<title>Redesign</title>'))
+    await expect(readReviews({})).rejects.toThrow('no scores found')
   })
 
   it('rejects when the index is down', async () => {

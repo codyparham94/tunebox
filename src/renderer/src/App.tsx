@@ -219,7 +219,10 @@ function useOsEvents() {
         toast.error('Playback engine check failed. Open Settings → Playback engine and update yt-dlp.')
       }
     })
-    const offCritics = window.api.onCritics((f) => queryClient.setQueryData(['critics', 'feed'], f))
+    const offCritics = window.api.onCritics((f) => {
+      queryClient.setQueryData(['critics', 'feed'], f)
+      void queryClient.invalidateQueries({ queryKey: ['critics', 'lists'] }) // a scan also rewrites the list index
+    })
     return () => {
       offCritics()
       offCommand()

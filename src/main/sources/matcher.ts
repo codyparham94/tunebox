@@ -73,6 +73,9 @@ export function pickBest(source: MatchSource, candidates: MatchCandidate[]): Mat
   return scored[0]
 }
 
+/** Compilations credit "Various Artists", which is no channel worth opening. */
+export const isVariousArtists = (artist: string) => /^various(?: artists)?$/.test(normalizeArtist(artist))
+
 /** YT Music album id whose artist is the same and whose title is the same or close; never another album by the artist. */
 export function pickAlbum(albums: { id: string; title: string; artist: string }[], title: string, artist: string): string | undefined {
   const wantArtist = normalizeArtist(artist)

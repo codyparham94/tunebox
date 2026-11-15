@@ -73,7 +73,7 @@ export function LookupAlbumCard(props: { title: string; artist: string; artUrl?:
     })
   const meta = [badge, date ? timeAgo(date) : undefined].filter(Boolean).join(' · ')
   return (
-    <div className="relative">
+    <div className="relative grid">
       <button className="card" onClick={open} aria-busy={busy === key}>
         <div className="relative">
           <Art src={artUrl} className="w-full" />

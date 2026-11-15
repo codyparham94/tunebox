@@ -88,13 +88,18 @@ export function Critics() {
   }
 
   const feed = useCriticsFeed()
-  const lists = useCriticLists()
-  // a Refresh can drop the chosen list from the index: fall back to the default
+  const best = mode === 'best'
+  const lists = useCriticLists(best)
+  // a Refresh can drop the chosen list from the index: fall back to the newest general list
   const id =
     (lists.data?.some((l) => l.id === listId)
       ? listId
-      : (lists.data?.find((l) => l.source === 'pitchfork') ?? lists.data?.[0])?.id) ?? ''
-  const list = useCriticList(id)
+      : (
+          lists.data?.find((l) => /^pitchfork:best-albums-\d{4}$/.test(l.id)) ??
+          lists.data?.find((l) => l.source === 'pitchfork') ??
+          lists.data?.[0]
+        )?.id) ?? ''
+  const list = useCriticList(id, best)
 
   const refresh = async () => {
     setRefreshing(true)
@@ -115,7 +120,7 @@ export function Critics() {
     <div className="page">
       <div className="page-head">
         <h1 className="page-title">Critics’ Picks</h1>
-        <button className="btn" disabled={refreshing} onClick={() => void refresh()}>
+        <button className="btn" disabled={refreshing} aria-busy={refreshing} onClick={() => void refresh()}>
           {refreshing && <span className="spinner" aria-hidden="true" />} Refresh
         </button>
       </div>

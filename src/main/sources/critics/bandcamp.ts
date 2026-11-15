@@ -10,7 +10,7 @@ export function parseAlbumOfTheDay(xml: string): CriticAlbum[] {
     const raw = /<title>(.*?)<\/title>/s.exec(item)?.[1]
     const link = /<link>(.*?)<\/link>/s.exec(item)?.[1].trim()
     const pub = /<pubDate>(.*?)<\/pubDate>/s.exec(item)?.[1]
-    if (!raw || !link) continue
+    if (!raw || !link?.startsWith('https://')) continue
     const title = decodeEntities(raw).trim()
     const cut = title.lastIndexOf(', “')
     if (cut < 1) continue

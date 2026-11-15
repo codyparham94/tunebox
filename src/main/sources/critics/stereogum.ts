@@ -10,7 +10,7 @@ export function parseAlbumOfTheWeek(xml: string): CriticAlbum[] {
     const raw = /<title>(.*?)<\/title>/s.exec(item)?.[1]
     const link = /<link>(.*?)<\/link>/s.exec(item)?.[1].trim()
     const pub = /<pubDate>(.*?)<\/pubDate>/s.exec(item)?.[1]
-    if (!raw || !link) continue
+    if (!raw || !link?.startsWith('https://')) continue
     const full = decodeEntities(raw).trim()
     if (!full.startsWith(PREFIX)) continue
     // the album is the first <em>; the feed escapes it (&lt;em&gt;), sometimes inside CDATA

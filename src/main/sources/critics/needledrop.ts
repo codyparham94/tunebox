@@ -8,6 +8,8 @@ export const NEEDLEDROP_CHANNEL = 'UCt7fwAhXDy3oNFTAzF2o8Pw'
 
 type Seen = Record<string, { album: CriticAlbum; score: number } | null>
 
+const thumb = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+
 const splitName = (s: string): { artist: string; title: string } | undefined => {
   const i = s.indexOf(' - ')
   const artist = s.slice(0, i).trim()
@@ -26,11 +28,15 @@ export function parseReview(html: string, url: string): { album: CriticAlbum; sc
   // the verdict is the "N/10" article tag; the same text also appears in other metadata
   const score = /<meta property="article:tag" content="(\d{1,2})\/10"/.exec(html)
   if (!name || !score) return null
+  const og = /<meta property="og:image" content="(https:\/\/[^"]+)"/.exec(html)
+  const embed = /youtube\.com\/embed\/([\w-]{11})/.exec(html)
+  const artUrl = og ? decodeEntities(og[1]) : embed ? thumb(embed[1]) : undefined
   const published = /<meta property="article:published_time" content="([^"]+)"/.exec(html)
   const date = published ? Date.parse(published[1]) : NaN
   return {
     album: {
       ...name,
+      artUrl,
       source: 'needledrop',
       verdict: `${score[1]}/10`,
       reviewUrl: url,
@@ -48,7 +54,8 @@ export function parseTop50(description: string, year: number): CriticAlbum[] {
     const url = lines.slice(i + 1).find(Boolean)
     const name = splitName(line)
     if (!name || !url || !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(url)) return
-    out.push({ ...name, source: 'needledrop', verdict: `Top 50 of ${year}`, reviewUrl: url })
+    const id = /[?&]v=([\w-]+)/.exec(url)?.[1] ?? /youtu\.be\/([\w-]+)/.exec(url)?.[1]
+    out.push({ ...name, artUrl: id ? thumb(id) : undefined, source: 'needledrop', verdict: `Top 50 of ${year}`, reviewUrl: url })
   })
   return out
 }
@@ -72,6 +79,8 @@ export async function readReviews(seen: Seen): Promise<{ albums: CriticAlbum[]; 
   const fresh = urls.filter((u) => !(u in seen))
   const got = await mapLimit(fresh, 4, async (u) => parseReview(await fetchText(u), u))
   // a failed fetch (undefined) is left out so the next scan retries it
+  // every fresh page unscored means the markup changed: fail rather than cache the misses
+  if (got.length >= 3 && got.every((r) => r === null)) throw new Error('The Needle Drop: no scores found')
   fresh.forEach((u, i) => {
     if (got[i] !== undefined) next[u] = got[i]!
   })

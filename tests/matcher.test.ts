@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ACCEPT_CONFIDENCE, matchTrack, pickAlbum, pickBest, scoreCandidate } from '../src/main/sources/matcher'
+import { ACCEPT_CONFIDENCE, isVariousArtists, matchTrack, pickAlbum, pickBest, scoreCandidate } from '../src/main/sources/matcher'
 import { normalizeArtist, normalizeTitle } from '../src/main/util/text'
 import { GET_LUCKY_RESULTS } from './fixtures/getLuckySearch'
 
@@ -67,6 +67,14 @@ describe('matchTrack', () => {
     expect((await matchTrack(meta, deps))?.track.id).toBe('5NV6Rdv1a3I')
     expect((await matchTrack(meta, deps))?.track.id).toBe('5NV6Rdv1a3I')
     expect(searches).toBe(1)
+  })
+})
+
+describe('isVariousArtists', () => {
+  it('flags compilation credits only', () => {
+    expect(isVariousArtists('Various Artists')).toBe(true)
+    expect(isVariousArtists('various')).toBe(true)
+    expect(isVariousArtists('Krill')).toBe(false)
   })
 })
 

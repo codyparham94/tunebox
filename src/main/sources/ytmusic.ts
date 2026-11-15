@@ -15,7 +15,7 @@ import type {
   Track
 } from '@shared/types'
 import { normalizeArtist, normalizeTitle, upscaleArt } from '../util/text'
-import { pickAlbum } from './matcher'
+import { isVariousArtists, pickAlbum } from './matcher'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Node = any
@@ -305,7 +305,7 @@ export async function findAlbum(title: string, artist: string): Promise<{ albumI
   const res = await yt.music.search(`${artist} ${title}`, { type: 'album' })
   const albums = compact((res.albums?.contents ?? []).map((i: Node) => toAlbum(i)))
   const albumId = pickAlbum(albums, title, artist)
-  return albumId ? { albumId } : { artistId: await findArtistId(artist, true) }
+  return albumId || isVariousArtists(artist) ? { albumId } : { artistId: await findArtistId(artist, true) }
 }
 
 /** First YouTube video from `channelId` whose title matches, with its description. */

@@ -1,6 +1,7 @@
 import type { CriticAlbum, CriticFeed, CriticList, CriticListSummary, CriticSource } from '@shared/types'
 import { db } from '../../context'
 import { getState, setState } from '../../db/settings'
+import { withTimeout } from '../../util/async'
 import { trackKey } from '../../util/text'
 import { readBandcamp } from './bandcamp'
 import { readReviews, readTop50Lists } from './needledrop'
@@ -131,7 +132,7 @@ const critics = createCritics({
   },
   async readListIndex() {
     const year = new Date().getFullYear()
-    const [pf, top50] = await Promise.allSettled([pitchfork.readListIndex(), readTop50Lists([year, year - 1])])
+    const [pf, top50] = await Promise.allSettled([pitchfork.readListIndex(), withTimeout(readTop50Lists([year, year - 1]), 15_000).then((r) => r ?? Promise.reject(new Error('The Needle Drop: timed out')))])
     const nd: Settled =
       top50.status === 'rejected'
         ? top50
