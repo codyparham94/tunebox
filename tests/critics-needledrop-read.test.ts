@@ -42,6 +42,31 @@ describe('readReviews', () => {
     expect(out.seen[missed]).toBeNull()
   })
 
+  const pageOf = (n: number) =>
+    Array.from({ length: 5 }, (_, k) => `<a href="/album-reviews/p${n}-${k}-album-review-x/"></a>`).join('')
+
+  it('reads three index pages when nothing is seen', async () => {
+    mocked.mockImplementation(async (u) => {
+      const m = /page\/(\d)\/$/.exec(u)
+      if (u.endsWith('/album-reviews/') || m) return pageOf(m ? +m[1] : 1)
+      return '<title>Nothing</title>'
+    })
+    await readReviews({})
+    const indexFetches = mocked.mock.calls.filter(([u]) => /\/album-reviews\/(page\/\d\/)?$/.test(u))
+    expect(indexFetches).toHaveLength(3)
+    expect(mocked).toHaveBeenCalledTimes(3 + 15)
+  })
+
+  it('still returns page 1 albums when page 2 fails', async () => {
+    mocked.mockImplementation(async (u) => {
+      if (u.includes('/page/')) throw new Error('theneedledrop.com: HTTP 503')
+      if (u.endsWith('/album-reviews/')) return index
+      return u === brakence ? review.replace('content="2/10"', 'content="9/10"') : '<title>Nothing</title>'
+    })
+    const out = await readReviews({})
+    expect(out.albums.map((a) => a.artist)).toEqual(['brakence'])
+  })
+
   it('rejects when the index is down', async () => {
     mocked.mockRejectedValue(new Error('theneedledrop.com: HTTP 503'))
     await expect(readReviews({})).rejects.toThrow(/503/)

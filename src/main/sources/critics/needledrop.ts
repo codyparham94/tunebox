@@ -54,7 +54,20 @@ export function parseTop50(description: string, year: number): CriticAlbum[] {
 }
 
 export async function readReviews(seen: Seen): Promise<{ albums: CriticAlbum[]; seen: Seen }> {
-  const urls = requireSome(parseReviewIndex(await fetchText(`${ORIGIN}/album-reviews/`)), 'The Needle Drop').slice(0, 24)
+  const urls: string[] = []
+  for (let page = 1; page <= 3 && urls.length < 24; page++) {
+    let found: string[]
+    try {
+      found = parseReviewIndex(await fetchText(`${ORIGIN}/album-reviews/${page > 1 ? `page/${page}/` : ''}`))
+    } catch (err) {
+      if (page === 1) throw err // page 1 down means the reader failed; later pages just end pagination
+      break
+    }
+    if (page === 1) requireSome(found, 'The Needle Drop')
+    urls.push(...found.filter((u) => !urls.includes(u)))
+    if (found.some((u) => u in seen)) break // older reviews were handled by an earlier scan
+  }
+  urls.length = Math.min(urls.length, 24)
   const next: Seen = { ...seen }
   const fresh = urls.filter((u) => !(u in seen))
   const got = await mapLimit(fresh, 4, async (u) => parseReview(await fetchText(u), u))
