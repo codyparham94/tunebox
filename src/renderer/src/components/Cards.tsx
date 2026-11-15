@@ -1,5 +1,9 @@
-import { Link } from 'react-router'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router'
 import type { AlbumSummary, ArtistSummary, RemotePlaylistSummary } from '@shared/types'
+import { api, errorMessage } from '../lib/queries'
+import { timeAgo } from '../lib/format'
+import { toast } from '../store/toast'
 import { Art } from './Art'
 
 export function ArtistCard({ artist }: { artist: ArtistSummary }) {
@@ -34,4 +38,61 @@ export function RemotePlaylistCard({ playlist }: { playlist: RemotePlaylistSumma
 
 export function CardGrid({ children }: { children: React.ReactNode }) {
   return <div className="card-grid">{children}</div>
+}
+
+/** Tracks which card is loading and toasts a failed lookup. */
+export function useBusy() {
+  const [busy, setBusy] = useState<string | null>(null)
+  const run = async (key: string, task: () => Promise<void>) => {
+    setBusy(key)
+    try {
+      await task()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setBusy(null)
+    }
+  }
+  return { busy, run }
+}
+
+/** An album named by a chart or a critic: find it on YouTube Music on click, falling back to the artist. */
+export function LookupAlbumCard(props: { title: string; artist: string; artUrl?: string; rank?: number; badge?: string; date?: number; reviewUrl?: string }) {
+  const { title, artist, artUrl, rank, badge, date, reviewUrl } = props
+  const navigate = useNavigate()
+  const { busy, run } = useBusy()
+  const key = `${title}|${artist}`
+  const open = () =>
+    run(key, async () => {
+      const { albumId, artistId } = await api.catalog.findAlbum(title, artist)
+      if (albumId) navigate(`/album/${albumId}`)
+      else if (artistId) {
+        navigate(`/artist/${artistId}`)
+        toast.info(`Couldn’t find “${title}” on YouTube Music, so here’s ${artist}.`)
+      } else toast.error(`Couldn’t find “${title}” on YouTube Music.`)
+    })
+  const meta = [badge, date ? timeAgo(date) : undefined].filter(Boolean).join(' · ')
+  return (
+    <div className="relative">
+      <button className="card" onClick={open} aria-busy={busy === key}>
+        <div className="relative">
+          <Art src={artUrl} className="w-full" />
+          {rank != null && <span className="rank-badge mono">{rank}</span>}
+          {busy === key && (
+            <span className="absolute inset-0 grid place-items-center" style={{ background: 'var(--overlay)' }}>
+              <span className="spinner" />
+            </span>
+          )}
+        </div>
+        <span className="card-title truncate">{title}</span>
+        <span className="card-sub truncate">{artist}</span>
+        {meta && <span className="card-sub truncate">{meta}</span>}
+      </button>
+      {reviewUrl && (
+        <a href={reviewUrl} target="_blank" rel="noreferrer" className="card-sub">
+          Read review
+        </a>
+      )}
+    </div>
+  )
 }

@@ -74,7 +74,7 @@ function handlers(deps: IpcDeps, sender: () => WebContents | undefined): Handler
       chartAlbums: (genreId) => deezer.chartAlbums(genreId ?? 0),
       chartArtists: (genreId) => deezer.chartArtists(genreId ?? 0),
       findArtist: async (name) => (await ytm.findArtistId(name)) ?? null,
-      findAlbum: async (title, artist) => (await ytm.findAlbumId(title, artist)) ?? null,
+      findAlbum: (title, artist) => ytm.findAlbum(title, artist),
       genres: () => deezer.genres(),
       tags: async () => (lastfm.lastfmAvailable() ? lastfm.topTags(24).catch(() => FALLBACK_TAGS) : FALLBACK_TAGS)
     },

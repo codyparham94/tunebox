@@ -51,7 +51,7 @@ export interface TuneboxApi {
     chartArtists(genreId?: number): Promise<ChartArtist[]>
     /** YT Music ids for chart entries (which come from Deezer) */
     findArtist(name: string): Promise<string | null>
-    findAlbum(title: string, artist: string): Promise<string | null>
+    findAlbum(title: string, artist: string): Promise<{ albumId?: string; artistId?: string }>
     genres(): Promise<Genre[]>
     tags(): Promise<string[]>
   }

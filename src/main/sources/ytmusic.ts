@@ -15,6 +15,7 @@ import type {
   Track
 } from '@shared/types'
 import { normalizeArtist, normalizeTitle, upscaleArt } from '../util/text'
+import { pickAlbum } from './matcher'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Node = any
@@ -274,12 +275,13 @@ export async function upNext(videoId: string): Promise<Track[]> {
 }
 
 /** Best-matching artist channel for a name. */
-export async function findArtistId(name: string): Promise<string | undefined> {
+export async function findArtistId(name: string, strict = false): Promise<string | undefined> {
   const yt = await innertube()
   const res = await yt.music.search(name, { type: 'artist' })
   const artists = compact((res.artists?.contents ?? []).map(toArtist))
   const want = normalizeArtist(name)
-  return (artists.find((a) => normalizeArtist(a.name) === want) ?? artists[0])?.id
+  const exact = artists.find((a) => normalizeArtist(a.name) === want)
+  return (strict ? exact : (exact ?? artists[0]))?.id
 }
 
 /**
@@ -297,12 +299,11 @@ export async function locate(t: Pick<Track, 'id' | 'title' | 'artist'>): Promise
   return { artistId, albumId: hit?.albumId }
 }
 
-/** Best-matching YT Music album for a title + artist (e.g. from a Deezer chart). */
-export async function findAlbumId(title: string, artist: string): Promise<string | undefined> {
+/** The YT Music album for a title + artist (e.g. from a chart or a critic), or at least the artist when the album is missing. */
+export async function findAlbum(title: string, artist: string): Promise<{ albumId?: string; artistId?: string }> {
   const yt = await innertube()
   const res = await yt.music.search(`${artist} ${title}`, { type: 'album' })
   const albums = compact((res.albums?.contents ?? []).map((i: Node) => toAlbum(i)))
-  const want = normalizeTitle(title)
-  const byArtist = (a: AlbumSummary) => normalizeArtist(a.artist) === normalizeArtist(artist)
-  return (albums.find((a) => normalizeTitle(a.title) === want && byArtist(a)) ?? albums.find(byArtist) ?? albums[0])?.id
+  const albumId = pickAlbum(albums, title, artist)
+  return albumId ? { albumId } : { artistId: await findArtistId(artist, true) }
 }

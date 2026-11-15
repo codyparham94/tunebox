@@ -73,6 +73,20 @@ export function pickBest(source: MatchSource, candidates: MatchCandidate[]): Mat
   return scored[0]
 }
 
+/** YT Music album id whose artist is the same and whose title is the same or close; never another album by the artist. */
+export function pickAlbum(albums: { id: string; title: string; artist: string }[], title: string, artist: string): string | undefined {
+  const wantArtist = normalizeArtist(artist)
+  const wantTitle = normalizeTitle(title)
+  let best: { id: string; score: number } | undefined
+  for (const a of albums) {
+    if (normalizeArtist(a.artist) !== wantArtist) continue
+    const t = normalizeTitle(a.title)
+    const score = t === wantTitle ? 1 : similarity(t, wantTitle)
+    if (score >= 0.8 && (!best || score > best.score)) best = { id: a.id, score }
+  }
+  return best?.id
+}
+
 export interface MatcherDeps {
   search(query: string): Promise<MatchCandidate[]>
   cacheGet(key: string): { videoId: string | null; confidence: number } | undefined

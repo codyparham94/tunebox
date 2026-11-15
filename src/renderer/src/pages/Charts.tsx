@@ -1,14 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import type { ChartAlbum, ChartArtist } from '@shared/types'
+import type { ChartArtist } from '@shared/types'
 import { Art } from '../components/Art'
+import { LookupAlbumCard, useBusy } from '../components/Cards'
 import { PlayIcon, RadioIcon, ShuffleIcon } from '../components/Icons'
 import { Empty, QueryView } from '../components/States'
 import { TrackList } from '../components/TrackList'
 import { startArtistRadio } from '../lib/actions'
 import { plural } from '../lib/format'
-import { api, errorMessage, useGenres } from '../lib/queries'
+import { api, useGenres } from '../lib/queries'
 import { player } from '../store/player'
 import { toast } from '../store/toast'
 
@@ -112,7 +113,7 @@ export function Charts() {
           {(list) => (
             <div className="card-grid">
               {list.map((a, i) => (
-                <AlbumCardFromChart key={`${a.title}-${a.artist}`} album={a} rank={i + 1} />
+                <LookupAlbumCard key={`${a.title}-${a.artist}`} title={a.title} artist={a.artist} artUrl={a.artUrl} rank={i + 1} />
               ))}
             </div>
           )}
@@ -122,33 +123,21 @@ export function Charts() {
   )
 }
 
-/** Chart entries come from Deezer; find the matching YT Music page on click. */
-function useOpen() {
-  const navigate = useNavigate()
-  const [busy, setBusy] = useState<string | null>(null)
-  const open = async (key: string, find: () => Promise<string | null>, route: (id: string) => string, what: string) => {
-    setBusy(key)
-    try {
-      const id = await find()
-      if (id) navigate(route(id))
-      else toast.error(`Couldn’t find ${what} on YouTube Music.`)
-    } catch (err) {
-      toast.error(errorMessage(err))
-    } finally {
-      setBusy(null)
-    }
-  }
-  return { busy, open }
-}
-
 /** Round art with the rank on it; the radio button sits on the art so the name gets the full width. */
 function ArtistCardFromChart({ artist, rank }: { artist: ChartArtist; rank: number }) {
-  const { busy, open } = useOpen()
+  const navigate = useNavigate()
+  const { busy, run } = useBusy()
   return (
     <li className="chart-artist">
       <button
         className="card"
-        onClick={() => open(artist.name, () => api.catalog.findArtist(artist.name), (id) => `/artist/${id}`, artist.name)}
+        onClick={() =>
+          run(artist.name, async () => {
+            const id = await api.catalog.findArtist(artist.name)
+            if (id) navigate(`/artist/${id}`)
+            else toast.error(`Couldn’t find ${artist.name} on YouTube Music.`)
+          })
+        }
         aria-busy={busy === artist.name}
       >
         <div className="relative">
@@ -171,29 +160,5 @@ function ArtistCardFromChart({ artist, rank }: { artist: ChartArtist; rank: numb
         <RadioIcon size={16} />
       </button>
     </li>
-  )
-}
-
-function AlbumCardFromChart({ album, rank }: { album: ChartAlbum; rank: number }) {
-  const { busy, open } = useOpen()
-  const key = `${album.title}|${album.artist}`
-  return (
-    <button
-      className="card"
-      onClick={() => open(key, () => api.catalog.findAlbum(album.title, album.artist), (id) => `/album/${id}`, `“${album.title}”`)}
-      aria-busy={busy === key}
-    >
-      <div className="relative">
-        <Art src={album.artUrl} className="w-full" />
-        <span className="rank-badge mono">{rank}</span>
-        {busy === key && (
-          <span className="absolute inset-0 grid place-items-center" style={{ background: 'var(--overlay)' }}>
-            <span className="spinner" />
-          </span>
-        )}
-      </div>
-      <span className="card-title truncate">{album.title}</span>
-      <span className="card-sub truncate">{album.artist}</span>
-    </button>
   )
 }

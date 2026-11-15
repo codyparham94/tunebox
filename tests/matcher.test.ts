@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ACCEPT_CONFIDENCE, matchTrack, pickBest, scoreCandidate } from '../src/main/sources/matcher'
+import { ACCEPT_CONFIDENCE, matchTrack, pickAlbum, pickBest, scoreCandidate } from '../src/main/sources/matcher'
 import { normalizeArtist, normalizeTitle } from '../src/main/util/text'
 import { GET_LUCKY_RESULTS } from './fixtures/getLuckySearch'
 
@@ -68,4 +68,18 @@ describe('matchTrack', () => {
     expect((await matchTrack(meta, deps))?.track.id).toBe('5NV6Rdv1a3I')
     expect(searches).toBe(1)
   })
+})
+
+describe('pickAlbum', () => {
+  const yt = [
+    { id: 'A1', title: 'Older Record', artist: 'Krill' },
+    { id: 'A2', title: 'Secret Language', artist: 'Krill' },
+    { id: 'A3', title: 'Secret Language', artist: 'Someone Else' },
+    { id: 'A4', title: 'EXPERTISE (Deluxe Edition)', artist: 'Donwill & The Expert' }
+  ]
+  it('needs artist and title', () => expect(pickAlbum(yt, 'Secret Language', 'Krill')).toBe('A2'))
+  it('never falls back to another album by the artist', () => expect(pickAlbum(yt, 'Brand New Album', 'Krill')).toBeUndefined())
+  it('never takes the same title by a different artist', () => expect(pickAlbum(yt.slice(2, 3), 'Secret Language', 'Krill')).toBeUndefined())
+  it('ignores edition noise and multi-artist credits', () => expect(pickAlbum(yt, 'EXPERTISE', 'Donwill & The Expert')).toBe('A4'))
+  it('accepts a near title (similarity ≥ 0.8)', () => expect(pickAlbum(yt, 'Secret Languages', 'Krill')).toBe('A2'))
 })
