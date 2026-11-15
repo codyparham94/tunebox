@@ -88,15 +88,16 @@ export async function readTop50Lists(years: number[]): Promise<CriticList[]> {
   const lists: CriticList[] = []
   for (const year of years) {
     const v = await channelVideo(NEEDLEDROP_CHANNEL, `theneedledrop top 50 albums of ${year}`, new RegExp(`top 50 albums of ${year}`, 'i'))
-    if (!v) continue
+    const albums = v ? parseTop50(v.description, year) : []
+    if (!albums.length) continue
     lists.push({
       id: `needledrop:top50-${year}`,
       source: 'needledrop',
       title: `Top 50 Albums of ${year}`,
       year,
       ranked: false,
-      albums: parseTop50(v.description, year)
+      albums
     })
   }
-  return lists
+  return requireSome(lists, 'The Needle Drop lists')
 }

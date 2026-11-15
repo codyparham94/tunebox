@@ -234,10 +234,7 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     onCriticsScanned((f) => win?.webContents.send(EVENT.critics, f))
     win.webContents.once('did-finish-load', () => {
       void runHealthCheck()
-      setTimeout(() => {
-        const t = Date.now()
-        void scanCriticsOnce().then(() => console.info('[critics] scan', Date.now() - t))
-      }, 10_000)
+      setTimeout(() => void scanCriticsOnce().catch((e) => console.warn('[critics] startup scan:', e)), 10_000)
     })
     startUpdater((status) => win?.webContents.send(EVENT.update, status))
   })

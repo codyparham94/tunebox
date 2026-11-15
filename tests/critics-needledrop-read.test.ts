@@ -1,12 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { channelVideo } from '../src/main/sources/ytmusic'
 import { fetchText } from '../src/main/sources/critics/http'
-import { parseReviewIndex, readReviews } from '../src/main/sources/critics/needledrop'
+import { parseReviewIndex, readReviews, readTop50Lists } from '../src/main/sources/critics/needledrop'
 
 vi.mock('../src/main/sources/critics/http', async (orig) => ({
   ...(await orig<typeof import('../src/main/sources/critics/http')>()),
   fetchText: vi.fn()
 }))
+
+vi.mock('../src/main/sources/ytmusic', () => ({ channelVideo: vi.fn() }))
 
 const fx = (f: string) => readFileSync(new URL(`./fixtures/critics/${f}`, import.meta.url), 'utf8')
 const mocked = vi.mocked(fetchText)
@@ -70,5 +73,20 @@ describe('readReviews', () => {
   it('rejects when the index is down', async () => {
     mocked.mockRejectedValue(new Error('theneedledrop.com: HTTP 503'))
     await expect(readReviews({})).rejects.toThrow(/503/)
+  })
+})
+
+describe('readTop50Lists', () => {
+  const video = vi.mocked(channelVideo)
+  const withText = (description: string) => ({ description }) as Awaited<ReturnType<typeof channelVideo>>
+
+  it('rejects when no year has a video', async () => {
+    video.mockResolvedValue(undefined as never)
+    await expect(readTop50Lists([2025, 2024])).rejects.toThrow('nothing found')
+  })
+  it('skips a year whose description has no album lines', async () => {
+    video.mockResolvedValueOnce(withText('no albums here')).mockResolvedValueOnce(withText('X - Album\nhttps://www.youtube.com/watch?v=abc'))
+    const lists = await readTop50Lists([2025, 2024])
+    expect(lists.map((l) => l.id)).toEqual(['needledrop:top50-2024'])
   })
 })

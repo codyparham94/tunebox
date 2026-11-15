@@ -62,6 +62,7 @@ export function createCritics(deps: CriticsDeps) {
   }
 
   async function run(): Promise<CriticFeed> {
+    const started = Date.now()
     const previous = store.get<CriticFeed>(FEED)?.albums ?? []
     const results = await Promise.allSettled(SOURCES.map((s) => deps.readers[s](store)))
     const failed: CriticSource[] = []
@@ -71,6 +72,7 @@ export function createCritics(deps: CriticsDeps) {
       console.warn(`[critics] ${SOURCES[i]}:`, (r.reason as Error)?.message)
       return previous.filter((a) => a.source === SOURCES[i])
     })
+    console.info('[critics] scan', Date.now() - started)
     const feed: CriticFeed = { albums: interleave(bySource), failed, builtAt: deps.now() }
     store.set(FEED, feed)
     await refreshIndex().catch((err: Error) => console.warn('[critics] list index:', err.message))
@@ -140,6 +142,9 @@ const critics = createCritics({
               return summary
             })
           }
+    for (const [name, r] of [['pitchfork', pf], ['needledrop', nd]] as const) {
+      if (r.status === 'rejected') console.warn(`[critics] list index ${name}:`, (r.reason as Error)?.message)
+    }
     return mergeIndex(store.get<CriticListSummary[]>(LISTS) ?? [], pf, nd)
   },
   async readList(id) {
