@@ -70,6 +70,32 @@ describe('readReviews', () => {
     expect(out.albums.map((a) => a.artist)).toEqual(['brakence'])
   })
 
+  it('keeps older cached picks that are no longer on page 1', async () => {
+    const mk = (n: string, day: number) => ({
+      album: {
+        artist: n,
+        title: n,
+        source: 'needledrop' as const,
+        verdict: '9/10',
+        reviewUrl: `https://www.theneedledrop.com/album-reviews/${n}-album-review-x/`,
+        date: Date.UTC(2026, 0, day)
+      },
+      score: 9
+    })
+    const [a, b, c] = [mk('a', 3), mk('b', 2), mk('c', 1)]
+    const fresh = 'https://www.theneedledrop.com/album-reviews/n-album-review-x/'
+    mocked.mockImplementation(async (u) => {
+      if (u.endsWith('/album-reviews/'))
+        return `<a href="/album-reviews/n-album-review-x/"></a><a href="${new URL(a.album.reviewUrl).pathname}"></a>`
+      if (u === fresh) return review.replace('content="2/10"', 'content="8/10"').replace('brakence - marroW', 'n - n')
+      throw new Error('unexpected fetch ' + u)
+    })
+    const seen = { [a.album.reviewUrl]: a, [b.album.reviewUrl]: b, [c.album.reviewUrl]: c }
+    const out = await readReviews(seen)
+    expect(mocked).toHaveBeenCalledTimes(2)
+    expect(out.albums.map((x) => x.artist)).toEqual(['n', 'a', 'b', 'c'])
+  })
+
   it('rejects when the index is down', async () => {
     mocked.mockRejectedValue(new Error('theneedledrop.com: HTTP 503'))
     await expect(readReviews({})).rejects.toThrow(/503/)

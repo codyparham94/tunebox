@@ -75,8 +75,8 @@ export async function readReviews(seen: Seen): Promise<{ albums: CriticAlbum[]; 
   fresh.forEach((u, i) => {
     if (got[i] !== undefined) next[u] = got[i]!
   })
-  const albums = urls
-    .map((u) => next[u])
+  // from the whole cache, not just this scan's pages: older picks must stay in the feed
+  const albums = Object.values(next)
     .filter((r) => r && r.score >= 8)
     .map((r) => r!.album)
     .sort((a, b) => (b.date ?? 0) - (a.date ?? 0))
