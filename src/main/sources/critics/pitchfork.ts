@@ -29,9 +29,11 @@ export function parseBestNew(html: string): CriticAlbum[] {
 
 export function parseReviewDates(xml: string): Map<string, number> {
   const dates = new Map<string, number>()
-  for (const m of xml.matchAll(/<item>.*?<link>(.*?)<\/link>.*?<pubDate>(.*?)<\/pubDate>/gs)) {
-    const ms = Date.parse(m[2])
-    if (Number.isFinite(ms)) dates.set(m[1].trim(), ms)
+  for (const item of xml.split('</item>')) {
+    const link = /<link>(.*?)<\/link>/s.exec(item)
+    const pub = /<pubDate>(.*?)<\/pubDate>/s.exec(item)
+    const ms = pub ? Date.parse(pub[1]) : NaN
+    if (link && Number.isFinite(ms)) dates.set(link[1].trim(), ms)
   }
   return dates
 }
@@ -46,6 +48,7 @@ export function parseListIndex(html: string): CriticListSummary[] {
     if (!year || !slug.includes('best') || !slug.includes('albums')) continue
     const title = slug
       .split('-')
+      .filter(Boolean)
       .map((w) => w[0].toUpperCase() + w.slice(1))
       .join(' ')
     out.push({ id: `pitchfork:${slug}`, source: 'pitchfork', title, year: +year[1], ranked: true })
@@ -55,10 +58,17 @@ export function parseListIndex(html: string): CriticListSummary[] {
 
 export function parseList(html: string): CriticAlbum[] {
   const entries = [...html.matchAll(/<h2>([^<]*?):\s*<em>([^<]*)<\/em><\/h2>/g)]
+  // the cover is the last <img> between the previous entry's heading and this one
+  const arts = entries.map((m, i) => {
+    const from = i ? entries[i - 1].index! + entries[i - 1][0].length : 0
+    const img = [...html.slice(from, m.index).matchAll(/<img\s(?:[^>]*?\s)?src="([^"]+)"/g)].pop()
+    return img ? decodeEntities(img[1]) : undefined
+  })
   // ponytail: assumes the page counts down from N to 1 (true of Pitchfork's year-end lists)
   return entries.map((m, i) => ({
     title: decodeEntities(m[2]).trim(),
     artist: decodeEntities(m[1]).trim(),
+    artUrl: arts[i],
     source: 'pitchfork' as const,
     verdict: '',
     reviewUrl: '',
@@ -69,7 +79,7 @@ export function parseList(html: string): CriticAlbum[] {
 export async function readBestNew(): Promise<CriticAlbum[]> {
   const [html, xml] = await Promise.all([
     fetchText(`${ORIGIN}/reviews/best/albums/`),
-    fetchText(`${ORIGIN}/feed/feed-album-reviews/rss`)
+    fetchText(`${ORIGIN}/feed/feed-album-reviews/rss`).catch(() => '') // dates are optional
   ])
   const dates = parseReviewDates(xml)
   const albums = parseBestNew(html).map((a) => ({ ...a, date: dates.get(a.reviewUrl) }))

@@ -10,8 +10,8 @@ const NAMED: Record<string, string> = { amp: '&', quot: '"', apos: "'", lt: '<',
 
 export function decodeEntities(s: string): string {
   return s.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (m, dec, hex, name) => {
-    if (dec) return String.fromCodePoint(+dec)
-    if (hex) return String.fromCodePoint(parseInt(hex, 16))
+    const cp = dec ? +dec : hex ? parseInt(hex, 16) : null
+    if (cp !== null) return cp <= 0x10ffff ? String.fromCodePoint(cp) : m
     return NAMED[name.toLowerCase()] ?? m
   })
 }

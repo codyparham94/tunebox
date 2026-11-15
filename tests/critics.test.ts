@@ -9,6 +9,9 @@ describe('critics helpers', () => {
   it('requireSome throws on empty', () => {
     expect(() => requireSome([], 'Pitchfork')).toThrow(/Pitchfork: nothing found/)
   })
+  it('decodeEntities leaves out-of-range entities alone', () => {
+    expect(decodeEntities('&#99999999;')).toBe('&#99999999;')
+  })
   it('decodeEntities', () => {
     expect(decodeEntities('Snakes &amp; Ladders &#8217;&#x2019;')).toBe('Snakes & Ladders ’’')
   })
@@ -34,6 +37,14 @@ describe('pitchfork', () => {
       expect(ms).toBeGreaterThan(Date.UTC(2026, 0, 1))
     }
   })
+  it('parseReviewDates does not borrow the next item date', () => {
+    const xml = '<item><link>https://a/</link></item><item><link>https://b/</link><pubDate>Sun, 15 Nov 2026 05:00:00 +0000</pubDate></item>'
+    expect([...parseReviewDates(xml).keys()]).toEqual(['https://b/'])
+  })
+  it('parseListIndex survives odd slugs', () => {
+    const html = '<a href="/features/lists-and-guides/best--albums-2025/"></a><a href="/features/lists-and-guides/-best-albums-2025/"></a>'
+    expect(parseListIndex(html)).toHaveLength(2)
+  })
   it('parseListIndex', () => {
     const lists = parseListIndex(fx('pitchfork-lists.html'))
     expect(lists).toContainEqual(expect.objectContaining({ id: 'pitchfork:best-albums-2025', year: 2025, ranked: true }))
@@ -45,5 +56,6 @@ describe('pitchfork', () => {
     expect(albums).toHaveLength(50)
     expect(albums.map((a) => a.rank).sort((a, b) => a! - b!)).toEqual(Array.from({ length: 50 }, (_, i) => i + 1))
     expect(albums).toContainEqual(expect.objectContaining({ artist: 'Sharp Pins', title: 'Radio DDR', rank: 50 }))
+    expect(albums.find((a) => a.artist === 'Sharp Pins')?.artUrl).toMatch(/^https:\/\//)
   })
 })
